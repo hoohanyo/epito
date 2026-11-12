@@ -13,8 +13,8 @@ const MATERIALS = {
   // Kötőanyag, beton
   kesz_beton:   { n: 'Kész beton (mixer)', g: 'Beton, habarcs', u: 'm³', pack: 0, pn: 'm³', p: 40000 },
   cement:       { n: 'Cement', g: 'Beton, habarcs', u: 'kg', pack: 25, pn: 'zsák (25 kg)', p: 2800 },
-  soder:        { n: 'Homokos kavics (sóder)', g: 'Beton, habarcs', u: 't', pack: 0, pn: 't', p: 9000 },
-  homok:        { n: 'Homok', g: 'Beton, habarcs', u: 't', pack: 0, pn: 't', p: 9000 },
+  soder:        { n: 'Homokos kavics (sóder)', g: 'Beton, habarcs', u: 't', ro: 1.8, pack: 0, pn: 't', p: 9000 },
+  homok:        { n: 'Homok', g: 'Beton, habarcs', u: 't', ro: 1.5, pack: 0, pn: 't', p: 9000 },
   szarazbeton:  { n: 'Zsákos szárazbeton', g: 'Beton, habarcs', u: 'kg', pack: 25, pn: 'zsák (25 kg)', p: 1600 },
   betonhalo:    { n: 'Betonacél háló', g: 'Beton, habarcs', u: 'm²', pack: 6, pn: 'tábla (2×3 m)', p: 7500 },
   esztrich:     { n: 'Esztrich szárazhabarcs', g: 'Beton, habarcs', u: 'kg', pack: 25, pn: 'zsák (25 kg)', p: 1900 },
@@ -95,13 +95,13 @@ const MATERIALS = {
   lefolyo_konyok:{ n: 'Lefolyó könyök', g: 'Tető', u: 'db', pack: 1, pn: 'db', p: 2500 },
   // Kert, térburkolat, ömlesztett
   terko:        { n: 'Térkő', g: 'Kert', u: 'm²', pack: 0, pn: 'm²', p: 7500 },
-  zuzottko:     { n: 'Zúzottkő (alap, 0/32)', g: 'Kert', u: 't', pack: 0, pn: 't', p: 13000 },
-  kozuzalek:    { n: 'Kőzúzalék (ágyazat, 0/4)', g: 'Kert', u: 't', pack: 0, pn: 't', p: 15000 },
+  zuzottko:     { n: 'Zúzottkő (alap, 0/32)', g: 'Kert', u: 't', ro: 1.6, pack: 0, pn: 't', p: 13000 },
+  kozuzalek:    { n: 'Kőzúzalék (ágyazat, 0/4)', g: 'Kert', u: 't', ro: 1.6, pack: 0, pn: 't', p: 15000 },
   szegelyko:    { n: 'Kerti szegélykő (1 m)', g: 'Kert', u: 'db', pack: 1, pn: 'db', p: 2200 },
   fugahomok:    { n: 'Fugahomok', g: 'Kert', u: 'kg', pack: 25, pn: 'zsák (25 kg)', p: 1800 },
   geotextil:    { n: 'Geotextília', g: 'Kert', u: 'm²', pack: 0, pn: 'm²', p: 350 },
-  murva:        { n: 'Murva / díszkavics', g: 'Kert', u: 't', pack: 0, pn: 't', p: 18000 },
-  termofold:    { n: 'Termőföld', g: 'Kert', u: 't', pack: 0, pn: 't', p: 8000 },
+  murva:        { n: 'Murva / díszkavics', g: 'Kert', u: 't', ro: 1.5, pack: 0, pn: 't', p: 18000 },
+  termofold:    { n: 'Termőföld', g: 'Kert', u: 't', ro: 1.3, pack: 0, pn: 't', p: 8000 },
   // Kerítés
   ker_oszlop:   { n: 'Kerítésoszlop', g: 'Kerítés', u: 'db', pack: 1, pn: 'db', p: 5500 },
   drothalo:     { n: 'Drótfonat / drótháló', g: 'Kerítés', u: 'fm', pack: 25, pn: 'tekercs (25 m)', p: 32000 },
@@ -130,6 +130,11 @@ const SEL = (id, l, opts, d, extra) => Object.assign({ id, t: 'sel', l, opts, d 
 const C = (id, l, d, extra) => Object.assign({ id, t: 'chk', l, d }, extra || {});
 const T = (id, l, d, extra) => Object.assign({ id, t: 'txt', l, d }, extra || {});
 const H = (l) => ({ t: 'hdr', l });
+// Ömlesztett anyag: tonna + mázsa + laza m³ egyszerre
+function TQ(t, k) {
+  const ro = MATERIALS[k] && MATERIALS[k].ro;
+  return fmt(t, 2) + '\u00a0t = ' + fmt(t * 10, t * 10 >= 100 ? 0 : 1) + '\u00a0q' + (ro ? ' ≈\u00a0' + fmt(t / ro, 2) + '\u00a0m³' : '');
+}
 
 // Felület-megadás blokkok
 function areaFields(kind) {
@@ -227,7 +232,7 @@ const CALCS = [
       mats.push({ k: 'cement', q: Vr * cem });
       mats.push({ k: 'soder', q: Vr * 1.9 });
       out.push(['Cement', fmt(Vr * cem, 0) + ' kg (' + cem + ' kg/m³)']);
-      out.push(['Homokos kavics', fmt(Vr * 1.9, 2) + ' t']);
+      out.push(['Homokos kavics', TQ(Vr * 1.9, 'soder')]);
       out.push(['Keverővíz (kb.)', fmt(Vr * 180, 0) + ' l']);
       if (Vr > 2) warn.push('2 m³ fölött kézi keveréssel nehéz egyenletes minőséget tartani – fontold meg a kész betont.');
     } else {
@@ -265,7 +270,7 @@ const CALCS = [
       const V = A * nz(v.vast) / 100 * k;
       out.push(['Térfogat', fmt(V, 3) + ' m³']);
       if (v.mod === 'zsak') { const kg = A * nz(v.vast) * 20 * k; mats.push({ k: 'esztrich', q: kg }); out.push(['Esztrich', fmt(kg, 0) + ' kg (≈ 20 kg/m²/cm)']); }
-      else { mats.push({ k: 'cement', q: V * 380 }); mats.push({ k: 'homok', q: V * 1.7 }); out.push(['Cement', fmt(V * 380, 0) + ' kg']); out.push(['Homok', fmt(V * 1.7, 2) + ' t']); }
+      else { mats.push({ k: 'cement', q: V * 380 }); mats.push({ k: 'homok', q: V * 1.7 }); out.push(['Cement', fmt(V * 380, 0) + ' kg']); out.push(['Homok', TQ(V * 1.7, 'homok')]); }
       if (nz(v.vast) < 3.5) warn.push('Úsztatott esztrichnél 4,5–5 cm alatt repedésveszély van; tapadó esztrichnél min. kb. 2,5–3 cm.');
     }
     if (v.perem) { const p = ar.per != null ? ar.per : 4 * Math.sqrt(A); mats.push({ k: 'peremszalag', q: p * 1.05 }); out.push(['Peremszalag', fmt(p * 1.05, 1) + ' fm' + (ar.per == null ? ' (becsült kerület)' : '')]); }
@@ -322,7 +327,7 @@ const CALCS = [
     const out = [['Falfelület', fmt(A, 2) + ' m²'], ['Zsalukő (10 db/m²)', fmt(db, 0) + ' db'], ['Kitöltő beton', fmt(V, 3) + ' m³']];
     const mats = [{ k: 'zsaluko' + v.tip, q: db }];
     if (v.mod === 'kesz') mats.push({ k: 'kesz_beton', q: Math.ceil(V * 4) / 4 });
-    else if (v.mod === 'kevert') { mats.push({ k: 'cement', q: V * 300 }); mats.push({ k: 'soder', q: V * 1.9 }); out.push(['Cement / sóder', fmt(V * 300, 0) + ' kg / ' + fmt(V * 1.9, 2) + ' t']); }
+    else if (v.mod === 'kevert') { mats.push({ k: 'cement', q: V * 300 }); mats.push({ k: 'soder', q: V * 1.9 }); out.push(['Cement', fmt(V * 300, 0) + ' kg'], ['Homokos kavics', TQ(V * 1.9, 'soder')]); }
     else { mats.push({ k: 'szarazbeton', q: V * 2200 }); out.push(['Szárazbeton', fmt(V * 2200, 0) + ' kg']); }
     return { out, mats, warn: ['A betonigény 50×20 cm-es elemmel számolt átlag; a gyártói adat ettől eltérhet. A vasalást külön számold.'] };
   }
@@ -598,18 +603,19 @@ const CALCS = [
     ...areaFields('floor'),
     F('alap', 'Zúzottkő alap vastagsága', 'cm', 15, { help: 'Gyalogos 10–15, személyautó 20–25, tehergépjármű 30+' }),
     F('agy', 'Ágyazat (0/4) vastagsága', 'cm', 4),
-    F('szeg', 'Szegélykő hossza', 'fm', 0, { help: 'Ha 0 és hossz × szélességet adtál, a kerületet veszi' }),
-    C('szegB', 'Szegélykő betonágyba (≈0,03 m³/fm, zsákos)', true),
+    SEL('szm', 'Szegélykő', [['kor', 'Körben, a teljes kerületen'], ['hossz', 'Csak megadott hosszon'], ['nincs', 'Nem kell szegély']], 'kor', { show: v => v.am === 'hsz' }),
+    F('szeg', 'Szegélykő hossza', 'fm', 10, { show: v => v.am === 'm2' || v.szm === 'hossz', help: 'Pl. ha az egyik oldal a házfalhoz ér, azt hagyd ki' }),
+    C('szegB', 'Szegélykő betonágyba (≈0,03 m³/fm, zsákos)', true, { show: v => !(v.am === 'hsz' && v.szm === 'nincs') }),
     C('geo', 'Geotextília az alap alá', true),
     RAH(5),
   ],
   compute(v) {
     const ar = areaOf(v, 'floor'); const A = ar.net; const k = 1 + nz(v.rah) / 100;
     const alapT = A * nz(v.alap) / 100 * 1.25 * 1.6; const agyT = A * nz(v.agy) / 100 * 1.2 * 1.6;
-    const szeg = nz(v.szeg) > 0 ? nz(v.szeg) : (ar.per || 0);
-    const out = [['Terület', fmt(A, 2) + ' m²'], ['Térkő', fmt(A * k, 2) + ' m²'], ['Zúzottkő alap (tömörítéssel)', fmt(alapT, 2) + ' t'], ['Kőzúzalék ágyazat', fmt(agyT, 2) + ' t'], ['Fugahomok (≈4 kg/m²)', fmt(A * 4, 0) + ' kg']];
+    const szeg = v.am === 'm2' || v.szm === 'hossz' ? nz(v.szeg) : v.szm === 'nincs' ? 0 : (ar.per || 0);
+    const out = [['Terület', fmt(A, 2) + ' m²'], ['Térkő', fmt(A * k, 2) + ' m²'], ['Zúzottkő alap (tömörítéssel)', TQ(alapT, 'zuzottko')], ['Kőzúzalék ágyazat', TQ(agyT, 'kozuzalek')], ['Fugahomok (≈4 kg/m²)', fmt(A * 4, 0) + ' kg']];
     const mats = [{ k: 'terko', q: A * k }, { k: 'zuzottko', q: alapT }, { k: 'kozuzalek', q: agyT }, { k: 'fugahomok', q: A * 4 }];
-    if (szeg > 0) { const db = CEIL(szeg * 1.03); mats.push({ k: 'szegelyko', q: db }); out.push(['Szegélykő (1 m)', db + ' db']); if (v.szegB) { mats.push({ k: 'szarazbeton', q: szeg * 0.03 * 2200 }); out.push(['Szárazbeton a szegélyhez', fmt(szeg * 0.03 * 2200, 0) + ' kg']); } }
+    if (szeg > 0) { const db = CEIL(szeg * 1.03); mats.push({ k: 'szegelyko', q: db }); out.push(['Szegély hossza', fmt(szeg, 2) + ' fm'], ['Szegélykő (1 m)', db + ' db']); if (v.szegB) { mats.push({ k: 'szarazbeton', q: szeg * 0.03 * 2200 }); out.push(['Szárazbeton a szegélyhez', fmt(szeg * 0.03 * 2200, 0) + ' kg']); } }
     if (v.geo) { mats.push({ k: 'geotextil', q: A * 1.15 }); out.push(['Geotextília', fmt(A * 1.15, 1) + ' m²']); }
     return { out, mats, warn: ['Tömegek: kb. 1,6 t/m³ laza térfogatsúllyal és 20–25% tömörítési ráhagyással.'] };
   }
@@ -627,7 +633,7 @@ const CALCS = [
   compute(v) {
     const ro = { murva: 1.5, zuzottko: 1.6, kozuzalek: 1.6, soder: 1.8, homok: 1.5, termofold: 1.3 }[v.any] || 1.6;
     const A = areaOf(v, 'floor').net; const V = A * nz(v.vast) / 100 * (1 + nz(v.tom) / 100); const t = V * ro;
-    const out = [['Terület', fmt(A, 2) + ' m²'], ['Térfogat', fmt(V, 2) + ' m³'], ['Tömeg', fmt(t, 2) + ' t']]; const mats = [{ k: v.any, q: t }];
+    const out = [['Terület', fmt(A, 2) + ' m²'], ['Szükséges anyag', TQ(t, v.any)]]; const mats = [{ k: v.any, q: t }];
     if (v.geo) { mats.push({ k: 'geotextil', q: A * 1.15 }); out.push(['Geotextília (15% átfedés)', fmt(A * 1.15, 1) + ' m²']); }
     return { out, mats, warn: [] };
   }
@@ -654,7 +660,7 @@ const CALCS = [
     if (v.tip === 'drot') { mats.push({ k: 'drothalo', q: L * 1.03 }, { k: 'fesziduzal', q: L * nz(v.sor) * 1.1 }); out.push(['Drótfonat', fmt(L * 1.03, 1) + ' fm'], ['Feszítőhuzal', fmt(L * nz(v.sor) * 1.1, 0) + ' fm']); }
     else { mats.push({ k: 'ker_panel', q: mezo }); out.push(['Panel', mezo + ' db']); }
     if (v.mod === 'zsak') { mats.push({ k: 'szarazbeton', q: V * 2200 }); out.push(['Szárazbeton', fmt(V * 2200, 0) + ' kg']); }
-    else if (v.mod === 'kevert') { mats.push({ k: 'cement', q: V * 300 }, { k: 'soder', q: V * 1.9 }); out.push(['Cement / sóder', fmt(V * 300, 0) + ' kg / ' + fmt(V * 1.9, 2) + ' t']); }
+    else if (v.mod === 'kevert') { mats.push({ k: 'cement', q: V * 300 }, { k: 'soder', q: V * 1.9 }); out.push(['Cement', fmt(V * 300, 0) + ' kg'], ['Homokos kavics', TQ(V * 1.9, 'soder')]); }
     else mats.push({ k: 'kesz_beton', q: Math.ceil(V * 4) / 4 });
     return { out, mats, warn: ['Oszlopot fagyhatár alá (≈ 80 cm) érdemes betonozni.'] };
   }
@@ -807,7 +813,7 @@ const CALCS = [
     const x = nz(v.ar); const Vk = nz(v.V) / 1000; const szaraz = Vk * 1.35;
     const cemV = szaraz / (1 + x), adV = szaraz * x / (1 + x);
     const cemKg = cemV * 1400, adT = adV * (v.ad === 'soder' ? 1.8 : 1.5);
-    return { out: [['Cement', fmt(cemKg, 1) + ' kg ≈ ' + fmt(cemKg / 25, 1) + ' zsák'], [v.ad === 'soder' ? 'Homokos kavics' : 'Homok', fmt(adT * 1000, 0) + ' kg (' + fmt(adV * 1000, 0) + ' l)'], ['Keverővíz (kb.)', fmt(cemKg * 0.5, 1) + ' l']],
+    return { out: [['Cement', fmt(cemKg, 1) + ' kg ≈ ' + fmt(cemKg / 25, 1) + ' zsák'], [v.ad === 'soder' ? 'Homokos kavics' : 'Homok', fmt(adT * 1000, 0) + ' kg = ' + fmt(adT * 10, 1) + ' q (' + fmt(adV * 1000, 0) + ' l)'], ['Keverővíz (kb.)', fmt(cemKg * 0.5, 1) + ' l']],
       mats: [{ k: 'cement', q: cemKg }, { k: v.ad, q: adT }], warn: ['Száraz-nedves térfogatváltozás ≈ 1,35-ös szorzóval; a víz mennyisége az adalék nedvességétől függ.'] };
   }
 },

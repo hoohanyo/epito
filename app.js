@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '0.4';
+const APP_VERSION = '0.5.1';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -50,6 +50,10 @@ function line(m) {
   if (pack > 0) { packs = Math.ceil(q / pack - 1e-9); cost = packs * P.p; } else cost = q * P.p;
   const qtxt = fmt(q) + ' ' + P.u;
   const ptxt = pack > 0 ? (pack === 1 && (P.u === 'db' || P.u === 'szál') ? '' : packs + ' × ' + P.pn) : '';
+  if (P.u === 't' && !ptxt) {
+    const ro = MATERIALS[m.k] && MATERIALS[m.k].ro;
+    return { k: m.k, name: P.n, q, u: P.u, pack, packs, pn: P.pn, price: P.p, cost, qtxt, ptxt: fmt(q * 10, q * 10 >= 100 ? 0 : 1) + '\u00a0q' + (ro ? ' ≈\u00a0' + fmt(q / ro, 2) + '\u00a0m³ (laza)' : ''), noprice: !P.p };
+  }
   return { k: m.k, name: P.n, q, u: P.u, pack, packs, pn: P.pn, price: P.p, cost, qtxt, ptxt, noprice: !P.p };
 }
 function aggregate(tetelek) {
