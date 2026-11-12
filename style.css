@@ -104,3 +104,5 @@ html.dark .btn.pri{color:#0b1220}
 .kv:last-child{border-bottom:0}
 .arrow{color:var(--muted);font-size:18px}
 .f label.sw{flex:none}
+.ghdr{display:flex;align-items:center;justify-content:space-between;margin:18px 4px 8px}
+.ghdr h2{margin:0}

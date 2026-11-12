@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '0.1';
+const APP_VERSION = '0.2';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -32,8 +32,8 @@ const saveQueue = () => LS.set('ek_queue', S.queue);
 
 /* ---------- Árak ---------- */
 function mat(k) {
-  const d = MATERIALS[k] || { n: k, g: 'Egyéb', u: '', pack: 0, pn: '', p: 0 };
   const o = S.data.arlista[k];
+  const d = MATERIALS[k] || { n: (o && o.n) || k, g: (o && o.g) || 'Egyéb', u: (o && o.u) || 'db', pack: 0, pn: '', p: 0, egyedi: true };
   if (!o) return d;
   return Object.assign({}, d, {
     n: o.n || d.n, pack: o.pack === '' || o.pack == null ? d.pack : Number(o.pack),
@@ -99,7 +99,7 @@ async function load(force) {
     S.syncing = true; updateSync();
     const j = await api('load');
     const arl = {};
-    for (const r of (j.arlista || [])) arl[r.kulcs] = { n: r.anyag, pack: r.kiszereles, pn: r.kiszNev, p: r.ar, megj: r.megj };
+    for (const r of (j.arlista || [])) arl[r.kulcs] = { n: r.anyag, g: r.csoport, u: r.egyseg, pack: r.kiszereles, pn: r.kiszNev, p: r.ar, megj: r.megj };
     S.data = { projektek: j.projektek || [], tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl };
     saveCache(); S.lastErr = ''; S.loaded = true;
     const hianyzo = Object.keys(MATERIALS).filter(k => !arl[k]);
@@ -146,6 +146,10 @@ const round3 = (x) => Math.round(x * 1000) / 1000;
 function deleteTetel(id) {
   S.data.tetelek = S.data.tetelek.filter(t => t.id !== id); saveCache(); enqueue('deleteTetel', { id });
 }
+const isEgyedi = (k) => !MATERIALS[k];
+const allMatKeys = () => Object.keys(MATERIALS).concat(Object.keys(S.data.arlista).filter(k => isEgyedi(k) && S.data.arlista[k]));
+const allGroups = () => [...new Set(allMatKeys().map(k => mat(k).g))];
+function deleteAr(k) { delete S.data.arlista[k]; saveCache(); enqueue('deleteAr', { kulcs: k }); }
 function saveAr(k, o) {
   S.data.arlista[k] = o; saveCache();
   enqueue('saveArak', { items: [arRow(k, mat(k))] });
@@ -389,7 +393,8 @@ function renderProjekt(r) {
   if (!ts.length) h += '<div class="empty">Még nincs tétel. Adj hozzá egy kalkulációt, vagy egyéb tételt (pl. fuvar, szerszámbérlés).</div>';
   else h += '<div class="card list">' + ts.map(t => {
     const c = CALC_BY_ID[t.calc]; const cost = sumCost((t.mats || []).map(line));
-    const sub = t.calc === 'egyeb' ? (t.mats[0] ? fmt(t.mats[0].q) + ' ' + (t.mats[0].u || '') + ' × ' + ft(t.mats[0].p) : '') : (c ? c.n : t.calc) + (t.out && t.out[0] ? ' · ' + t.out[0][1] : '');
+    const m0 = t.mats && t.mats[0];
+    const sub = t.calc === 'egyeb' ? (!m0 ? '' : m0.k === '_egyeb' ? fmt(m0.q) + ' ' + (m0.u || '') + ' × ' + ft(m0.p) : (line(m0).ptxt || line(m0).qtxt) + ' · árlistából') : (c ? c.n : t.calc) + (t.out && t.out[0] ? ' · ' + t.out[0][1] : '');
     return '<div class="it" data-t="' + t.id + '"><span class="ic" style="font-size:20px">' + (c ? c.i : '➕') + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc(sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
   }).join('') + '</div>';
   if (agg.length) h += '<h2>Összesített anyaglista</h2><div class="card">' + matsTable(agg) + '<div class="small muted" style="margin-top:6px">Azonos anyagok összevonva; a kiszerelésre kerekítés az összegből történik, ezért kevesebb lehet, mint a tételek összege.</div></div>';
@@ -404,23 +409,46 @@ function renderProjekt(r) {
     if (t.calc === 'egyeb') egyebDialog(p.id, t); else openCalc(t.calc, t);
   });
 }
+function matOptions(sel) {
+  return allGroups().map(g => '<optgroup label="' + esc(g) + '">' + allMatKeys().filter(k => mat(k).g === g).map(k => '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc(mat(k).n) + '</option>').join('') + '</optgroup>').join('');
+}
 function egyebDialog(pid, t) {
-  const m0 = t && t.mats[0] || { n: '', q: 1, u: 'db', p: 0 };
+  const m0 = t && t.mats[0] || { k: '_egyeb', n: '', q: 1, u: 'db', p: 0 };
   const h = '<h3>' + (t ? 'Egyéb tétel' : 'Új egyéb tétel') + '</h3>' +
+    '<div class="fld"><label>Forrás</label><select id="es"><option value="_egyeb"' + (m0.k === '_egyeb' ? ' selected' : '') + '>Kézi tétel (fuvar, bérlés, munkadíj…)</option>' + matOptions(m0.k) + '</select></div>' +
     '<div class="fld"><label>Megnevezés</label><input id="en" value="' + esc(t ? t.nev : '') + '" placeholder="pl. Fuvardíj, konténer, szerszámbérlés"></div>' +
-    '<div class="row2"><div class="fld"><label>Mennyiség</label><input id="eq" inputmode="decimal" value="' + esc(numStr(m0.q)) + '"></div><div class="fld"><label>Egység</label><input id="eu" value="' + esc(m0.u) + '" list="egysegek"></div></div>' +
+    '<div class="row2"><div class="fld"><label>Mennyiség</label><input id="eq" inputmode="decimal" value="' + esc(numStr(m0.q)) + '"></div><div class="fld" id="euw"><label>Egység</label><input id="eu" value="' + esc(m0.u || '') + '" list="egysegek"></div></div>' +
     '<datalist id="egysegek"><option>db</option><option>alkalom</option><option>óra</option><option>nap</option><option>m²</option><option>fm</option><option>m³</option><option>t</option><option>kg</option><option>l</option></datalist>' +
-    '<div class="fld"><label>Egységár (Ft)</label><input id="ep" inputmode="numeric" value="' + (m0.p ? dotted(m0.p) : '') + '"></div>' +
+    '<div class="fld" id="epw"><label>Egységár (Ft)</label><input id="ep" inputmode="numeric" value="' + (m0.p ? dotted(m0.p) : '') + '"></div>' +
+    '<div class="small muted" id="einfo" style="margin:-4px 0 10px"></div>' +
     '<div class="btns"><button class="btn pri wide" id="eok">Mentés</button><button class="btn" id="ex">Mégse</button></div>' +
     (t ? '<div class="btns"><button class="btn danger" id="edel">Tétel törlése</button></div>' : '');
   openModal(h, m => {
     priceInput($('#ep', m));
+    let elozo = m0.k;
+    const frissit = () => {
+      const k = $('#es', m).value, kezi = k === '_egyeb';
+      $('#euw', m).hidden = !kezi; $('#epw', m).hidden = !kezi;
+      if (kezi) { $('#einfo', m).textContent = ''; }
+      else {
+        const P = mat(k), en = $('#en', m);
+        if (!en.value.trim() || (elozo !== '_egyeb' && en.value === mat(elozo).n)) en.value = P.n;
+        const l = line({ k, q: Number(parseNum($('#eq', m).value)) || 0 });
+        $('#einfo', m).textContent = 'Mennyiség ' + P.u + '-ben. ' + (l.ptxt ? l.ptxt + ' → ' : '') + (P.p ? ft(l.cost) : 'nincs ár az árlistában');
+      }
+      elozo = k;
+    };
+    $('#es', m).onchange = frissit; $('#eq', m).oninput = frissit; frissit();
     $('#ex', m).onclick = closeModal;
     $('#eok', m).onclick = () => {
-      const n = $('#en', m).value.trim(); if (!n) { $('#en', m).focus(); return; }
-      const q = Number(parseNum($('#eq', m).value)) || 0, u = $('#eu', m).value.trim(), pr = priceVal($('#ep', m));
-      const tt = { id: t ? t.id : uid('T'), projektId: pid, calc: 'egyeb', nev: n, values: {}, mats: [{ k: '_egyeb', n, q, u, p: pr }], out: [['Mennyiség', fmt(q) + ' ' + u], ['Egységár', ft(pr)]], letrehozva: t ? t.letrehozva : '' };
-      upsertTetel(tt); closeModal(); render();
+      const k = $('#es', m).value;
+      const n = $('#en', m).value.trim() || (k !== '_egyeb' ? mat(k).n : ''); if (!n) { $('#en', m).focus(); return; }
+      const q = Number(parseNum($('#eq', m).value)) || 0;
+      let mats, out;
+      if (k === '_egyeb') { const u = $('#eu', m).value.trim(), pr = priceVal($('#ep', m)); mats = [{ k: '_egyeb', n, q, u, p: pr }]; out = [['Mennyiség', fmt(q) + ' ' + u], ['Egységár', ft(pr)]]; }
+      else { mats = [{ k, q }]; out = [['Mennyiség', fmt(q) + ' ' + mat(k).u]]; }
+      upsertTetel({ id: t ? t.id : uid('T'), projektId: pid, calc: 'egyeb', nev: n, values: {}, mats, out, letrehozva: t ? t.letrehozva : '' });
+      closeModal(); render();
     };
     if (t) $('#edel', m).onclick = () => { if (confirm('Törlöd ezt a tételt?')) { deleteTetel(t.id); closeModal(); render(); } };
   });
@@ -479,40 +507,75 @@ async function shareList(p, agg) {
 
 /* ----- Árlista ----- */
 function renderAr() {
-  setHeader('Árlista', Object.keys(MATERIALS).length + ' anyag');
+  const keys0 = allMatKeys();
+  setHeader('Árlista', keys0.length + ' anyag');
   const q = S.arKeres.toLowerCase();
-  const keys = Object.keys(MATERIALS).filter(k => !q || (mat(k).n + ' ' + mat(k).g).toLowerCase().includes(q));
-  let h = '<div class="banner">ℹ️ Az induló árak csak minták. Koppints egy anyagra, és írd át a saját beszerzési áradra.</div>';
+  const keys = keys0.filter(k => !q || (mat(k).n + ' ' + mat(k).g).toLowerCase().includes(q));
+  let h = '<div class="banner">ℹ️ Az induló árak csak minták. Koppints egy anyagra, és írd át a saját áradra. Ami hiányzik, a csoportoknál a „+ Új” gombbal veheted fel.</div>';
   h += '<input class="search" id="ak" placeholder="Anyag keresése…" value="' + esc(S.arKeres) + '">';
-  const groups = [...new Set(keys.map(k => mat(k).g))];
+  const groups = q ? [...new Set(keys.map(k => mat(k).g))] : allGroups();
   for (const g of groups) {
-    h += '<h2>' + esc(g) + '</h2><div class="card list">' + keys.filter(k => mat(k).g === g).map(k => {
+    const gk = keys.filter(k => mat(k).g === g);
+    h += '<div class="ghdr"><h2>' + esc(g) + '</h2><button class="btn sm" data-ujg="' + esc(g) + '">+ Új</button></div><div class="card list">' + (gk.length ? gk.map(k => {
       const P = mat(k); const unitTxt = P.pack > 0 ? '/ ' + P.pn : '/ ' + P.u;
-      return '<div class="it" data-k="' + k + '"><div class="m"><b>' + esc(P.n) + '</b><small>' + esc(P.pack > 0 ? P.pn + ' · alapegység: ' + P.u : 'egységár: Ft/' + P.u) + (P.megj ? ' · ' + esc(P.megj) : '') + '</small></div><div class="v' + (P.p ? '' : ' noprice') + '">' + (P.p ? ft(P.p) : 'nincs ár') + '<small>' + esc(unitTxt) + '</small></div></div>';
-    }).join('') + '</div>';
+      return '<div class="it" data-k="' + k + '"><div class="m"><b>' + esc(P.n) + (isEgyedi(k) ? '<span class="pill">saját</span>' : '') + '</b><small>' + esc(P.pack > 0 ? P.pn + ' · alapegység: ' + P.u : 'egységár: Ft/' + P.u) + (P.megj ? ' · ' + esc(P.megj) : '') + '</small></div><div class="v' + (P.p ? '' : ' noprice') + '">' + (P.p ? ft(P.p) : 'nincs ár') + '<small>' + esc(unitTxt) + '</small></div></div>';
+    }).join('') : '<div class="muted small" style="padding:8px 2px">Nincs anyag.</div>') + '</div>';
   }
   if (!keys.length) h += '<div class="empty">Nincs találat.</div>';
+  h += '<div class="btns" style="margin-top:14px"><button class="btn wide" id="ujcsop">+ Új anyag új csoportba</button></div>';
   $('#view').innerHTML = h;
   const ak = $('#ak'); ak.oninput = () => { S.arKeres = ak.value; const pos = ak.selectionStart; renderAr(); const n = $('#ak'); n.focus(); n.setSelectionRange(pos, pos); };
   document.querySelectorAll('[data-k]').forEach(el => el.onclick = () => arDialog(el.dataset.k));
+  document.querySelectorAll('[data-ujg]').forEach(el => el.onclick = () => arDialog(null, el.dataset.ujg));
+  $('#ujcsop').onclick = () => arDialog(null, '');
 }
-function arDialog(k) {
-  const P = mat(k), D = MATERIALS[k];
-  const h = '<h3>' + esc(P.n) + '</h3>' +
-    '<div class="fld"><label>Megnevezés</label><input id="an" value="' + esc(P.n) + '"></div>' +
+function arDialog(k, ujCsoport) {
+  const uj = !k; const egyedi = uj || isEgyedi(k);
+  const P = uj ? { n: '', g: ujCsoport, u: 'db', pack: 0, pn: '', p: 0, megj: '' } : mat(k);
+  const D = !uj && MATERIALS[k];
+  const csoportok = allGroups();
+  const ujCs = egyedi && !P.g;
+  const h = '<h3>' + (uj ? 'Új anyag' : esc(P.n)) + '</h3>' +
+    '<div class="fld"><label>Megnevezés</label><input id="an" value="' + esc(P.n) + '" placeholder="pl. Csempeszegély alumínium"></div>' +
+    (egyedi ? '<div class="fld"><label>Csoport</label><select id="ag">' + csoportok.map(g => '<option' + (g === P.g ? ' selected' : '') + '>' + esc(g) + '</option>').join('') + '<option value="_uj"' + (ujCs ? ' selected' : '') + '>+ Új csoport…</option></select></div>' +
+      '<div class="fld" id="agw"' + (ujCs ? '' : ' hidden') + '><label>Új csoport neve</label><input id="agn" placeholder="pl. Villanyszerelés"></div>' +
+      '<div class="fld"><label>Alapegység (ebben adod meg a mennyiséget)</label><input id="au" value="' + esc(P.u) + '" list="aegys"><datalist id="aegys"><option>db</option><option>kg</option><option>l</option><option>m²</option><option>fm</option><option>m³</option><option>t</option><option>szál</option><option>tekercs</option></datalist></div>' : '') +
     '<div class="row2"><div class="fld"><label>Kiszerelés neve</label><input id="apn" value="' + esc(P.pn) + '" placeholder="pl. zsák (25 kg)"></div>' +
-    '<div class="fld"><label>Kiszerelés (' + esc(P.u) + ')</label><input id="apk" inputmode="decimal" value="' + esc(numStr(P.pack)) + '"></div></div>' +
-    '<div class="small muted" style="margin:-4px 0 10px">Hány ' + esc(P.u) + ' van egy kiszerelésben. 0 = nincs kerekítés, ekkor az ár ' + esc(P.u) + '-re értendő.</div>' +
-    '<div class="fld"><label id="apl">Ár (Ft / ' + esc(P.pack > 0 ? 'kiszerelés' : P.u) + ')</label><input id="ap" inputmode="numeric" value="' + (P.p ? dotted(Math.round(P.p)) : '') + '"></div>' +
+    '<div class="fld"><label id="apkl">Kiszerelés (' + esc(P.u) + ')</label><input id="apk" inputmode="decimal" value="' + esc(numStr(P.pack)) + '"></div></div>' +
+    '<div class="small muted" id="apinfo" style="margin:-4px 0 10px"></div>' +
+    '<div class="fld"><label id="apl"></label><input id="ap" inputmode="numeric" value="' + (P.p ? dotted(Math.round(P.p)) : '') + '"></div>' +
     '<div class="fld"><label>Megjegyzés (pl. bolt, márka)</label><input id="am" value="' + esc(P.megj || '') + '"></div>' +
     '<div class="btns"><button class="btn pri wide" id="aok">Mentés</button><button class="btn" id="ax">Mégse</button></div>' +
-    '<div class="btns"><button class="btn sm" id="ad">Minta érték visszaállítása (' + ft(D.p) + ')</button></div>';
+    (D ? '<div class="btns"><button class="btn sm" id="ad">Minta érték visszaállítása (' + ft(D.p) + ')</button></div>' : '') +
+    (!uj && egyedi ? '<div class="btns"><button class="btn danger" id="adel">Anyag törlése</button></div>' : '');
   openModal(h, m => {
     priceInput($('#ap', m));
-    $('#apk', m).oninput = () => { $('#apl', m).textContent = 'Ár (Ft / ' + ((Number(parseNum($('#apk', m).value)) || 0) > 0 ? 'kiszerelés' : P.u) + ')'; };
+    const egys = () => egyedi ? ($('#au', m).value.trim() || 'db') : P.u;
+    const frissit = () => {
+      const u = egys(), pk = Number(parseNum($('#apk', m).value)) || 0;
+      $('#apkl', m).textContent = 'Kiszerelés (' + u + ')';
+      $('#apinfo', m).textContent = 'Hány ' + u + ' van egy kiszerelésben. 0 = nincs kerekítés, ekkor az ár ' + u + '-re értendő.';
+      $('#apl', m).textContent = 'Ár (Ft / ' + (pk > 0 ? 'kiszerelés' : u) + ')';
+    };
+    frissit(); $('#apk', m).oninput = frissit;
+    if (egyedi) { $('#au', m).oninput = frissit; $('#ag', m).onchange = () => { $('#agw', m).hidden = $('#ag', m).value !== '_uj'; }; }
     $('#ax', m).onclick = closeModal;
-    $('#aok', m).onclick = () => { saveAr(k, { n: $('#an', m).value.trim() || D.n, pn: $('#apn', m).value.trim(), pack: Number(parseNum($('#apk', m).value)) || 0, p: priceVal($('#ap', m)), megj: $('#am', m).value.trim() }); closeModal(); render(); toast('Ár mentve'); };
-    $('#ad', m).onclick = () => { saveAr(k, { n: D.n, pn: D.pn, pack: D.pack, p: D.p, megj: '' }); closeModal(); render(); };
+    $('#aok', m).onclick = () => {
+      const n = $('#an', m).value.trim(); if (!n && egyedi) { $('#an', m).focus(); return; }
+      const o = { n: n || D.n, pn: $('#apn', m).value.trim(), pack: Number(parseNum($('#apk', m).value)) || 0, p: priceVal($('#ap', m)), megj: $('#am', m).value.trim() };
+      if (egyedi) {
+        let g = $('#ag', m).value;
+        if (g === '_uj') { g = $('#agn', m).value.trim(); if (!g) { $('#agn', m).focus(); return; } }
+        o.g = g; o.u = egys();
+      }
+      saveAr(k || uid('egyedi_'), o); closeModal(); render(); toast(uj ? 'Anyag hozzáadva' : 'Mentve');
+    };
+    if (D) $('#ad', m).onclick = () => { saveAr(k, { n: D.n, pn: D.pn, pack: D.pack, p: D.p, megj: '' }); closeModal(); render(); };
+    if (!uj && egyedi) $('#adel', m).onclick = () => {
+      const n = S.data.tetelek.filter(t => (t.mats || []).some(x => x.k === k)).length;
+      if (!confirm('Törlöd a(z) „' + P.n + '” anyagot?' + (n ? ' ' + n + ' tétel használja – ott ár nélkül marad.' : ''))) return;
+      deleteAr(k); closeModal(); render(); toast('Anyag törölve');
+    };
   });
 }
 
@@ -527,7 +590,7 @@ function renderTobb() {
   h += '<h2>Megjelenés</h2><div class="card"><div class="kv"><span>Téma</span><b>' + (document.documentElement.classList.contains('dark') ? 'Sötét' : 'Világos') + ' – a fejléc ' + (document.documentElement.classList.contains('dark') ? '☀️' : '🌙') + ' gombjával váltasz</b></div></div>';
   if (!LOCAL) h += '<h2>Belépés</h2><div class="btns"><button class="btn danger" id="kilep">Kilépés (kód törlése erről az eszközről)</button></div>';
   h += '<h2>Eszköz</h2><div class="btns"><button class="btn danger" id="cache">Helyi adatok törlése</button></div>';
-  h += '<h2>Névjegy</h2><div class="card small"><b>' + esc(CONFIG.APP_NAME) + ' ' + APP_VERSION + '</b><br><span class="muted">' + CALCS.length + ' kalkulátor, ' + Object.keys(MATERIALS).length + ' anyag. A számítások átlagos anyagszükségleti értékekkel dolgoznak, tájékoztató jellegűek – vásárlás előtt mindig nézd meg a gyártó terméklapját.</span></div>';
+  h += '<h2>Névjegy</h2><div class="card small"><b>' + esc(CONFIG.APP_NAME) + ' ' + APP_VERSION + '</b><br><span class="muted">' + CALCS.length + ' kalkulátor, ' + allMatKeys().length + ' anyag. A számítások átlagos anyagszükségleti értékekkel dolgoznak, tájékoztató jellegűek – vásárlás előtt mindig nézd meg a gyártó terméklapját.</span></div>';
   $('#view').innerHTML = h;
   if (!LOCAL) {
     $('#sync').onclick = () => load(true).then(() => toast(S.lastErr ? S.lastErr : 'Szinkron kész'));
