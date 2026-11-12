@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Építőkalkulátor</title>
+<meta name="theme-color" content="#16325c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Építőkalk">
+<link rel="stylesheet" href="style.css?v=0.1">
+<script>try{if(localStorage.getItem('ek_tema')==='sotet')document.documentElement.classList.add('dark')}catch(e){}</script>
+</head>
+<body>
+<header class="top">
+  <button class="iconbtn" id="btnBack" aria-label="Vissza" hidden>‹</button>
+  <div class="title"><span id="hdrTitle">Építőkalkulátor</span><small id="hdrSub"></small></div>
+  <button class="sync" id="btnSync" title="Szinkron állapot"></button>
+  <button class="iconbtn" id="btnTheme" aria-label="Téma váltása"></button>
+</header>
+
+<main id="view"></main>
+
+<nav class="bottom">
+  <button data-tab="kalk"><span>🧮</span>Kalkulátor</button>
+  <button data-tab="proj"><span>📁</span>Projektek</button>
+  <button data-tab="ar"><span>🏷️</span>Árlista</button>
+  <button data-tab="tobb"><span>⚙️</span>Több</button>
+</nav>
+
+<div class="modal" id="modal" hidden><div class="sheet" id="modalBody"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="config.js?v=0.1"></script>
+<script src="calc.js?v=0.1"></script>
+<script src="app.js?v=0.1"></script>
+</body>
+</html>
