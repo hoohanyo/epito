@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '0.2';
+const APP_VERSION = '0.3';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -23,7 +23,7 @@ const S = {
   data: LS.get('ek_cache', { projektek: [], tetelek: [], arlista: {} }),
   queue: LS.get('ek_queue', []),
   kod: LS.get('ek_kod', ''),
-  syncing: false, lastErr: '', loaded: false,
+  syncing: false, lastErr: '', loaded: false, kodBeallitas: false,
   calc: null, targetProj: null, projFilter: 'Aktív', kalkKeres: '', arKeres: '',
 };
 if (!S.data.arlista) S.data.arlista = {};
@@ -98,6 +98,7 @@ async function load(force) {
   try {
     S.syncing = true; updateSync();
     const j = await api('load');
+    if (j.alapkod) { S.kodBeallitas = true; return; }
     const arl = {};
     for (const r of (j.arlista || [])) arl[r.kulcs] = { n: r.anyag, g: r.csoport, u: r.egyseg, pack: r.kiszereles, pn: r.kiszNev, p: r.ar, megj: r.megj };
     S.data = { projektek: j.projektek || [], tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl };
@@ -171,7 +172,7 @@ window.addEventListener('offline', updateSync);
 function updateSync() {
   const b = $('#btnSync');
   if (LOCAL) { b.textContent = '📱 Helyi'; b.title = 'Helyi mód – az adatok csak ezen az eszközön vannak'; return; }
-  if (!S.kod) { b.textContent = ''; b.hidden = true; return; }
+  if (!S.kod || S.kodBeallitas) { b.textContent = ''; b.hidden = true; return; }
   b.hidden = false;
   if (S.syncing) b.textContent = '⟳ Szinkron…';
   else if (S.queue.length) b.textContent = '⏳ ' + S.queue.length + ' várakozik';
@@ -210,6 +211,7 @@ function render() {
   themeIcon(); updateSync();
   const nav = $('nav.bottom');
   if (!LOCAL && !S.kod) { nav.hidden = true; return renderLogin(); }
+  if (!LOCAL && S.kodBeallitas) { nav.hidden = true; return renderKodBeallit(); }
   nav.hidden = false;
   const r = S.stack[S.stack.length - 1];
   ({ kalk: renderKalk, calc: renderCalc, proj: renderProj, projekt: renderProjekt, ar: renderAr, tobb: renderTobb }[r.v] || renderKalk)(r);
@@ -218,16 +220,43 @@ function render() {
 function renderLogin() {
   setHeader(CONFIG.APP_NAME, 'Belépés');
   $('#btnBack').hidden = true;
-  $('#view').innerHTML = '<div class="card" style="margin-top:30px"><h3 style="margin-top:0">Belépés</h3><p class="muted small">Add meg a kódot, amit a Code.gs-ben beállítottál (APP_KOD).</p>' +
+  $('#view').innerHTML = '<div class="card" style="margin-top:30px"><h3 style="margin-top:0">Belépés</h3><p class="muted small">Add meg a kódodat. Első belépéskor az alapkódot – utána kérni fogja a végleges kódot, amit az app megjegyez.</p>' +
     '<div class="fld"><input id="kod" type="password" autocomplete="current-password" placeholder="Kód"></div><button class="btn pri wide" id="belep" style="width:100%">Belépés</button><div id="lerr" class="small" style="color:var(--err);margin-top:8px"></div></div>';
   const go_ = async () => {
     const k = $('#kod').value.trim(); if (!k) return;
     $('#belep').disabled = true; $('#lerr').textContent = '';
     S.kod = k;
-    try { await api('ping'); LS.set('ek_kod', k); render(); load(true); }
+    try {
+      const j = await api('ping');
+      if (j.alapkod) { S.kodBeallitas = true; render(); return; }
+      LS.set('ek_kod', k); render(); load(true);
+    }
     catch (e) { S.kod = ''; $('#lerr').textContent = e.server ? (e.auth ? 'Hibás kód.' : e.message) : 'Nem érem el a szervert. Ellenőrizd a netet és a config.js-ben az API_URL-t.'; $('#belep').disabled = false; }
   };
   $('#belep').onclick = go_; $('#kod').onkeydown = e => { if (e.key === 'Enter') go_(); };
+}
+
+function kodUrlap(pre) {
+  return '<div class="fld"><label>Új kód (legalább 4 karakter)</label><input id="' + pre + '1" type="password" autocomplete="new-password"></div>' +
+    '<div class="fld"><label>Új kód még egyszer</label><input id="' + pre + '2" type="password" autocomplete="new-password"></div>';
+}
+async function kodMentes(pre, root, gomb, hiba) {
+  const a = $('#' + pre + '1', root).value.trim(), b = $('#' + pre + '2', root).value.trim();
+  hiba.textContent = '';
+  if (a.length < 4) { hiba.textContent = 'Legalább 4 karakter legyen.'; return false; }
+  if (a !== b) { hiba.textContent = 'A két kód nem egyezik.'; return false; }
+  gomb.disabled = true;
+  try { await api('setKod', { uj: a }); S.kod = a; LS.set('ek_kod', a); return true; }
+  catch (e) { hiba.textContent = e.server ? e.message : 'Nincs kapcsolat a szerverrel – próbáld újra.'; gomb.disabled = false; return false; }
+}
+function renderKodBeallit() {
+  setHeader(CONFIG.APP_NAME, 'Végleges kód beállítása');
+  $('#btnBack').hidden = true;
+  $('#view').innerHTML = '<div class="card" style="margin-top:30px"><h3 style="margin-top:0">Végleges kód</h3><p class="muted small">Az alapkóddal léptél be. Most adj meg egy saját kódot – ettől kezdve csak ezzel lehet belépni, az alapkód megszűnik. Ezen az eszközön az app megjegyzi, nem kell újra beírnod.</p>' +
+    kodUrlap('vk') + '<button class="btn pri" id="vkok" style="width:100%">Kód mentése</button><div id="vkerr" class="small" style="color:var(--err);margin-top:8px"></div></div>';
+  $('#vkok').onclick = async () => {
+    if (await kodMentes('vk', document, $('#vkok'), $('#vkerr'))) { S.kodBeallitas = false; toast('Kód beállítva'); render(); load(true); }
+  };
 }
 
 /* ----- Kalkulátor lista ----- */
@@ -588,13 +617,18 @@ function renderTobb() {
   h += '<div class="kv"><span>Projektek / tételek</span><b>' + S.data.projektek.length + ' / ' + S.data.tetelek.length + '</b></div></div>';
   h += '<div class="btns">' + (LOCAL ? '' : '<button class="btn wide" id="sync">⟳ Szinkron most</button><button class="btn wide" id="xall">⬇️ Teljes Excel</button>') + '</div>';
   h += '<h2>Megjelenés</h2><div class="card"><div class="kv"><span>Téma</span><b>' + (document.documentElement.classList.contains('dark') ? 'Sötét' : 'Világos') + ' – a fejléc ' + (document.documentElement.classList.contains('dark') ? '☀️' : '🌙') + ' gombjával váltasz</b></div></div>';
-  if (!LOCAL) h += '<h2>Belépés</h2><div class="btns"><button class="btn danger" id="kilep">Kilépés (kód törlése erről az eszközről)</button></div>';
+  if (!LOCAL) h += '<h2>Belépés</h2><div class="btns"><button class="btn wide" id="kodmod">🔑 Kód módosítása</button></div><div class="btns"><button class="btn danger" id="kilep">Kilépés (kód törlése erről az eszközről)</button></div>';
   h += '<h2>Eszköz</h2><div class="btns"><button class="btn danger" id="cache">Helyi adatok törlése</button></div>';
   h += '<h2>Névjegy</h2><div class="card small"><b>' + esc(CONFIG.APP_NAME) + ' ' + APP_VERSION + '</b><br><span class="muted">' + CALCS.length + ' kalkulátor, ' + allMatKeys().length + ' anyag. A számítások átlagos anyagszükségleti értékekkel dolgoznak, tájékoztató jellegűek – vásárlás előtt mindig nézd meg a gyártó terméklapját.</span></div>';
   $('#view').innerHTML = h;
   if (!LOCAL) {
     $('#sync').onclick = () => load(true).then(() => toast(S.lastErr ? S.lastErr : 'Szinkron kész'));
     $('#xall').onclick = exportAll;
+    $('#kodmod').onclick = () => openModal('<h3>Kód módosítása</h3><p class="muted small">Az új kód minden eszközön érvényes lesz; a többi eszközön újra be kell majd lépni vele.</p>' + kodUrlap('km') +
+      '<div id="kmerr" class="small" style="color:var(--err);margin-bottom:8px"></div><div class="btns"><button class="btn pri wide" id="kmok">Mentés</button><button class="btn" id="kmx">Mégse</button></div>', m => {
+      $('#kmx', m).onclick = closeModal;
+      $('#kmok', m).onclick = async () => { if (await kodMentes('km', m, $('#kmok', m), $('#kmerr', m))) { closeModal(); toast('Új kód elmentve'); } };
+    });
     $('#kilep').onclick = () => { if (confirm('Kilépsz? Az el nem küldött módosítások elvesznek.')) { S.queue = []; saveQueue(); logout(); } };
   }
   $('#cache').onclick = () => {
