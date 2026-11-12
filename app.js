@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '0.3';
+const APP_VERSION = '0.4';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -271,7 +271,7 @@ function renderKalk() {
   for (const [gid, gn] of GROUPS) {
     const cs = CALCS.filter(c => c.g === gid && (!q || (c.n + ' ' + c.desc).toLowerCase().includes(q)));
     if (!cs.length) continue;
-    h += '<h2>' + esc(gn) + '</h2><div class="grid">' + cs.map(c => '<button class="tile" data-c="' + c.id + '"><span class="ic">' + c.i + '</span><b>' + esc(c.n) + '</b></button>').join('') + '</div>';
+    h += '<h2>' + esc(gn) + '</h2><div class="grid">' + cs.map(c => '<button class="tile g-' + c.g + '" data-c="' + c.id + '"><span class="ic">' + c.i + '</span><b>' + esc(c.n) + '</b></button>').join('') + '</div>';
   }
   if (q && !CALCS.some(c => (c.n + ' ' + c.desc).toLowerCase().includes(q))) h += '<div class="empty">Nincs ilyen kalkulátor.</div>';
   $('#view').innerHTML = h;
@@ -414,7 +414,7 @@ function renderProjekt(r) {
   const ts = S.data.tetelek.filter(t => t.projektId === p.id).sort((a, b) => String(a.letrehozva || '').localeCompare(String(b.letrehozva || '')));
   const agg = aggregate(ts);
   setHeader(p.nev, [p.hely, p.allapot === 'Lezárt' ? 'lezárt' : ''].filter(Boolean).join(' · '));
-  let h = '<div class="card"><div class="total"><span>Becsült anyagköltség</span><b>' + ft(sumCost(agg)) + '</b></div>' +
+  let h = '<div class="card hero"><div class="total"><span>Becsült anyagköltség</span><b>' + ft(sumCost(agg)) + '</b></div>' +
     (p.megj ? '<div class="small muted" style="margin-top:6px;white-space:pre-wrap">' + esc(p.megj) + '</div>' : '') +
     '<div class="btns" style="margin-bottom:0;margin-top:10px"><button class="btn sm" id="pedit">✏️ Adatok</button><button class="btn sm" id="pxls">⬇️ Excel</button><button class="btn sm" id="pshare">🛒 Bevásárlólista</button></div></div>';
   h += '<div class="btns"><button class="btn pri wide" id="addk">+ Kalkuláció</button><button class="btn wide" id="adde">+ Egyéb tétel</button></div>';
@@ -424,7 +424,7 @@ function renderProjekt(r) {
     const c = CALC_BY_ID[t.calc]; const cost = sumCost((t.mats || []).map(line));
     const m0 = t.mats && t.mats[0];
     const sub = t.calc === 'egyeb' ? (!m0 ? '' : m0.k === '_egyeb' ? fmt(m0.q) + ' ' + (m0.u || '') + ' × ' + ft(m0.p) : (line(m0).ptxt || line(m0).qtxt) + ' · árlistából') : (c ? c.n : t.calc) + (t.out && t.out[0] ? ' · ' + t.out[0][1] : '');
-    return '<div class="it" data-t="' + t.id + '"><span class="ic" style="font-size:20px">' + (c ? c.i : '➕') + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc(sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
+    return '<div class="it" data-t="' + t.id + '"><span class="ic">' + (c ? c.i : '➕') + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc(sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
   }).join('') + '</div>';
   if (agg.length) h += '<h2>Összesített anyaglista</h2><div class="card">' + matsTable(agg) + '<div class="small muted" style="margin-top:6px">Azonos anyagok összevonva; a kiszerelésre kerekítés az összegből történik, ezért kevesebb lehet, mint a tételek összege.</div></div>';
   $('#view').innerHTML = h;
