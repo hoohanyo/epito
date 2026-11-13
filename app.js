@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '0.8';
+const APP_VERSION = '0.9';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -113,7 +113,7 @@ async function load(force) {
     const arl = {};
     for (const r of (j.arlista || [])) arl[r.kulcs] = { n: r.anyag, g: r.csoport, u: r.egyseg, pack: r.kiszereles, pn: r.kiszNev, p: r.ar, megj: r.megj };
     const be = j.beallitas || {};
-    S.data = { ceg: safeJson(be.ceg, {}), logo: be.logo || '', projektek: (j.projektek || []).map(p => Object.assign(p, { aj: safeJson(p.aj, {}) })), tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl };
+    S.data = { ceg: safeJson(be.ceg, {}), logo: be.logo || '', sablonok: safeJson(be.sablonok, []), projektek: (j.projektek || []).map(p => Object.assign(p, { aj: safeJson(p.aj, {}), helyisegek: safeJson(p.helyisegek, []), fotok: safeJson(p.fotok, []) })), tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl };
     saveCache(); S.lastErr = ''; S.loaded = true;
     const hianyzo = Object.keys(MATERIALS).filter(k => !arl[k]);
     if (hianyzo.length) enqueue('saveArak', { items: hianyzo.map(k => arRow(k, MATERIALS[k])) });
@@ -132,7 +132,7 @@ function upsertProjekt(p) {
   p.modositva = now(); if (!p.letrehozva) p.letrehozva = p.modositva;
   const i = S.data.projektek.findIndex(x => x.id === p.id);
   if (i >= 0) S.data.projektek[i] = p; else S.data.projektek.unshift(p);
-  saveCache(); enqueue('saveProjekt', { p: Object.assign({}, p, { aj: JSON.stringify(p.aj || {}), ajAllapot: (p.aj && p.aj.allapot) || '' }) });
+  saveCache(); enqueue('saveProjekt', { p: Object.assign({}, p, { aj: JSON.stringify(p.aj || {}), ajAllapot: (p.aj && p.aj.allapot) || '', helyisegek: JSON.stringify(p.helyisegek || []), fotok: JSON.stringify(p.fotok || []) }) });
 }
 function deleteProjekt(id) {
   S.data.projektek = S.data.projektek.filter(p => p.id !== id);
@@ -324,7 +324,7 @@ function renderCalc() {
 }
 function renderForm() {
   const st = S.calc, c = CALC_BY_ID[st.id], v = st.v;
-  let h = '';
+  let h = roomPickerHtml(c, v);
   for (const f of c.fields) {
     if (f.show && !f.show(v)) continue;
     const help = f.help ? '<span class="help">' + esc(f.help) + '</span>' : '';
@@ -344,8 +344,9 @@ function renderForm() {
   }));
   form.querySelectorAll('input[data-ny]').forEach(el => el.addEventListener('change', () => { if (el.dataset.relist) renderForm(); }));
   form.querySelectorAll('[data-nyh]').forEach(b => b.onclick = () => openNyilas(b.dataset.nyh));
+  bindRoomPicker(c, v);
   form.querySelectorAll('input[inputmode]').forEach(el => el.addEventListener('focus', () => el.select()));
-  form.querySelectorAll('select').forEach(el => el.onchange = () => { v[el.dataset.id] = el.value; if (el.dataset.id === 'mj') LS.set('ek_mj', el.value); remember(); renderForm(); renderRes(); });
+  form.querySelectorAll('select:not(#f__room)').forEach(el => el.onchange = () => { v[el.dataset.id] = el.value; if (el.dataset.id === 'mj') LS.set('ek_mj', el.value); remember(); renderForm(); renderRes(); });
   form.querySelectorAll('input[type=checkbox]').forEach(el => el.onchange = () => { v[el.dataset.id] = el.checked; remember(); renderForm(); renderRes(); });
 }
 function nySummary(v) {
@@ -354,42 +355,11 @@ function nySummary(v) {
 }
 function openNyilas(fid) {
   const v = S.calc.v;
-  let rows = (v.nyl && v.nyl.length ? v.nyl : [{ t: 'ablak', sz: 120, m: 150, db: 1 }]).map(r => Object.assign({}, r));
-  const typeOpts = (t) => NY_TYPES.map(x => '<option value="' + x[0] + '"' + (x[0] === t ? ' selected' : '') + '>' + x[1] + '</option>').join('');
-  const draw = (m) => {
-    $('#nyrows', m).innerHTML = rows.map((r, i) => '<div class="nyrow" data-i="' + i + '"><select data-k="t">' + typeOpts(r.t) + '</select>' +
-      ['sz', 'm', 'db'].map(k => '<input data-k="' + k + '" inputmode="decimal" value="' + esc(numStr(r[k])) + '">').join('') + '<button class="nydel" title="Törlés">✕</button></div>').join('') ||
-      '<div class="muted small" style="padding:8px 0">Nincs nyílás a listában.</div>';
-    $('#nyrows', m).querySelectorAll('.nyrow').forEach(row => {
-      const r = rows[row.dataset.i];
-      row.querySelector('select').onchange = (e) => { const ty = NY_TYPES.find(x => x[0] === e.target.value); r.t = ty[0]; r.sz = ty[2]; r.m = ty[3]; draw(m); };
-      row.querySelectorAll('input').forEach(inp => inp.oninput = () => { r[inp.dataset.k] = parseNum(inp.value); sum(m); });
-      row.querySelectorAll('input').forEach(inp => inp.onfocus = () => inp.select());
-      row.querySelector('.nydel').onclick = () => { rows.splice(row.dataset.i, 1); draw(m); };
-    });
-    sum(m);
-  };
-  const sum = (m) => {
+  openNyEditor(v.nyl, (rows) => {
     const st = nyStats({ nyl: rows });
-    $('#nysum', m).innerHTML = '<b>' + fmt(st.m2, 2) + ' m²</b> levonás · ' + st.n + ' db · kerület ' + fmt(st.ker, 1) + ' m' + (st.ajtoDb ? ' · ebből ' + st.ajtoDb + ' ajtó (' + fmt(st.ajtoSz, 2) + ' m)' : '');
-  };
-  const h = '<h3>Nyílások</h3><p class="small muted" style="margin-top:-6px">Méretek cm-ben (falnyílás / tokméret). A típus kiválasztásakor jellemző méretet ad, amit átírhatsz.</p>' +
-    '<div class="nyrow nyhead"><span>Típus</span><span>Szél.</span><span>Mag.</span><span>db</span><span></span></div><div id="nyrows"></div>' +
-    '<div class="btns"><button class="btn sm" id="nyab">+ Ablak</button><button class="btn sm" id="nyaj">+ Ajtó</button><button class="btn sm" id="nyeg">+ Egyéb</button></div>' +
-    '<div class="card" id="nysum" style="font-size:14px"></div>' +
-    '<div class="btns"><button class="btn pri wide" id="nyok">Átvétel</button><button class="btn" id="nyx">Mégse</button></div>';
-  openModal(h, m => {
-    const add = (t) => { const ty = NY_TYPES.find(x => x[0] === t); rows.push({ t, sz: ty[2], m: ty[3], db: 1 }); draw(m); };
-    $('#nyab', m).onclick = () => add('ablak'); $('#nyaj', m).onclick = () => add('ajto'); $('#nyeg', m).onclick = () => add('egyeb');
-    $('#nyx', m).onclick = closeModal;
-    $('#nyok', m).onclick = () => {
-      rows = rows.filter(r => nz(r.sz) > 0 && nz(r.m) > 0 && nz(r.db) > 0);
-      const st = nyStats({ nyl: rows });
-      const fdef = CALC_BY_ID[S.calc.id].fields.find(f => f.id === fid);
-      v.nyl = rows; v[fid] = Math.round((fdef && fdef.nyHelp === 'ajto' ? st.ajtoSz : st.m2) * 100) / 100;
-      remember(); closeModal(); renderForm(); renderRes();
-    };
-    draw(m);
+    const fdef = CALC_BY_ID[S.calc.id].fields.find(f => f.id === fid);
+    v.nyl = rows; v[fid] = Math.round((fdef && fdef.nyHelp === 'ajto' ? st.ajtoSz : st.m2) * 100) / 100;
+    remember(); renderForm(); renderMunka(); renderRes();
   });
 }
 function remember() { if (S.calc && !S.calc.tetelId) LS.set('ek_utolso_' + S.calc.id, S.calc.v); }
@@ -463,7 +433,9 @@ function saveDialog(asNew) {
         const p = { id: uid('P'), nev: n, hely: '', megj: '', allapot: 'Aktív' }; upsertProjekt(p); pid = p.id;
       }
       const r = fullResult(c, st.v);
-      const t = { id: st.tetelId && !asNew ? st.tetelId : uid('T'), projektId: pid, calc: c.id, nev: $('#mn', m).value.trim() || c.n, values: Object.assign({}, st.v), mats: r.mats.map(x => ({ k: x.k, q: round3(x.q) })), out: r.out };
+      const pp = S.data.projektek.find(x => x.id === pid);
+      if (st.v._room && !roomById(pp, st.v._room)) delete st.v._room;
+      const t = { id: st.tetelId && !asNew ? st.tetelId : uid('T'), projektId: pid, calc: c.id, roomId: st.v._room || '', nev: $('#mn', m).value.trim() || c.n, values: Object.assign({}, st.v), mats: r.mats.map(x => ({ k: x.k, q: round3(x.q) })), out: r.out };
       const old = st.tetelId && !asNew && S.data.tetelek.find(x => x.id === st.tetelId);
       if (old) t.letrehozva = old.letrehozva;
       upsertTetel(t);
@@ -534,21 +506,35 @@ function renderProjekt(r) {
   let h = '<div class="card hero"><div class="total"><span>Becsült összköltség</span><b>' + ft(sumCost(agg)) + '</b></div>' +
     '<div class="small muted" style="margin-top:4px">Anyag ' + ft(sumCost(sc.anyag)) + ' · munkadíj ' + ft(sumCost(sc.munka)) + (sc.egyeb.length ? ' · egyéb ' + ft(sumCost(sc.egyeb)) : '') + ' <span style="opacity:.7">(nettó)</span></div>' +
     (p.megj ? '<div class="small muted" style="margin-top:6px;white-space:pre-wrap">' + esc(p.megj) + '</div>' : '') +
-    '<div class="btns" style="margin-bottom:0;margin-top:10px"><button class="btn sm" id="pedit">✏️ Adatok</button><button class="btn sm" id="pxls">⬇️ Excel</button><button class="btn sm" id="pshare">🛒 Bevásárlólista</button></div></div>';
+    '<div class="btns" style="margin-bottom:0;margin-top:10px"><button class="btn sm" id="pedit">✏️ Adatok</button><button class="btn sm" id="pxls">⬇️ Excel</button><button class="btn sm" id="pshare">🛒 Bevásárlólista</button><button class="btn sm" id="psab">📋 Mentés sablonként</button></div></div>';
   h += '<div class="btns"><button class="btn pri wide" id="paj">📄 Árajánlat készítése</button></div>';
-  h += '<div class="btns"><button class="btn sm wide" id="addk">+ Kalkuláció</button><button class="btn sm wide" id="addm">+ Munkadíj</button><button class="btn sm wide" id="adde">+ Egyéb</button></div>';
-  h += '<h2>Tételek</h2>';
-  if (!ts.length) h += '<div class="empty">Még nincs tétel. Adj hozzá egy kalkulációt, vagy egyéb tételt (pl. fuvar, szerszámbérlés).</div>';
-  else h += '<div class="card list">' + ts.map(t => {
+  const rooms = roomsOf(p);
+  h += '<div class="ghdr"><h2>Helyiségek, területek</h2><button class="btn sm" id="addh">+ Helyiség</button></div>';
+  if (!rooms.length) h += '<div class="empty small" style="padding:14px">Add meg a helyiségek méreteit egyszer – a kalkulátorok és a sablonok ebből számolnak, és módosításkor minden kapcsolt tétel frissül.</div>';
+  else h += '<div class="card list">' + rooms.map(r => { const n = ts.filter(t => tetelRoomId(t) === r.id).length; return '<div class="it" data-h="' + r.id + '"><span class="ic">🏠</span><div class="m"><b>' + esc(r.nev) + '</b><small>' + esc(roomSummary(r)) + (n ? ' · ' + n + ' tétel' : '') + '</small></div><span class="arrow">›</span></div>'; }).join('') + '</div>';
+  h += '<div class="ghdr"><h2>Tételek</h2><button class="btn sm" id="addsab">📋 Sablonból</button></div>';
+  h += '<div class="btns" style="margin-top:0"><button class="btn sm wide" id="addk">+ Kalkuláció</button><button class="btn sm wide" id="addm">+ Munkadíj</button><button class="btn sm wide" id="adde">+ Egyéb</button></div>';
+  const tetelItem = (t) => {
     const c = CALC_BY_ID[t.calc]; const cost = sumCost((t.mats || []).map(line));
     const m0 = t.mats && t.mats[0];
     const sub = t.calc === 'egyeb' ? (!m0 ? '' : m0.k === '_egyeb' ? fmt(m0.q) + ' ' + (m0.u || '') + ' × ' + ft(m0.p) : (line(m0).ptxt || line(m0).qtxt) + ' · árlistából') : (c ? c.n : t.calc) + (t.out && t.out[0] ? ' · ' + t.out[0][1] : '');
     return '<div class="it" data-t="' + t.id + '"><span class="ic">' + (c ? c.i : '➕') + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc(sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
-  }).join('') + '</div>';
+  };
+  if (!ts.length) h += '<div class="empty">Még nincs tétel. Adj hozzá kalkulációt, munkadíjat vagy egyéb tételt – vagy indíts sablonból (pl. fürdőszoba-felújítás).</div>';
+  else {
+    const csop = rooms.map(r => [r.nev, ts.filter(t => tetelRoomId(t) === r.id)]).concat([[rooms.length ? 'Általános' : '', ts.filter(t => !roomById(p, tetelRoomId(t)))]]).filter(g => g[1].length);
+    h += '<div class="card list">' + csop.map(g => (g[0] && csop.length > 1 ? '<div class="lgrp">' + esc(g[0]) + ' · ' + ft(sumCost(aggregate(g[1]))) + '</div>' : '') + g[1].map(tetelItem).join('')).join('') + '</div>';
+  }
   if (sc.anyag.length) h += '<h2>Összesített anyaglista</h2><div class="card">' + matsTable(sc.anyag) + '<div class="small muted" style="margin-top:6px">Azonos anyagok összevonva; a kiszerelésre kerekítés az összegből történik, ezért kevesebb lehet, mint a tételek összege.</div></div>';
   if (sc.munka.length) h += '<h2>Munkadíjak</h2><div class="card">' + matsTable(sc.munka) + '</div>';
   if (sc.egyeb.length) h += '<h2>Egyéb tételek</h2><div class="card">' + matsTable(sc.egyeb) + '</div>';
+  h += fotokHtml(p);
   $('#view').innerHTML = h;
+  bindFotok(p);
+  $('#addh').onclick = () => roomDialog(p, null);
+  document.querySelectorAll('[data-h]').forEach(el => el.onclick = () => roomDialog(p, roomById(p, el.dataset.h)));
+  $('#addsab').onclick = () => sablonDialog(p);
+  $('#psab').onclick = () => saveAsSablon(p);
   $('#pedit').onclick = () => projDialog(p);
   $('#pxls').onclick = () => exportProjekt(p);
   $('#pshare').onclick = () => shareList(p, sc.anyag);
@@ -566,9 +552,13 @@ function matOptions(sel) {
 }
 function egyebDialog(pid, t, pre) {
   const m0 = t && t.mats[0] || { k: pre || '_egyeb', n: '', q: 1, u: 'db', p: 0 };
+  const proj = S.data.projektek.find(x => x.id === pid); const rooms = roomsOf(proj);
+  const rqSel = t && t.rq && t.roomId ? t.roomId + '|' + t.rq : '';
+  const rqHtml = rooms.length ? '<div class="fld"><label>Mennyiség forrása</label><select id="erq"><option value="">Kézzel adom meg</option>' + rooms.map(r => '<optgroup label="' + esc(r.nev) + '">' + Object.keys(ROOM_Q).map(q => '<option value="' + r.id + '|' + q + '"' + (rqSel === r.id + '|' + q ? ' selected' : '') + '>' + esc(r.nev) + ': ' + ROOM_Q[q][0] + ' (' + fmt(ROOM_Q[q][1](r), 2) + ')</option>').join('') + '</optgroup>').join('') + '</select></div>' : '';
   const h = '<h3>' + (t ? 'Tétel' : pre ? 'Új munkadíj tétel' : 'Új egyéb tétel') + '</h3>' +
     '<div class="fld"><label>Forrás</label><select id="es"><option value="_egyeb"' + (m0.k === '_egyeb' ? ' selected' : '') + '>Kézi tétel (fuvar, bérlés, munkadíj…)</option>' + matOptions(m0.k) + '</select></div>' +
     '<div class="fld"><label>Megnevezés</label><input id="en" value="' + esc(t ? t.nev : '') + '" placeholder="pl. Fuvardíj, konténer, szerszámbérlés"></div>' +
+ rqHtml +
     '<div class="row2"><div class="fld"><label>Mennyiség</label><input id="eq" inputmode="decimal" value="' + esc(numStr(m0.q)) + '"></div><div class="fld" id="euw"><label>Egység</label><input id="eu" value="' + esc(m0.u || '') + '" list="egysegek"></div></div>' +
     '<datalist id="egysegek"><option>db</option><option>alkalom</option><option>óra</option><option>nap</option><option>m²</option><option>fm</option><option>m³</option><option>t</option><option>kg</option><option>l</option></datalist>' +
     '<div class="fld" id="ecw"><label>Jellege</label><select id="ec"><option value="egyeb"' + (m0.cat !== 'munka' ? ' selected' : '') + '>Egyéb (anyag, fuvar, bérlés…)</option><option value="munka"' + (m0.cat === 'munka' ? ' selected' : '') + '>Munkadíj</option></select></div>' +
@@ -591,6 +581,8 @@ function egyebDialog(pid, t, pre) {
       }
       elozo = k;
     };
+    const rqUpd = () => { const e = $('#erq', m); if (!e) return; const [rid, q] = e.value.split('|'); const r = roomById(proj, rid); $('#eq', m).readOnly = !!r; if (r) $('#eq', m).value = numStr(r2(ROOM_Q[q][1](r))); frissit(); };
+    if ($('#erq', m)) { $('#erq', m).onchange = rqUpd; rqUpd(); }
     $('#es', m).onchange = frissit; $('#eq', m).oninput = frissit; frissit();
     $('#ex', m).onclick = closeModal;
     $('#eok', m).onclick = () => {
@@ -600,7 +592,10 @@ function egyebDialog(pid, t, pre) {
       let mats, out;
       if (k === '_egyeb') { const u = $('#eu', m).value.trim(), pr = priceVal($('#ep', m)); mats = [{ k: '_egyeb', n, q, u, p: pr, cat: $('#ec', m).value }]; out = [['Mennyiség', fmt(q) + ' ' + u], ['Egységár', ft(pr)]]; }
       else { mats = [{ k, q }]; out = [['Mennyiség', fmt(q) + ' ' + mat(k).u]]; }
-      upsertTetel({ id: t ? t.id : uid('T'), projektId: pid, calc: 'egyeb', nev: n, values: {}, mats, out, letrehozva: t ? t.letrehozva : '' });
+      const [rid, rq] = ($('#erq', m) ? $('#erq', m).value : '').split('|');
+      const tt = { id: t ? t.id : uid('T'), projektId: pid, calc: 'egyeb', nev: n, values: {}, mats, out, letrehozva: t ? t.letrehozva : '', roomId: rid && rq ? rid : '', rq: rid && rq ? rq : '' };
+      if (tt.rq) applyRoomToTetel(tt, roomById(proj, rid));
+      upsertTetel(tt);
       closeModal(); render();
     };
     if (t) $('#edel', m).onclick = () => { if (confirm('Törlöd ezt a tételt?')) { deleteTetel(t.id); closeModal(); render(); } };

@@ -161,7 +161,7 @@ function renderAjanlat(r) {
 }
 
 /* ---------- Ajánlat dokumentum ---------- */
-function quoteHtml(p) {
+function quoteHtml(p, fotoSrc) {
   const aj = ajOf(p); const c = cegOf(); const Q = computeQuote(p, aj);
   const lines = (s) => String(s || '').split('\n').map(x => x.trim()).filter(Boolean);
   const ervIg = (() => { const d = new Date(aj.datum || Date.now()); d.setDate(d.getDate() + (Number(aj.erv) || 0)); return huDate(isoDay(d)); })();
@@ -211,6 +211,8 @@ function quoteHtml(p) {
     (lines(aj.nemtart).length ? '<div class="q-lbl" style="margin-top:14px">Az ajánlat nem tartalmazza</div><ul class="q-ul">' + lines(aj.nemtart).map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') + '</div>' +
     (lines(aj.vallalas).length ? '<div class="q-commit"><div class="q-lbl">Vállalásaink</div><ul class="q-check">' + lines(aj.vallalas).map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' : '<div></div>') + '</section>';
   if (aj.megj) h += '<section class="q-scope"><div class="q-lbl">Megjegyzés</div><p>' + esc(aj.megj).replace(/\n/g, '<br>') + '</p></section>';
+  const qf = (p.fotok || []).filter(f => f.aj && fotoSrc && fotoSrc[f.id]);
+  if (qf.length) h += '<section class="q-fotok"><div class="q-lbl">Fotók a helyszínről</div><div class="q-fgrid">' + qf.map(f => '<figure><img src="' + fotoSrc[f.id] + '" alt="">' + (f.cap ? '<figcaption>' + esc(f.cap) + '</figcaption>' : '') + '</figure>').join('') + '</div></section>';
   h += '<section class="q-close"><p>' + esc(c.zaras || AJ_DEF.zaras) + '</p></section>';
   // aláírás
   h += '<section class="q-sign"><div><div class="q-sigline"></div><div class="q-strong">' + esc(c.kapcs || c.nev || '') + '</div><div class="q-sub">' + esc(c.kapcs && c.nev ? c.nev : 'Ajánlattevő') + '</div></div>' +
@@ -218,11 +220,14 @@ function quoteHtml(p) {
   h += '<footer class="q-foot">' + esc([c.nev, c.tel, c.email, c.bank ? 'Számlaszám: ' + c.bank : ''].filter(Boolean).join(' · ')) + '</footer>';
   return h + '</div>';
 }
-function openQuote(p) {
+async function openQuote(p) {
+  const fotoSrc = {};
+  const kell = (p.fotok || []).filter(f => f.aj);
+  if (kell.length) { toast('Fotók betöltése…'); for (const f of kell) { try { fotoSrc[f.id] = await fotoGet(f.id); } catch (e) {} } }
   let q = $('#quote');
   if (!q) { q = document.createElement('div'); q.id = 'quote'; document.body.appendChild(q); }
   const aj = ajOf(p);
-  q.innerHTML = '<div class="q-bar"><button class="btn sm" id="qx">‹ Vissza</button><span class="q-bt">' + esc(aj.szam) + '</span><button class="btn sm pri" id="qp">🖨️ Nyomtatás / PDF</button></div>' + quoteHtml(p);
+  q.innerHTML = '<div class="q-bar"><button class="btn sm" id="qx">‹ Vissza</button><span class="q-bt">' + esc(aj.szam) + '</span><button class="btn sm pri" id="qp">🖨️ Nyomtatás / PDF</button></div>' + quoteHtml(p, fotoSrc);
   q.hidden = false; document.body.classList.add('quote-open');
   const fit = () => { const pp = q.querySelector('.q-paper'); if (pp) pp.style.zoom = Math.min(1, (window.innerWidth - 16) / 794); };
   fit(); window.addEventListener('resize', fit);

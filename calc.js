@@ -122,6 +122,7 @@ const MATERIALS = {
   md_nap:       { n: 'Napidíj (1 fő)', g: 'Munkadíj', u: 'nap', pack: 0, pn: 'nap', p: 55000 },
   md_kiszallas: { n: 'Kiszállás', g: 'Munkadíj', u: 'alkalom', pack: 0, pn: 'alkalom', p: 10000 },
   md_km:        { n: 'Kiszállás km-díj', g: 'Munkadíj', u: 'km', pack: 0, pn: 'km', p: 150 },
+  md_foldkiemeles:{ n: 'Földkiemelés, tükörkészítés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 3000 },
   md_bontas:    { n: 'Bontás', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 3000 },
   md_sitt:      { n: 'Sittszállítás (konténer)', g: 'Munkadíj', u: 'alkalom', pack: 0, pn: 'alkalom', p: 60000 },
   md_beton:     { n: 'Betonozás', g: 'Munkadíj', u: 'm³', pack: 0, pn: 'm³', p: 30000 },
@@ -187,6 +188,22 @@ function nyStats(v) {
     else st.kavaKer += 2 * (sz + m) * db;
   }
   return st;
+}
+
+function csempeSav(v, ar) {
+  if (v.am !== 'hel' || !(nz(v.csempeH) > 0)) return 0;
+  ar = ar || areaOf(v, 'room');
+  return Math.max(0, ar.per * Math.min(nz(v.csempeH), nz(v.Hm)) - (Array.isArray(v.nyl) && v.nyl.length ? nyInBand(v.nyl, nz(v.csempeH)) : 0));
+}
+// A nyílások fal alsó sávjába (0…h méter) eső része – ajtó a padlótól, ablak 0,9 m mellvédtől
+function nyInBand(nyl, h) {
+  let a = 0;
+  for (const r of nyl || []) {
+    const sz = nz(r.sz) / 100, m = nz(r.m) / 100, db = nz(r.db);
+    const alja = NY_AJTO[r.t] ? 0 : r.t === 'tetoablak' ? 99 : 0.9;
+    a += sz * Math.max(0, Math.min(h, alja + m) - alja) * db;
+  }
+  return a;
 }
 
 // Káva (ablak/ajtó bélése) – a nyíláslistából
@@ -432,6 +449,7 @@ const CALCS = [
   desc: 'Helyiség falai (+mennyezet): glett, alapozó és festék.',
   fields: [
     ...areaFields('room'),
+    F('csempeH', 'Csempézett sáv a fal alján (nem festendő)', 'm', 0, { show: v => v.am === 'hel', help: 'Pl. fürdőben 2,1 m-ig csempe – ott csak a fölötte lévő falat festi' }),
     ...kavaFields(25),
     C('gl', 'Glettelés', true),
     F('glmm', 'Glett összvastagság', 'mm', 1.5, { show: v => v.gl, help: 'Két vékony réteg együtt kb. 1–2 mm' }),
@@ -443,11 +461,14 @@ const CALCS = [
     RAH(5),
   ],
   compute(v) {
-    const warn = []; const kA = kavaArea(v, warn); const ar = areaOf(v, 'room'); const A = ar.net + kA; const k = 1 + nz(v.rah) / 100;
+    const warn = []; const kA = kavaArea(v, warn); const ar = areaOf(v, 'room'); const k = 1 + nz(v.rah) / 100;
+    const sav = csempeSav(v, ar);
+    const A = Math.max(0, ar.net - sav) + kA;
     const out = [['Festendő felület', fmt(A, 2) + ' m²' + (ar.ceil || kA ? ' (ebből ' + [ar.ceil ? 'mennyezet ' + fmt(ar.ceil, 1) : '', kA ? 'káva ' + fmt(kA, 2) : ''].filter(Boolean).join(', ') + ')' : '')]], mats = [];
     if (v.gl) { const kg = A * nz(v.glmm) * 1.0 * k; mats.push({ k: 'glett', q: kg }); out.push(['Glett (≈1 kg/m²/mm)', fmt(kg, 0) + ' kg']); }
     if (v.alap) { const l = A / nz(v.alapk || 8) * k; mats.push({ k: 'mely_alapozo', q: l }); out.push(['Mélyalapozó', fmt(l, 1) + ' l']); }
     if (v.fest) { const l = A * nz(v.ret) / nz(v.kiad || 8) * k; mats.push({ k: 'festek', q: l }); out.push(['Festék', fmt(l, 1) + ' l']); }
+    if (sav) out.push(['Csempézett sáv levonva', fmt(sav, 2) + ' m²']);
     return { out, mats, warn };
   }
 },
@@ -931,7 +952,7 @@ const MUNKA = {
   falazas: ['md_falazas', v => [wallA(v), 'm²']],
   zsaluko: ['md_zsaluko', v => [wallA(v), 'm²']],
   vakolas: ['md_vakolas', v => [wallA(v) + kavaArea(v), 'm²']],
-  festes: ['md_festes', v => [areaOf(v, 'room').net + kavaArea(v), 'm²']],
+  festes: ['md_festes', v => [Math.max(0, areaOf(v, 'room').net - csempeSav(v)) + kavaArea(v), 'm²']],
   gipszkarton: ['md_gipszkarton', v => [v.tip === 'am' ? nz(v.Lh) * nz(v.Ls) : Math.max(0, nz(v.L) * nz(v.Hm) - nz(v.ny)), 'm²']],
   burkolas: ['md_burkolas', v => [v.hol === 'padlo' ? nz(v.Lh) * nz(v.Ls) : v.hol === 'fal' ? Math.max(0, 2 * (nz(v.Lh) + nz(v.Ls)) * nz(v.Hm) - nz(v.ny)) : nz(v.A), 'm²']],
   vizszig: ['md_vizszig', v => [wallA(v), 'm²']],
@@ -947,6 +968,65 @@ const MUNKA = {
 };
 for (const id in MUNKA) { CALC_BY_ID[id].md = MUNKA[id][0]; CALC_BY_ID[id].mq = MUNKA[id][1]; }
 
+/* ---------- Helyiségek ----------
+   Helyiség: { id, nev, L, W, H (m), nyl: [nyílások] }. A ROOM_MAP megmondja, egy kalkulátor mely mezőit tölti a helyiség. */
+function roomGeo(r) {
+  const L = nz(r.L), W = nz(r.W), H = nz(r.H); const st = nyStats({ nyl: r.nyl || [] });
+  return { L, W, H, A: L * W, per: 2 * (L + W), fal: Math.max(0, 2 * (L + W) * H - st.m2), st };
+}
+const r2 = (x) => Math.round(x * 100) / 100;
+const ROOM_MAP = {
+  burkolas: (r, v) => {
+    const g = roomGeo(r);
+    if (v.hol === 'fal') return { Lh: g.L, Ls: g.W, ny: r2(nyInBand(r.nyl, nz(v.Hm) || 2.1)), nyl: r.nyl || [] };
+    return { hol: 'padlo', Lh: g.L, Ls: g.W, ajto: r2(g.st.ajtoSz), nyl: r.nyl || [] };
+  },
+  festes: (r) => { const g = roomGeo(r); return { am: 'hel', Lh: g.L, Ls: g.W, Hm: g.H, ny: r2(g.st.m2), nyl: r.nyl || [] }; },
+  vakolas: (r) => { const g = roomGeo(r); return { am: 'fal', L: g.per, Hm: g.H, ny: r2(g.st.m2), nyl: r.nyl || [] }; },
+  vizszig: (r) => { const g = roomGeo(r); return { am: 'fal', L: g.per, Hm: g.H, ny: r2(g.st.m2), nyl: r.nyl || [] }; },
+  esztrich: (r) => { const g = roomGeo(r); return { am: 'hsz', Lh: g.L, Ls: g.W }; },
+  fodem: (r) => { const g = roomGeo(r); return { am: 'hsz', Lh: g.L, Ls: g.W }; },
+  terko: (r) => { const g = roomGeo(r); return { am: 'hsz', Lh: g.L, Ls: g.W }; },
+  omlesztett: (r) => { const g = roomGeo(r); return { am: 'hsz', Lh: g.L, Ls: g.W }; },
+  gipszkarton: (r, v) => { const g = roomGeo(r); return v.tip === 'am' ? { Lh: g.L, Ls: g.W } : {}; },
+  terasz: (r) => { const g = roomGeo(r); return { Lh: g.L, Ls: g.W }; },
+};
+// Egyéb (munkadíj) tételek mennyisége a helyiségből
+const ROOM_Q = {
+  padlo: ['padló területe', r => roomGeo(r).A],
+  fal: ['falfelület (nyílások nélkül)', r => roomGeo(r).fal],
+  osszes: ['padló + fal + mennyezet', r => { const g = roomGeo(r); return g.A * 2 + g.fal; }],
+  csempe: ['padló + 2,1 m-es csempézett sáv', r => { const g = roomGeo(r); return g.A + Math.max(0, g.per * Math.min(2.1, g.H || 2.1) - nyInBand(r.nyl, 2.1)); }],
+  kerulet: ['kerület', r => roomGeo(r).per],
+  egy: ['1 alkalom', () => 1],
+};
+
+/* ---------- Beépített projektsablonok ---------- */
+const SABLONOK = [
+  { id: 'furdo', n: 'Fürdőszoba-felújítás', i: '🛁', desc: 'Bontás, vízszigetelés, padló- és falburkolás, festés a csempe felett, sittszállítás',
+    items: [
+      { nev: 'Régi burkolat bontása', md: 'md_bontas', rq: 'csempe' },
+      { nev: 'Padlóburkolás vízszigeteléssel', calc: 'burkolas', v: { hol: 'padlo', szig: true } },
+      { nev: 'Falburkolás (csempe 2,1 m-ig)', calc: 'burkolas', v: { hol: 'fal', Hm: 2.1, la: 30, lb: 60, lv: 8, szig: false } },
+      { nev: 'Glettelés, festés (csempe felett + mennyezet)', calc: 'festes', v: { csempeH: 2.1, menny: true } },
+      { nev: 'Sittszállítás', md: 'md_sitt', rq: 'egy' },
+    ] },
+  { id: 'festes', n: 'Szobafestés', i: '🖌️', desc: 'Glettelés, alapozás, festés falakra és mennyezetre',
+    items: [{ nev: 'Glettelés, festés', calc: 'festes', v: { menny: true } }] },
+  { id: 'padlo', n: 'Padlócsere', i: '▭', desc: 'Régi padló bontása, aljzatkiegyenlítés, új burkolat lábazattal',
+    items: [
+      { nev: 'Régi padló bontása', md: 'md_bontas', rq: 'padlo' },
+      { nev: 'Aljzatkiegyenlítés (önterülő)', calc: 'esztrich', v: { mod: 'ont', vmm: 5 } },
+      { nev: 'Padlóburkolás', calc: 'burkolas', v: { hol: 'padlo', lab: true } },
+    ] },
+  { id: 'kocsibeallo', n: 'Kocsibeálló, térkövezés', i: '🚗', desc: 'Földkiemelés, zúzottkő alap autós terhelésre, térkő, szegély, földelszállítás', kint: true,
+    items: [
+      { nev: 'Földkiemelés, tükörkészítés', md: 'md_foldkiemeles', rq: 'padlo' },
+      { nev: 'Térkövezés (autós terhelés)', calc: 'terko', v: { alap: 25, agy: 4 } },
+      { nev: 'Föld elszállítása', md: 'md_sitt', rq: 'egy' },
+    ] },
+];
+
 // Ömlesztett anyag mértékegysége – a választást az app megjegyzi, minden kalkulátorban ugyanaz
 const MJ_SHOW = { terko: () => true, omlesztett: () => true, beton: v => v.mod === 'kevert', esztrich: v => v.mod === 'ch', zsaluko: v => v.mod === 'kevert', kerites: v => v.mod === 'kevert' };
 for (const id in MJ_SHOW) CALC_BY_ID[id].fields.push(SEL('mj', 'Ömlesztett anyag mértékegysége', MJ_OPTS, 'm3', { show: MJ_SHOW[id], help: 'Az app megjegyzi, és mindenhol ezt használja' }));
@@ -957,4 +1037,4 @@ function defaults(calc) {
   return v;
 }
 
-if (typeof module !== 'undefined') module.exports = { nyStats, kavaArea, bulkTxt, MJ_OPTS, MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };
+if (typeof module !== 'undefined') module.exports = { ROOM_MAP, ROOM_Q, SABLONOK, roomGeo, nyInBand, nyStats, kavaArea, bulkTxt, MJ_OPTS, MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };
