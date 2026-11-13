@@ -13,15 +13,15 @@
   --c5:#e3e8ee;--c5t:#3c5470; --c6:#f1e6da;--c6t:#7c5530; --c7:#ebe8f1;--c7t:#5a4f7a;
 }
 html.dark{
-  --bg:#131416; --card:#1c1e21; --card2:#232529; --line:#2e3135; --line2:#272a2e; --text:#ecebe7; --muted:#9a978f;
-  --pri:#3fb7ad; --pri-h:#5fcac1; --pri-soft:#173331; --pri-t:#0c1514;
-  --acc:#f0a63d; --acc-soft:#33281a;
-  --ok:#5cc489; --warn:#f0b459; --warn-bg:#2c2416; --err:#ff7d6b;
-  --hdr:#0d0e10; --hdr-t:#ecebe7; --hdr-m:rgba(236,235,231,.55); --nav:#17181b;
-  --hero:#232529; --hero-t:#ecebe7; --hero-m:rgba(236,235,231,.6);
-  --shadow:none;
-  --c1:#173331;--c1t:#5fcac1; --c2:#33281a;--c2t:#f0b459; --c3:#36221d;--c3t:#ff9a7f; --c4:#262d1d;--c4t:#a9c472;
-  --c5:#1f2833;--c5t:#8fb0d6; --c6:#2f261d;--c6t:#d9a676; --c7:#26233a;--c7t:#b2a7e0;
+  --bg:#0d1013; --card:#161a1f; --card2:#0f1317; --line:#28303a; --line2:#1f262e; --text:#eef1f4; --muted:#9ea8b3;
+  --pri:#4cc9bd; --pri-h:#6fd8ce; --pri-soft:#123331; --pri-t:#06201e;
+  --acc:#f2ad45; --acc-soft:#3a2c15;
+  --ok:#5fd093; --warn:#f4bd62; --warn-bg:#2a2112; --err:#ff8270;
+  --hdr:#080a0c; --hdr-t:#eef1f4; --hdr-m:rgba(238,241,244,.6); --nav:#11151a;
+  --hero:linear-gradient(140deg,#16302e 0%,#152024 55%,#171b20 100%); --hero-t:#eef1f4; --hero-m:rgba(238,241,244,.68);
+  --shadow:0 1px 0 rgba(255,255,255,.035) inset,0 6px 18px -10px rgba(0,0,0,.6);
+  --c1:#12302e;--c1t:#6fd8ce; --c2:#382a14;--c2t:#f4bd62; --c3:#3a221c;--c3t:#ff9d84; --c4:#22301c;--c4t:#a9d07a;
+  --c5:#1a2838;--c5t:#93b8e6; --c6:#33271c;--c6t:#e0ae7c; --c7:#272340;--c7t:#bcb1f0;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -316,3 +316,26 @@ html.dark .pill.late{background:#3a1f1a;color:#ff8a78}
 .szlg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted);margin-top:4px}
 .szlg b{color:var(--text)}
 .pills{margin:2px 0 1px}.pills .pill{margin-left:0;margin-right:4px}
+
+/* Linkek (telefon, e-mail) – mindkét módban olvasható */
+a{color:var(--pri);text-decoration:none;font-weight:600}
+a:active{opacity:.7}
+.card.hero a{color:var(--acc)}
+/* Sötét mód finomítások */
+html.dark .card.hero{border:1px solid rgba(76,201,189,.22)}
+html.dark .card{border-color:var(--line)}
+html.dark .tile:active{background:var(--pri-soft)}
+html.dark nav.bottom{border-top-color:var(--line2)}
+html.dark .search,html.dark .tile{background:var(--card)}
+html.dark .f input[type=text],html.dark .f input:not([type]),html.dark .f select,html.dark .fld input,html.dark .fld select,html.dark .fld textarea,html.dark .nyrow input,html.dark .nyrow select{border-color:#2c353f;color:var(--text)}
+html.dark .seg{background:var(--card2)}
+html.dark .seg button.on{background:#232a32;color:var(--text)}
+html.dark .banner{background:var(--acc-soft);color:var(--text)}
+html.dark .empty{border-color:#2a323b}
+html.dark .pill.gray{background:#252c34;color:#b3bcc6}
+html.dark .pill.done{background:#1c2a3b;color:#9cc2ee}
+html.dark .cpy{background:#222931}
+html.dark .modal .sheet{background:#161a1f}
+html.dark .list .it .ic{background:#1f252c}
+html.dark input[type=date]{color-scheme:dark}
+html.dark select{color-scheme:dark}
