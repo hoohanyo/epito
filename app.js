@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '0.5.1';
+const APP_VERSION = '0.7';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -51,11 +51,13 @@ function line(m) {
   const qtxt = fmt(q) + ' ' + P.u;
   const ptxt = pack > 0 ? (pack === 1 && (P.u === 'db' || P.u === 'szál') ? '' : packs + ' × ' + P.pn) : '';
   if (P.u === 't' && !ptxt) {
-    const ro = MATERIALS[m.k] && MATERIALS[m.k].ro;
-    return { k: m.k, name: P.n, q, u: P.u, pack, packs, pn: P.pn, price: P.p, cost, qtxt, ptxt: fmt(q * 10, q * 10 >= 100 ? 0 : 1) + '\u00a0q' + (ro ? ' ≈\u00a0' + fmt(q / ro, 2) + '\u00a0m³ (laza)' : ''), noprice: !P.p };
+    const ro = MATERIALS[m.k] && MATERIALS[m.k].ro; const mj = mjPref();
+    if (mj === 'mind') return { k: m.k, name: P.n, q, u: P.u, pack, packs, pn: P.pn, price: P.p, cost, qtxt, ptxt: fmt(q * 10, q * 10 >= 100 ? 0 : 1) + '\u00a0q' + (ro ? ' ≈\u00a0' + fmt(q / ro, 2) + '\u00a0m³ (laza)' : ''), noprice: !P.p };
+    return { k: m.k, name: P.n, q, u: P.u, pack, packs, pn: P.pn, price: P.p, cost, qtxt: bulkTxt(q, m.k, mj), ptxt: mj === 't' ? '' : 'ár: ' + fmt(q, 2) + ' t alapján', noprice: !P.p };
   }
   return { k: m.k, name: P.n, q, u: P.u, pack, packs, pn: P.pn, price: P.p, cost, qtxt, ptxt, noprice: !P.p };
 }
+const mjPref = () => LS.get('ek_mj', 'm3');
 function aggregate(tetelek) {
   const map = new Map();
   for (const t of tetelek) for (const m of (t.mats || [])) {
@@ -163,7 +165,7 @@ function saveAr(k, o) {
 /* ---------- Navigáció ---------- */
 function go(route) { S.stack.push(route); history.pushState({ d: S.stack.length }, ''); render(); window.scrollTo(0, 0); }
 function back() { if (S.stack.length > 1) { S.stack.pop(); render(); } }
-window.addEventListener('popstate', () => { if (!$('#modal').hidden) { closeModal(); return; } back(); });
+window.addEventListener('popstate', () => { if (!$('#szg').hidden) { closeSzg(); return; } if (!$('#modal').hidden) { closeModal(); return; } back(); });
 function setTab(tab) { S.tab = tab; S.stack = [{ v: tab }]; render(); window.scrollTo(0, 0); }
 document.querySelectorAll('nav.bottom button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
 $('#btnBack').onclick = () => back();
@@ -188,7 +190,7 @@ function updateSync() {
 
 /* ---------- Közös UI ---------- */
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 2600); }
-function openModal(html, bind) { $('#modalBody').innerHTML = html; $('#modal').hidden = false; if (bind) bind($('#modalBody')); }
+function openModal(html, bind) { $('#modalBody').innerHTML = '<button class="sheet-szg" title="Számológép" onmousedown="event.preventDefault()" onclick="openSzg()">' + $('#btnSzg').innerHTML + '</button>' + html; $('#modal').hidden = false; if (bind) bind($('#modalBody')); }
 function closeModal() { $('#modal').hidden = true; $('#modalBody').innerHTML = ''; }
 $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 function priceInput(el) { el.addEventListener('input', () => { const d = el.value.replace(/\D/g, ''); el.value = d ? dotted(d) : ''; }); }
@@ -286,7 +288,9 @@ function renderKalk() {
 function openCalc(id, tetel) {
   const c = CALC_BY_ID[id]; if (!c) return;
   const saved = !tetel ? LS.get('ek_utolso_' + id, null) : null;
-  S.calc = { id, v: Object.assign(defaults(c), saved || {}, tetel ? tetel.values : {}), tetelId: tetel ? tetel.id : null, projektId: tetel ? tetel.projektId : S.targetProj, nev: tetel ? tetel.nev : '' };
+  const v0 = Object.assign(defaults(c), saved || {}, tetel ? tetel.values : {});
+  if (c.fields.some(f => f.id === 'mj')) v0.mj = mjPref();
+  S.calc = { id, v: v0, tetelId: tetel ? tetel.id : null, projektId: tetel ? tetel.projektId : S.targetProj, nev: tetel ? tetel.nev : '' };
   go({ v: 'calc' });
 }
 
@@ -317,15 +321,67 @@ function renderForm() {
     if (f.show && !f.show(v)) continue;
     const help = f.help ? '<span class="help">' + esc(f.help) + '</span>' : '';
     if (f.t === 'hdr') h += '<div class="f hdr">' + esc(f.l) + '</div>';
-    else if (f.t === 'num') h += '<div class="f"><label for="f_' + f.id + '">' + esc(f.l) + help + '</label><span class="in"><input id="f_' + f.id + '" data-id="' + f.id + '" inputmode="decimal" autocomplete="off" value="' + esc(numStr(v[f.id])) + '"><span class="u">' + esc(f.u || '') + '</span></span></div>';
+    else if (f.t === 'num') {
+      h += '<div class="f' + (f.nyHelp ? ' hasSub' : '') + '"><label for="f_' + f.id + '">' + esc(f.l) + help + '</label><span class="in"><input id="f_' + f.id + '" data-id="' + f.id + '"' + (f.nyHelp ? ' data-ny="1"' : '') + ' inputmode="decimal" autocomplete="off" value="' + esc(numStr(v[f.id])) + '"><span class="u">' + esc(f.u || '') + '</span></span></div>';
+      if (f.nyHelp) h += '<div class="f-sub"><button class="btn sm" data-nyh="' + f.id + '">📐 Nyílások listából</button><span class="small muted" id="nys_' + f.id + '">' + esc(nySummary(v)) + '</span></div>';
+    }
     else if (f.t === 'sel') h += '<div class="f sel"><label for="f_' + f.id + '">' + esc(f.l) + help + '</label><select id="f_' + f.id + '" data-id="' + f.id + '">' + f.opts.map(o => '<option value="' + esc(o[0]) + '"' + (String(v[f.id]) === String(o[0]) ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select></div>';
     else if (f.t === 'chk') h += '<div class="f"><label for="f_' + f.id + '">' + esc(f.l) + help + '</label><label class="sw"><input type="checkbox" id="f_' + f.id + '" data-id="' + f.id + '"' + (v[f.id] ? ' checked' : '') + '><i></i></label></div>';
   }
   const form = $('#form'); form.innerHTML = h;
-  form.querySelectorAll('input[inputmode]').forEach(el => el.addEventListener('input', () => { v[el.dataset.id] = parseNum(el.value); remember(); renderRes(); }));
+  form.querySelectorAll('input[inputmode]').forEach(el => el.addEventListener('input', () => {
+    v[el.dataset.id] = parseNum(el.value);
+    if (el.dataset.ny && v.nyl && v.nyl.length) { v.nyl = []; const sm = $('#nys_' + el.dataset.id); if (sm) sm.textContent = ''; el.dataset.relist = '1'; }
+    remember(); renderRes();
+  }));
+  form.querySelectorAll('input[data-ny]').forEach(el => el.addEventListener('change', () => { if (el.dataset.relist) renderForm(); }));
+  form.querySelectorAll('[data-nyh]').forEach(b => b.onclick = () => openNyilas(b.dataset.nyh));
   form.querySelectorAll('input[inputmode]').forEach(el => el.addEventListener('focus', () => el.select()));
-  form.querySelectorAll('select').forEach(el => el.onchange = () => { v[el.dataset.id] = el.value; remember(); renderForm(); renderRes(); });
+  form.querySelectorAll('select').forEach(el => el.onchange = () => { v[el.dataset.id] = el.value; if (el.dataset.id === 'mj') LS.set('ek_mj', el.value); remember(); renderForm(); renderRes(); });
   form.querySelectorAll('input[type=checkbox]').forEach(el => el.onchange = () => { v[el.dataset.id] = el.checked; remember(); renderForm(); renderRes(); });
+}
+function nySummary(v) {
+  const st = nyStats(v); if (!st.list) return '';
+  return st.n + ' nyílás · ' + fmt(st.m2, 2) + ' m² · kerület ' + fmt(st.ker, 1) + ' m';
+}
+function openNyilas(fid) {
+  const v = S.calc.v;
+  let rows = (v.nyl && v.nyl.length ? v.nyl : [{ t: 'ablak', sz: 120, m: 150, db: 1 }]).map(r => Object.assign({}, r));
+  const typeOpts = (t) => NY_TYPES.map(x => '<option value="' + x[0] + '"' + (x[0] === t ? ' selected' : '') + '>' + x[1] + '</option>').join('');
+  const draw = (m) => {
+    $('#nyrows', m).innerHTML = rows.map((r, i) => '<div class="nyrow" data-i="' + i + '"><select data-k="t">' + typeOpts(r.t) + '</select>' +
+      ['sz', 'm', 'db'].map(k => '<input data-k="' + k + '" inputmode="decimal" value="' + esc(numStr(r[k])) + '">').join('') + '<button class="nydel" title="Törlés">✕</button></div>').join('') ||
+      '<div class="muted small" style="padding:8px 0">Nincs nyílás a listában.</div>';
+    $('#nyrows', m).querySelectorAll('.nyrow').forEach(row => {
+      const r = rows[row.dataset.i];
+      row.querySelector('select').onchange = (e) => { const ty = NY_TYPES.find(x => x[0] === e.target.value); r.t = ty[0]; r.sz = ty[2]; r.m = ty[3]; draw(m); };
+      row.querySelectorAll('input').forEach(inp => inp.oninput = () => { r[inp.dataset.k] = parseNum(inp.value); sum(m); });
+      row.querySelectorAll('input').forEach(inp => inp.onfocus = () => inp.select());
+      row.querySelector('.nydel').onclick = () => { rows.splice(row.dataset.i, 1); draw(m); };
+    });
+    sum(m);
+  };
+  const sum = (m) => {
+    const st = nyStats({ nyl: rows });
+    $('#nysum', m).innerHTML = '<b>' + fmt(st.m2, 2) + ' m²</b> levonás · ' + st.n + ' db · kerület ' + fmt(st.ker, 1) + ' m' + (st.ajtoDb ? ' · ebből ' + st.ajtoDb + ' ajtó (' + fmt(st.ajtoSz, 2) + ' m)' : '');
+  };
+  const h = '<h3>Nyílások</h3><p class="small muted" style="margin-top:-6px">Méretek cm-ben (falnyílás / tokméret). A típus kiválasztásakor jellemző méretet ad, amit átírhatsz.</p>' +
+    '<div class="nyrow nyhead"><span>Típus</span><span>Szél.</span><span>Mag.</span><span>db</span><span></span></div><div id="nyrows"></div>' +
+    '<div class="btns"><button class="btn sm" id="nyab">+ Ablak</button><button class="btn sm" id="nyaj">+ Ajtó</button><button class="btn sm" id="nyeg">+ Egyéb</button></div>' +
+    '<div class="card" id="nysum" style="font-size:14px"></div>' +
+    '<div class="btns"><button class="btn pri wide" id="nyok">Átvétel</button><button class="btn" id="nyx">Mégse</button></div>';
+  openModal(h, m => {
+    const add = (t) => { const ty = NY_TYPES.find(x => x[0] === t); rows.push({ t, sz: ty[2], m: ty[3], db: 1 }); draw(m); };
+    $('#nyab', m).onclick = () => add('ablak'); $('#nyaj', m).onclick = () => add('ajto'); $('#nyeg', m).onclick = () => add('egyeb');
+    $('#nyx', m).onclick = closeModal;
+    $('#nyok', m).onclick = () => {
+      rows = rows.filter(r => nz(r.sz) > 0 && nz(r.m) > 0 && nz(r.db) > 0);
+      const st = nyStats({ nyl: rows });
+      v.nyl = rows; v[fid] = Math.round(st.m2 * 100) / 100;
+      remember(); closeModal(); renderForm(); renderRes();
+    };
+    draw(m);
+  });
 }
 function remember() { if (S.calc && !S.calc.tetelId) LS.set('ek_utolso_' + S.calc.id, S.calc.v); }
 function computeSafe(c, v) { try { return c.compute(v); } catch (e) { console.error(e); return { out: [['Hiba', 'Ellenőrizd a megadott értékeket']], mats: [], warn: [] }; } }

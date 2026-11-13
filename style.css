@@ -160,3 +160,44 @@ html.dark .seg button.on{background:var(--line)}
 .kv:last-child{border-bottom:0}
 .kv span{color:var(--muted)}
 .arrow{color:var(--muted);font-size:18px}
+
+/* Nyílások */
+.f.hasSub{border-bottom:0;padding-bottom:2px}
+.f-sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:2px 0 9px;border-bottom:1px solid var(--line2)}
+.nyrow{display:grid;grid-template-columns:1.5fr 1fr 1fr .7fr 30px;gap:6px;align-items:center;margin-bottom:6px}
+.nyrow select,.nyrow input{width:100%;padding:9px 6px;border:1px solid var(--line);border-radius:9px;background:var(--card2);min-width:0}
+.nyrow input{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.nyhead{margin-bottom:4px}
+.nyhead span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.nyhead span:nth-child(n+2){text-align:right;padding-right:6px}
+.nydel{border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0}
+
+/* Számológép */
+.szg{position:fixed;inset:0;z-index:70;background:rgba(15,16,18,.35);display:flex;align-items:flex-end;justify-content:center}
+.szg-panel{width:100%;max-width:400px;background:var(--hdr);color:var(--hdr-t);border-radius:20px 20px 0 0;padding:12px 12px calc(12px + env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.35);border-top:3px solid var(--acc)}
+@media(min-width:700px){.szg{align-items:flex-end;justify-content:flex-end;padding:0 20px 90px;background:transparent;pointer-events:none}.szg-panel{pointer-events:auto;border-radius:18px;border:1px solid rgba(255,255,255,.1);border-top:3px solid var(--acc)}}
+.szg-top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.szg-top b{font-size:15px;flex:1}
+.szg-mode{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--hdr-m);border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:1px 6px}
+.szg-ic{background:rgba(255,255,255,.08);border:0;color:var(--hdr-t);width:34px;height:34px;border-radius:10px;cursor:pointer;font-size:15px}
+.szg-disp{background:rgba(255,255,255,.05);border-radius:12px;padding:10px 12px;margin-bottom:8px;text-align:right;min-height:78px}
+.szg-expr{font-size:18px;color:var(--hdr-m);word-break:break-all;min-height:24px;font-variant-numeric:tabular-nums}
+.szg-res{font-size:30px;font-weight:700;color:var(--hdr-t);font-variant-numeric:tabular-nums;word-break:break-all;line-height:1.2}
+.szg-res.fresh{color:var(--acc)}
+.szg-hist{max-height:150px;overflow:auto;background:rgba(255,255,255,.04);border-radius:10px;margin-bottom:8px}
+.szg-hi{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer;font-size:13px}
+.szg-hi span{color:var(--hdr-m);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.szg-ins{width:100%;margin-bottom:8px;background:var(--acc);color:#1d2024}
+.szg-row2{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:5px}
+.szg-row2 button{background:rgba(255,255,255,.05);border:0;color:var(--hdr-m);border-radius:9px;padding:7px 0;font-size:12.5px;cursor:pointer}
+.szg-keys{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.szg-keys button{border:0;border-radius:12px;height:48px;font-size:19px;cursor:pointer;background:rgba(255,255,255,.1);color:var(--hdr-t);font-variant-numeric:tabular-nums}
+.szg-keys button:active,.szg-row2 button:active{filter:brightness(1.4)}
+.szg-keys .k-fn{background:rgba(255,255,255,.06);font-size:15px;color:var(--hdr-m)}
+.szg-keys .k-op{background:rgba(255,255,255,.06);color:var(--acc);font-size:21px}
+.szg-keys .k-ctl{background:rgba(255,255,255,.06);color:var(--hdr-m);font-size:16px}
+.szg-keys .k-eq{background:var(--pri);color:#fff;font-weight:700}
+html.dark .szg-keys .k-eq{color:#0c1514}
+.sheet{position:relative}
+.sheet-szg{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.sheet h3{padding-right:44px}

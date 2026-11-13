@@ -32,6 +32,7 @@ const MATERIALS = {
   ytong20:      { n: 'Pórusbeton falazóelem 20 cm', g: 'Falazóelem', u: 'db', pack: 1, pn: 'db', p: 1500 },
   ytong30:      { n: 'Pórusbeton falazóelem 30 cm', g: 'Falazóelem', u: 'db', pack: 1, pn: 'db', p: 2100 },
   ytong375:     { n: 'Pórusbeton falazóelem 37,5 cm', g: 'Falazóelem', u: 'db', pack: 1, pn: 'db', p: 2600 },
+  athidalo:     { n: 'Áthidaló', g: 'Falazóelem', u: 'fm', pack: 0, pn: 'fm', p: 6500 },
   falelem_egyedi:{ n: 'Falazóelem (egyedi)', g: 'Falazóelem', u: 'db', pack: 1, pn: 'db', p: 0 },
   zsaluko15:    { n: 'Zsalukő 15 cm', g: 'Falazóelem', u: 'db', pack: 1, pn: 'db', p: 550 },
   zsaluko20:    { n: 'Zsalukő 20 cm', g: 'Falazóelem', u: 'db', pack: 1, pn: 'db', p: 620 },
@@ -46,6 +47,7 @@ const MATERIALS = {
   gk_lap:       { n: 'Gipszkarton lap', g: 'Gipszkarton', u: 'db', pack: 1, pn: 'tábla', p: 3200 },
   cw_profil:    { n: 'CW profil', g: 'Gipszkarton', u: 'szál', pack: 1, pn: 'szál', p: 1600 },
   uw_profil:    { n: 'UW profil', g: 'Gipszkarton', u: 'szál', pack: 1, pn: 'szál', p: 1300 },
+  ua_profil:    { n: 'UA (merevített) profil ajtóhoz', g: 'Gipszkarton', u: 'szál', pack: 1, pn: 'szál', p: 5500 },
   cd_profil:    { n: 'CD profil', g: 'Gipszkarton', u: 'szál', pack: 1, pn: 'szál', p: 1500 },
   ud_profil:    { n: 'UD profil', g: 'Gipszkarton', u: 'szál', pack: 1, pn: 'szál', p: 1000 },
   fuggeszto:    { n: 'Függesztő (direkt/nóniusz)', g: 'Gipszkarton', u: 'db', pack: 1, pn: 'db', p: 180 },
@@ -131,9 +133,34 @@ const C = (id, l, d, extra) => Object.assign({ id, t: 'chk', l, d }, extra || {}
 const T = (id, l, d, extra) => Object.assign({ id, t: 'txt', l, d }, extra || {});
 const H = (l) => ({ t: 'hdr', l });
 // Ömlesztett anyag: tonna + mázsa + laza m³ egyszerre
-function TQ(t, k) {
+const MJ_OPTS = [['m3', 'Köbméter (laza m³)'], ['t', 'Tonna'], ['q', 'Mázsa'], ['mind', 'Mind egyszerre (t, q, m³)']];
+function bulkTxt(t, k, mode) {
+  const ro = MATERIALS[k] && MATERIALS[k].ro;
+  if (mode === 't') return fmt(t, 2) + '\u00a0t';
+  if (mode === 'q') return fmt(t * 10, t * 10 >= 100 ? 0 : 1) + '\u00a0q';
+  if (mode === 'm3' && ro) return fmt(t / ro, 2) + '\u00a0m³';
+  return TQ(t, k);
+}
+function TQ(t, k, mode) {
+  if (mode && mode !== 'mind') return bulkTxt(t, k, mode);
   const ro = MATERIALS[k] && MATERIALS[k].ro;
   return fmt(t, 2) + '\u00a0t = ' + fmt(t * 10, t * 10 >= 100 ? 0 : 1) + '\u00a0q' + (ro ? ' ≈\u00a0' + fmt(t / ro, 2) + '\u00a0m³' : '');
+}
+
+/* ---------- Nyílások (ablak, ajtó) listája ----------
+   v.nyl = [{ t, sz (cm), m (cm), db }] – a "Nyílások" segédablak tölti ki */
+const NY_TYPES = [['ablak', 'Ablak', 120, 150], ['ajto', 'Ajtó', 90, 210], ['erkely', 'Erkélyajtó', 90, 210], ['kapu', 'Garázskapu', 250, 210], ['egyeb', 'Egyéb nyílás', 100, 100]];
+const NY_AJTO = { ajto: 1, erkely: 1, kapu: 1 };
+function nyStats(v) {
+  const L = Array.isArray(v.nyl) ? v.nyl : [];
+  const st = { n: 0, m2: 0, ker: 0, kavaKer: 0, ajtoSz: 0, ajtoDb: 0, list: L.length > 0 };
+  for (const r of L) {
+    const sz = nz(r.sz) / 100, m = nz(r.m) / 100, db = nz(r.db);
+    st.n += db; st.m2 += sz * m * db; st.ker += 2 * (sz + m) * db;
+    if (NY_AJTO[r.t]) { st.kavaKer += (sz + 2 * m) * db; st.ajtoSz += sz * db; st.ajtoDb += db; }
+    else st.kavaKer += 2 * (sz + m) * db;
+  }
+  return st;
 }
 
 // Felület-megadás blokkok
@@ -144,7 +171,7 @@ function areaFields(kind) {
     F('L', 'Fal hossza (összesen)', 'm', 5, { show: v => v.am === 'fal' }),
     F('Hm', 'Fal magassága', 'm', 2.7, { show: v => v.am === 'fal' }),
     F('A', 'Felület', 'm²', 10, { show: v => v.am === 'm2' }),
-    F('ny', 'Nyílások levonása (ablak, ajtó)', 'm²', 0, { help: 'Pl. ajtó 0,9×2,1 ≈ 1,9 m², ablak 1,2×1,5 = 1,8 m²' }),
+    F('ny', 'Nyílások levonása (ablak, ajtó)', 'm²', 0, { nyHelp: true }),
   ];
   if (kind === 'room') return [
     SEL('am', 'Felület megadása', [['hel', 'Helyiség (h × sz × belmagasság)'], ['m2', 'Kész felület (m²)']], 'hel'),
@@ -153,7 +180,7 @@ function areaFields(kind) {
     F('Hm', 'Belmagasság', 'm', 2.7, { show: v => v.am === 'hel' }),
     C('menny', 'Mennyezet is', true, { show: v => v.am === 'hel' }),
     F('A', 'Felület', 'm²', 40, { show: v => v.am === 'm2' }),
-    F('ny', 'Nyílások levonása', 'm²', 3.5, { show: v => v.am === 'hel' || v.am === 'm2', help: 'Ajtó ≈ 1,9 m², ablak pl. 1,2×1,5 = 1,8 m²' }),
+    F('ny', 'Nyílások levonása', 'm²', 3.5, { show: v => v.am === 'hel' || v.am === 'm2', nyHelp: true }),
   ];
   return [
     SEL('am', 'Felület megadása', [['hsz', 'Hossz × szélesség'], ['m2', 'Kész terület (m²)']], 'hsz'),
@@ -232,7 +259,7 @@ const CALCS = [
       mats.push({ k: 'cement', q: Vr * cem });
       mats.push({ k: 'soder', q: Vr * 1.9 });
       out.push(['Cement', fmt(Vr * cem, 0) + ' kg (' + cem + ' kg/m³)']);
-      out.push(['Homokos kavics', TQ(Vr * 1.9, 'soder')]);
+      out.push(['Homokos kavics', TQ(Vr * 1.9, 'soder', v.mj)]);
       out.push(['Keverővíz (kb.)', fmt(Vr * 180, 0) + ' l']);
       if (Vr > 2) warn.push('2 m³ fölött kézi keveréssel nehéz egyenletes minőséget tartani – fontold meg a kész betont.');
     } else {
@@ -270,7 +297,7 @@ const CALCS = [
       const V = A * nz(v.vast) / 100 * k;
       out.push(['Térfogat', fmt(V, 3) + ' m³']);
       if (v.mod === 'zsak') { const kg = A * nz(v.vast) * 20 * k; mats.push({ k: 'esztrich', q: kg }); out.push(['Esztrich', fmt(kg, 0) + ' kg (≈ 20 kg/m²/cm)']); }
-      else { mats.push({ k: 'cement', q: V * 380 }); mats.push({ k: 'homok', q: V * 1.7 }); out.push(['Cement', fmt(V * 380, 0) + ' kg']); out.push(['Homok', TQ(V * 1.7, 'homok')]); }
+      else { mats.push({ k: 'cement', q: V * 380 }); mats.push({ k: 'homok', q: V * 1.7 }); out.push(['Cement', fmt(V * 380, 0) + ' kg']); out.push(['Homok', TQ(V * 1.7, 'homok', v.mj)]); }
       if (nz(v.vast) < 3.5) warn.push('Úsztatott esztrichnél 4,5–5 cm alatt repedésveszély van; tapadó esztrichnél min. kb. 2,5–3 cm.');
     }
     if (v.perem) { const p = ar.per != null ? ar.per : 4 * Math.sqrt(A); mats.push({ k: 'peremszalag', q: p * 1.05 }); out.push(['Peremszalag', fmt(p * 1.05, 1) + ' fm' + (ar.per == null ? ' (becsült kerület)' : '')]); }
@@ -291,6 +318,9 @@ const CALCS = [
     F('fu', 'Fugavastagság', 'mm', 10, { show: v => v.elem === 'egy' }),
     F('hab', 'Habarcsszükséglet', 'l/m²', 20, { show: v => v.elem === 'egy', help: 'Gyártói adat; ragasztott elemnél írj 0-t' }),
     ...areaFields('wall'),
+    SEL('athm', 'Áthidaló a nyílások fölé', [['igen', 'Számolja (a nyíláslistából)'], ['nem', 'Nem kell']], 'igen', { show: v => nyStats(v).list }),
+    F('athdb', 'Áthidaló egymás mellett', 'db', 2, { show: v => nyStats(v).list && v.athm === 'igen', help: 'Falvastagságtól függ: pl. 12 cm-es elemből 30-as falba 2–3 db' }),
+    F('athf', 'Felfekvés oldalanként', 'cm', 12.5, { show: v => nyStats(v).list && v.athm === 'igen' }),
     RAH(5),
   ],
   compute(v) {
@@ -308,7 +338,13 @@ const CALCS = [
     const mats = [{ k: key, q: db }];
     if (habL > 0) { const kg = A * habL * 1.5 * k; out.push(['Habarcs (friss)', fmt(A * habL * k, 0) + ' l']); out.push(['Falazóhabarcs (száraz)', fmt(kg, 0) + ' kg']); mats.push({ k: 'falazohabarcs', q: kg }); }
     if (ragKg > 0) { const kg = A * ragKg * k; out.push(['Falazóragasztó', fmt(kg, 0) + ' kg']); mats.push({ k: 'ytong_ragaszto', q: kg }); }
-    return { out, mats, warn: ['A habarcs- és ragasztóigény átlagérték – a pontos adat a gyártó terméklapján van.'] };
+    const st = nyStats(v);
+    if (st.list && v.athm === 'igen') {
+      let fm = 0, n = 0;
+      for (const r of v.nyl) { const len = (nz(r.sz) + 2 * nz(v.athf)) / 100; fm += len * nz(r.db) * nz(v.athdb); n += nz(r.db) * nz(v.athdb); }
+      mats.push({ k: 'athidalo', q: fm }); out.push(['Áthidaló', n + ' db, összesen ' + fmt(fm, 2) + ' fm']);
+    }
+    return { out, mats, warn: ['A habarcs- és ragasztóigény átlagérték – a pontos adat a gyártó terméklapján van.'].concat(st.list && v.athm === 'igen' ? ['Az áthidalót a gyártói hosszakra (pl. 25 cm-es lépésekben) felfelé kerekítve rendeld.'] : []) };
   }
 },
 {
@@ -327,7 +363,7 @@ const CALCS = [
     const out = [['Falfelület', fmt(A, 2) + ' m²'], ['Zsalukő (10 db/m²)', fmt(db, 0) + ' db'], ['Kitöltő beton', fmt(V, 3) + ' m³']];
     const mats = [{ k: 'zsaluko' + v.tip, q: db }];
     if (v.mod === 'kesz') mats.push({ k: 'kesz_beton', q: Math.ceil(V * 4) / 4 });
-    else if (v.mod === 'kevert') { mats.push({ k: 'cement', q: V * 300 }); mats.push({ k: 'soder', q: V * 1.9 }); out.push(['Cement', fmt(V * 300, 0) + ' kg'], ['Homokos kavics', TQ(V * 1.9, 'soder')]); }
+    else if (v.mod === 'kevert') { mats.push({ k: 'cement', q: V * 300 }); mats.push({ k: 'soder', q: V * 1.9 }); out.push(['Cement', fmt(V * 300, 0) + ' kg'], ['Homokos kavics', TQ(V * 1.9, 'soder', v.mj)]); }
     else { mats.push({ k: 'szarazbeton', q: V * 2200 }); out.push(['Szárazbeton', fmt(V * 2200, 0) + ' kg']); }
     return { out, mats, warn: ['A betonigény 50×20 cm-es elemmel számolt átlag; a gyártói adat ettől eltérhet. A vasalást külön számold.'] };
   }
@@ -382,7 +418,7 @@ const CALCS = [
     SEL('tip', 'Szerkezet', [['vf', 'Válaszfal (két oldal)'], ['et', 'Előtétfal / falburkolat (egy oldal)'], ['am', 'Álmennyezet']], 'vf'),
     F('L', 'Fal hossza', 'm', 4, { show: v => v.tip !== 'am' }),
     F('Hm', 'Fal magassága', 'm', 2.7, { show: v => v.tip !== 'am' }),
-    F('ny', 'Nyílások (ajtó)', 'm²', 1.9, { show: v => v.tip !== 'am' }),
+    F('ny', 'Nyílások (ajtó)', 'm²', 1.9, { show: v => v.tip !== 'am', nyHelp: true }),
     F('Lh', 'Helyiség hossza', 'm', 4, { show: v => v.tip === 'am' }),
     F('Ls', 'Helyiség szélessége', 'm', 3, { show: v => v.tip === 'am' }),
     SEL('ret', 'Lapréteg oldalanként', [['1', '1 réteg'], ['2', '2 réteg']], '1'),
@@ -417,7 +453,9 @@ const CALCS = [
       out.push(['Csavar', fmt(cs, 0) + ' db'], ['Hézagoló', fmt(A * old * 0.4 * k, 1) + ' kg']);
       if (v.gyapot && v.tip === 'vf') { mats.push({ k: 'gk_gyapot', q: A * 1.05 }); out.push(['Gyapot', fmt(A * 1.05, 1) + ' m²']); }
       if (Hm > pl) warn.push('A falmagasság nagyobb a profil szálhosszánál – a CW profilokat toldani kell (toldáskor min. 50 cm átfedés).');
-      if (nz(v.ny) > 0) warn.push('Ajtónyílásnál 2 db UA (merevített) profil kell a tok mellé – ezt külön vedd fel.');
+      const gst = nyStats(v);
+      if (gst.ajtoDb > 0) { mats.push({ k: 'ua_profil', q: gst.ajtoDb * 2 }); out.push(['UA profil (ajtónként 2)', gst.ajtoDb * 2 + ' szál']); }
+      else if (nz(v.ny) > 0) warn.push('Ajtónyílásnál 2 db UA (merevített) profil kell a tok mellé – a „Nyílások” listában vedd fel az ajtót, és kiszámolja.');
     }
     return { out, mats, warn };
   }
@@ -430,7 +468,7 @@ const CALCS = [
     F('Lh', 'Helyiség hossza', 'm', 3, { show: v => v.hol !== 'm2' }),
     F('Ls', 'Helyiség szélessége', 'm', 2, { show: v => v.hol !== 'm2' }),
     F('Hm', 'Csempézés magassága', 'm', 2.1, { show: v => v.hol === 'fal' }),
-    F('ny', 'Nyílások levonása', 'm²', 1.9, { show: v => v.hol === 'fal' }),
+    F('ny', 'Nyílások levonása', 'm²', 1.9, { show: v => v.hol === 'fal', nyHelp: true }),
     F('A', 'Terület', 'm²', 10, { show: v => v.hol === 'm2' }),
     F('la', 'Lap hossza', 'cm', 60),
     F('lb', 'Lap szélessége', 'cm', 60),
@@ -501,26 +539,40 @@ const CALCS = [
     F('vast', 'Vastagság', 'cm', 15),
     F('dub', 'Dübel', 'db/m²', 6, { help: 'EPS 4–6, kőzetgyapot 6–8, széles felületen szélzónában több' }),
     SEL('vak', 'Színvakolat szemcse', [['1.5', '1,5 mm kapart (≈2,5 kg/m²)'], ['2', '2 mm kapart (≈3 kg/m²)'], ['0', 'Nem kell színvakolat']], '1.5'),
-    F('lab', 'Lábazati indítóprofil hossza', 'fm', 0, { help: 'Általában a homlokzat kerülete, mínusz ajtók' }),
-    F('elv', 'Élvédő (sarkok + nyíláskeretek)', 'fm', 0),
+    SEL('labm', 'Lábazati indítóprofil', [['auto', 'Fal hosszából, az ajtók levonásával'], ['kezi', 'Megadom a hosszát'], ['nincs', 'Nem kell']], 'auto', { show: v => v.am === 'fal' }),
+    F('lab', 'Lábazati profil hossza', 'fm', 0, { show: v => v.am === 'm2' || v.labm === 'kezi' }),
+    SEL('elvm', 'Élvédő', [['auto', 'Sarkokból és nyílásokból'], ['kezi', 'Megadom a hosszát'], ['nincs', 'Nem kell']], 'auto'),
+    F('sarok', 'Külső épületsarkok száma', 'db', 4, { show: v => v.elvm === 'auto' }),
+    F('smag', 'Sarkok magassága', 'm', 3, { show: v => v.elvm === 'auto' && v.am === 'm2' }),
+    F('elv', 'Élvédő hossza', 'fm', 0, { show: v => v.elvm === 'kezi' }),
+    C('kava', 'Kávák (ablakbélletek) szigetelése', false),
+    F('kmely', 'Káva mélysége', 'cm', 20, { show: v => v.kava }),
+    F('kvast', 'Káva szigetelés vastagsága', 'cm', 3, { show: v => v.kava }),
     RAH(5),
   ],
   compute(v) {
-    const A = areaOf(v, 'wall').net; const k = 1 + nz(v.rah) / 100;
-    const V = A * nz(v.vast) / 100 * k;
-    const tabla = CEIL(A * k / 0.5);
+    const ar = areaOf(v, 'wall'); const A0 = ar.net; const k = 1 + nz(v.rah) / 100; const st = nyStats(v); const warn = [];
+    const kavaA = v.kava ? st.kavaKer * nz(v.kmely) / 100 : 0;
+    const A = A0 + kavaA; // ragasztó, háló, vakolat a kávákra is kell
+    const V = A0 * nz(v.vast) / 100 * k + kavaA * nz(v.kvast) / 100 * 1.1;
+    const tabla = CEIL(A0 * k / 0.5);
     const rag = A * 5 * 1.0, beagy = A * 4.5;
-    const mats = [{ k: v.any, q: V }, { k: 'hoszig_ragaszto', q: (rag + beagy) * 1.05 }, { k: 'dubel', q: CEIL(A * nz(v.dub) * 1.05) }, { k: 'uvegszovet', q: A * 1.15 }];
-    const out = [['Szigetelendő felület', fmt(A, 2) + ' m²'], ['Hőszigetelő anyag', fmt(V, 2) + ' m³ ≈ ' + tabla + ' tábla (100×50 cm)'],
-      ['Ragasztó (ragasztás 5 + beágyazás 4,5 kg/m²)', fmt((rag + beagy) * 1.05, 0) + ' kg'], ['Dübel', CEIL(A * nz(v.dub) * 1.05) + ' db'], ['Üvegszövet háló', fmt(A * 1.15, 1) + ' m²']];
+    const mats = [{ k: v.any, q: V }, { k: 'hoszig_ragaszto', q: (rag + beagy) * 1.05 }, { k: 'dubel', q: CEIL(A0 * nz(v.dub) * 1.05) }, { k: 'uvegszovet', q: A * 1.15 }];
+    const out = [['Szigetelendő felület', fmt(A0, 2) + ' m²' + (kavaA ? ' + káva ' + fmt(kavaA, 2) + ' m²' : '')], ['Hőszigetelő anyag', fmt(V, 2) + ' m³ ≈ ' + tabla + ' tábla (100×50 cm)' + (kavaA ? ' + kávalapok' : '')],
+      ['Ragasztó (ragasztás 5 + beágyazás 4,5 kg/m²)', fmt((rag + beagy) * 1.05, 0) + ' kg'], ['Dübel', CEIL(A0 * nz(v.dub) * 1.05) + ' db'], ['Üvegszövet háló', fmt(A * 1.15, 1) + ' m²']];
+    if (v.kava && !st.list) warn.push('A kávák számolásához add meg az ablakokat, ajtókat a „Nyílások” listában.');
     if (v.vak !== '0') {
       const kgm = v.vak === '2' ? 3 : 2.5; mats.push({ k: 'vakolat_alapozo', q: A * 0.25 * 1.05 }, { k: 'szinvakolat', q: A * kgm * 1.05 });
       out.push(['Vakolatalapozó', fmt(A * 0.25 * 1.05, 1) + ' kg'], ['Színvakolat', fmt(A * kgm * 1.05, 0) + ' kg']);
     }
-    if (nz(v.lab) > 0) { const sz = CEIL(nz(v.lab) * 1.05 / 2.5); mats.push({ k: 'labazati_profil', q: sz }); out.push(['Lábazati profil', sz + ' szál']); }
-    if (nz(v.elv) > 0) { const sz = CEIL(nz(v.elv) * 1.05 / 2.5); mats.push({ k: 'elvedo', q: sz }); out.push(['Élvédő', sz + ' szál']); }
+    const lab = v.am === 'm2' ? nz(v.lab) : v.labm === 'auto' ? Math.max(0, nz(v.L) - st.ajtoSz) : v.labm === 'kezi' ? nz(v.lab) : 0;
+    if (lab > 0) { const sz = CEIL(lab * 1.05 / 2.5); mats.push({ k: 'labazati_profil', q: sz }); out.push(['Lábazati profil', fmt(lab, 1) + ' fm → ' + sz + ' szál']); }
+    const elv = v.elvm === 'auto' ? st.kavaKer + nz(v.sarok) * (v.am === 'fal' ? nz(v.Hm) : nz(v.smag)) : v.elvm === 'kezi' ? nz(v.elv) : 0;
+    if (elv > 0) { const sz = CEIL(elv * 1.05 / 2.5); mats.push({ k: 'elvedo', q: sz }); out.push(['Élvédő', fmt(elv, 1) + ' fm → ' + sz + ' szál']); }
+    if (v.elvm === 'auto' && !st.list && nz(v.ny) > 0) warn.push('Az élvédőbe a nyílások kerülete csak akkor számít bele, ha a „Nyílások” listában adod meg őket.');
     const dl = nz(v.vast) + 5; out.push(['Javasolt dübelhossz', '≈ ' + dl + '–' + (dl + 4) + ' cm']);
-    return { out, mats, warn: ['A kávák (ablakbélletek) 2–3 cm-es szigetelését és a lábazati XPS-t külön számold, ha kell.'] };
+    warn.push('A lábazati XPS-t külön számold (XPS anyaggal, a lábazat magasságával).');
+    return { out, mats, warn };
   }
 },
 {
@@ -613,7 +665,7 @@ const CALCS = [
     const ar = areaOf(v, 'floor'); const A = ar.net; const k = 1 + nz(v.rah) / 100;
     const alapT = A * nz(v.alap) / 100 * 1.25 * 1.6; const agyT = A * nz(v.agy) / 100 * 1.2 * 1.6;
     const szeg = v.am === 'm2' || v.szm === 'hossz' ? nz(v.szeg) : v.szm === 'nincs' ? 0 : (ar.per || 0);
-    const out = [['Terület', fmt(A, 2) + ' m²'], ['Térkő', fmt(A * k, 2) + ' m²'], ['Zúzottkő alap (tömörítéssel)', TQ(alapT, 'zuzottko')], ['Kőzúzalék ágyazat', TQ(agyT, 'kozuzalek')], ['Fugahomok (≈4 kg/m²)', fmt(A * 4, 0) + ' kg']];
+    const out = [['Terület', fmt(A, 2) + ' m²'], ['Térkő', fmt(A * k, 2) + ' m²'], ['Zúzottkő alap (tömörítéssel)', TQ(alapT, 'zuzottko', v.mj)], ['Kőzúzalék ágyazat', TQ(agyT, 'kozuzalek', v.mj)], ['Fugahomok (≈4 kg/m²)', fmt(A * 4, 0) + ' kg']];
     const mats = [{ k: 'terko', q: A * k }, { k: 'zuzottko', q: alapT }, { k: 'kozuzalek', q: agyT }, { k: 'fugahomok', q: A * 4 }];
     if (szeg > 0) { const db = CEIL(szeg * 1.03); mats.push({ k: 'szegelyko', q: db }); out.push(['Szegély hossza', fmt(szeg, 2) + ' fm'], ['Szegélykő (1 m)', db + ' db']); if (v.szegB) { mats.push({ k: 'szarazbeton', q: szeg * 0.03 * 2200 }); out.push(['Szárazbeton a szegélyhez', fmt(szeg * 0.03 * 2200, 0) + ' kg']); } }
     if (v.geo) { mats.push({ k: 'geotextil', q: A * 1.15 }); out.push(['Geotextília', fmt(A * 1.15, 1) + ' m²']); }
@@ -633,7 +685,7 @@ const CALCS = [
   compute(v) {
     const ro = { murva: 1.5, zuzottko: 1.6, kozuzalek: 1.6, soder: 1.8, homok: 1.5, termofold: 1.3 }[v.any] || 1.6;
     const A = areaOf(v, 'floor').net; const V = A * nz(v.vast) / 100 * (1 + nz(v.tom) / 100); const t = V * ro;
-    const out = [['Terület', fmt(A, 2) + ' m²'], ['Szükséges anyag', TQ(t, v.any)]]; const mats = [{ k: v.any, q: t }];
+    const out = [['Terület', fmt(A, 2) + ' m²'], ['Szükséges anyag', TQ(t, v.any, v.mj)]]; const mats = [{ k: v.any, q: t }];
     if (v.geo) { mats.push({ k: 'geotextil', q: A * 1.15 }); out.push(['Geotextília (15% átfedés)', fmt(A * 1.15, 1) + ' m²']); }
     return { out, mats, warn: [] };
   }
@@ -660,7 +712,7 @@ const CALCS = [
     if (v.tip === 'drot') { mats.push({ k: 'drothalo', q: L * 1.03 }, { k: 'fesziduzal', q: L * nz(v.sor) * 1.1 }); out.push(['Drótfonat', fmt(L * 1.03, 1) + ' fm'], ['Feszítőhuzal', fmt(L * nz(v.sor) * 1.1, 0) + ' fm']); }
     else { mats.push({ k: 'ker_panel', q: mezo }); out.push(['Panel', mezo + ' db']); }
     if (v.mod === 'zsak') { mats.push({ k: 'szarazbeton', q: V * 2200 }); out.push(['Szárazbeton', fmt(V * 2200, 0) + ' kg']); }
-    else if (v.mod === 'kevert') { mats.push({ k: 'cement', q: V * 300 }, { k: 'soder', q: V * 1.9 }); out.push(['Cement', fmt(V * 300, 0) + ' kg'], ['Homokos kavics', TQ(V * 1.9, 'soder')]); }
+    else if (v.mod === 'kevert') { mats.push({ k: 'cement', q: V * 300 }, { k: 'soder', q: V * 1.9 }); out.push(['Cement', fmt(V * 300, 0) + ' kg'], ['Homokos kavics', TQ(V * 1.9, 'soder', v.mj)]); }
     else mats.push({ k: 'kesz_beton', q: Math.ceil(V * 4) / 4 });
     return { out, mats, warn: ['Oszlopot fagyhatár alá (≈ 80 cm) érdemes betonozni.'] };
   }
@@ -673,7 +725,7 @@ const CALCS = [
   fields: [
     F('L', 'Felület szélessége', 'm', 3.5),
     F('Hm', 'Felület magassága', 'm', 2.6),
-    F('ny', 'Kihagyott felület (ablak, ajtó)', 'm²', 0),
+    F('ny', 'Kihagyott felület (ablak, ajtó)', 'm²', 0, { nyHelp: true }),
     SEL('ir', 'Deszkák iránya', [['viz', 'Vízszintes'], ['fugg', 'Függőleges']], 'viz'),
     F('dsz', 'Deszka fedőszélessége', 'cm', 12),
     F('fuga', 'Árnyékfuga', 'mm', 8),
@@ -821,10 +873,14 @@ const CALCS = [
 
 const CALC_BY_ID = Object.fromEntries(CALCS.map(c => [c.id, c]));
 
+// Ömlesztett anyag mértékegysége – a választást az app megjegyzi, minden kalkulátorban ugyanaz
+const MJ_SHOW = { terko: () => true, omlesztett: () => true, beton: v => v.mod === 'kevert', esztrich: v => v.mod === 'ch', zsaluko: v => v.mod === 'kevert', kerites: v => v.mod === 'kevert' };
+for (const id in MJ_SHOW) CALC_BY_ID[id].fields.push(SEL('mj', 'Ömlesztett anyag mértékegysége', MJ_OPTS, 'm3', { show: MJ_SHOW[id], help: 'Az app megjegyzi, és mindenhol ezt használja' }));
+
 function defaults(calc) {
   const v = {};
   for (const f of calc.fields) if (f.id) v[f.id] = f.d;
   return v;
 }
 
-if (typeof module !== 'undefined') module.exports = { MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };
+if (typeof module !== 'undefined') module.exports = { bulkTxt, MJ_OPTS, MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };
