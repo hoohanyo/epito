@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '1.2';
+const APP_VERSION = '1.3';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -116,9 +116,10 @@ async function load(force) {
     for (const r of (j.arlista || [])) arl[r.kulcs] = { n: r.anyag, g: r.csoport, u: r.egyseg, pack: r.kiszereles, pn: r.kiszNev, p: r.ar, megj: r.megj };
     const be = j.beallitas || {};
     S.data = { ceg: safeJson(be.ceg, {}), logo: be.logo || '', sablonok: safeJson(be.sablonok, []), projektek: (j.projektek || []).map(p => Object.assign(p, { aj: safeJson(p.aj, {}), helyisegek: safeJson(p.helyisegek, []), fotok: safeJson(p.fotok, []), szamla: safeJson(p.szamla, null) })), tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl,
+      kuka: (j.kuka || []).map(k => ({ id: k.id, tipus: k.tipus, nev: k.nev, torolve: k.torolve, adat: safeJson([1, 2, 3, 4, 5, 6, 7, 8].map(i => k['adat' + i] || '').join(''), {}) })),
       ugyfelek: j.ugyfelek || [], munkareszek: (j.munkareszek || []).map(m => Object.assign(m, { ajanlatban: !(m.ajanlatban === false || m.ajanlatban === 'FALSE' || m.ajanlatban === 'false'), sorrend: Number(m.sorrend) || 0 })) };
     saveCache(); S.lastErr = ''; S.loaded = true;
-    migrateData();
+    migrateData(); kukaLejart();
     const hianyzo = Object.keys(MATERIALS).filter(k => !arl[k]);
     if (hianyzo.length) enqueue('saveArak', { items: hianyzo.map(k => arRow(k, MATERIALS[k])) });
   } catch (e) {
@@ -252,7 +253,7 @@ function render() {
   if (!LOCAL && S.kodBeallitas) { nav.hidden = true; return renderKodBeallit(); }
   nav.hidden = false;
   const r = S.stack[S.stack.length - 1];
-  ({ kalk: renderKalk, calc: renderCalc, proj: (x) => renderUgyfelek(x), ugyfel: (x) => renderUgyfel(x), projekt: (x) => renderMegrendeles(x), munkaresz: (x) => renderMunkaresz(x), szamla: (x) => renderSzamla(x), ar: renderAr, tobb: renderTobb, ceg: (x) => renderCeg(x), ajanlat: (x) => renderAjanlat(x) }[r.v] || renderKalk)(r);
+  ({ kalk: renderKalk, calc: renderCalc, proj: (x) => renderUgyfelek(x), ugyfel: (x) => renderUgyfel(x), projekt: (x) => renderMegrendeles(x), munkaresz: (x) => renderMunkaresz(x), szamla: (x) => renderSzamla(x), kuka: () => renderKuka(), ar: renderAr, tobb: renderTobb, ceg: (x) => renderCeg(x), ajanlat: (x) => renderAjanlat(x) }[r.v] || renderKalk)(r);
 }
 
 function renderLogin() {
@@ -343,7 +344,7 @@ function renderCalc() {
   $('#ment').onclick = () => saveDialog(false);
   if (st.tetelId) {
     $('#ujkent').onclick = () => saveDialog(true);
-    $('#torol').onclick = () => { if (confirm('Biztosan törlöd ezt a tételt?')) { deleteTetel(st.tetelId); toast('Tétel törölve'); back(); } };
+    $('#torol').onclick = () => torlesKerdes('tetel', st.tetelId, () => back());
   }
   $('#alap').onclick = () => { st.v = defaults(c); LS.del('ek_utolso_' + c.id); renderForm(); renderMunka(); renderRes(); };
 }
@@ -535,7 +536,7 @@ function egyebDialog(mrId, t, pre) {
       upsertTetel(tt);
       closeModal(); render();
     };
-    if (t) $('#edel', m).onclick = () => { if (confirm('Törlöd ezt a tételt?')) { deleteTetel(t.id); closeModal(); render(); } };
+    if (t) $('#edel', m).onclick = () => torlesKerdes('tetel', t.id, () => { closeModal(); render(); });
   });
 }
 
@@ -674,6 +675,7 @@ function renderTobb() {
   h += '<div class="kv"><span>Ügyfelek / megrendelések / tételek</span><b>' + S.data.ugyfelek.length + ' / ' + S.data.projektek.length + ' / ' + S.data.tetelek.length + '</b></div></div>';
   h += '<div class="btns">' + (LOCAL ? '' : '<button class="btn wide" id="sync">⟳ Szinkron most</button><button class="btn wide" id="xall">⬇️ Teljes Excel</button>') + '</div>';
   h += '<h2>Árajánlat</h2><div class="card list"><div class="it" id="cegb"><span class="ic">🏢</span><div class="m"><b>Vállalkozói adatok és ajánlat-alapbeállítások</b><small>' + esc((S.data.ceg && S.data.ceg.nev) || 'Még nincs kitöltve – az árajánlat fejlécéhez kell') + '</small></div><span class="arrow">›</span></div></div>';
+  h += '<h2>Törölt elemek</h2><div class="card list"><div class="it" id="kukab"><span class="ic">🗑</span><div class="m"><b>Törölt elemek (' + ((S.data.kuka || []).length) + ')</b><small>30 napig visszaállíthatók</small></div><span class="arrow">›</span></div></div>';
   h += '<h2>Megjelenés</h2><div class="card"><div class="kv"><span>Téma</span><b>' + (document.documentElement.classList.contains('dark') ? 'Sötét' : 'Világos') + ' – a fejléc ' + (document.documentElement.classList.contains('dark') ? '☀️' : '🌙') + ' gombjával váltasz</b></div></div>';
   if (!LOCAL) h += '<h2>Belépés</h2><div class="btns"><button class="btn wide" id="kodmod">🔑 Kód módosítása</button></div><div class="btns"><button class="btn danger" id="kilep">Kilépés (kód törlése erről az eszközről)</button></div>';
   h += '<h2>Eszköz</h2><div class="btns"><button class="btn danger" id="cache">Helyi adatok törlése</button></div>';
@@ -690,6 +692,7 @@ function renderTobb() {
     $('#kilep').onclick = () => { if (confirm('Kilépsz? Az el nem küldött módosítások elvesznek.')) { S.queue = []; saveQueue(); logout(); } };
   }
   $('#cegb').onclick = () => go({ v: 'ceg' });
+  $('#kukab').onclick = () => go({ v: 'kuka' });
   $('#cache').onclick = () => {
     const msg = LOCAL ? 'Helyi módban ez MINDEN projektet és árat töröl erről az eszközről. Biztos?' : 'Törlöd a helyi gyorsítótárat? A Sheetben lévő adatok megmaradnak, újratöltjük őket.' + (S.queue.length ? ' FIGYELEM: ' + S.queue.length + ' el nem küldött módosítás elveszik!' : '');
     if (!confirm(msg)) return;

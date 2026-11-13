@@ -345,3 +345,8 @@ html.dark select{color-scheme:dark}
 .szakasz.felm .card{margin-bottom:6px}
 .hasznal{color:var(--pri)!important;font-weight:600}
 .list .it .btn.sm{flex:none}
+/* Balra húzásos törlés */
+.card.list{overflow:hidden}
+.list .it[data-del]{position:relative;background:var(--card);transition:transform .18s ease;touch-action:pan-y}
+.swipe-del{position:absolute;top:0;bottom:0;right:-92px;width:92px;border:0;background:var(--err);color:#fff;font-weight:700;font-size:13px;cursor:pointer}
+html.dark .swipe-del{color:#1a0d0b}

@@ -100,7 +100,7 @@ function renderUgyfelek() {
       return { u, ms, akt, last };
     }).sort((a, b) => (b.akt.length > 0) - (a.akt.length > 0) || String(b.last).localeCompare(String(a.last)));
     if (!us.length) h += '<div class="empty">' + (S.data.ugyfelek.length ? 'Nincs találat.' : 'Még nincs ügyfeled. Az „+ Új megrendelés” gombbal kezdj – az ügyfelet ott helyben felveheted.') + '</div>';
-    else h += '<div class="card list">' + us.map(x => '<div class="it" data-u="' + x.u.id + '"><span class="ic">👤</span><div class="m"><b>' + esc(x.u.nev) + (x.akt.length ? '<span class="pill">' + x.akt.length + ' aktív</span>' : '') + '</b><small>' + esc([telepules(x.u.cim), x.ms.length + ' megrendelés'].filter(Boolean).join(' · ')) + '</small></div><span class="arrow">›</span></div>').join('') + '</div>';
+    else h += '<div class="card list">' + us.map(x => '<div class="it" data-u="' + x.u.id + '" data-del="ugyfel|' + x.u.id + '"><span class="ic">👤</span><div class="m"><b>' + esc(x.u.nev) + (x.akt.length ? '<span class="pill">' + x.akt.length + ' aktív</span>' : '') + '</b><small>' + esc([telepules(x.u.cim), x.ms.length + ' megrendelés'].filter(Boolean).join(' · ')) + '</small></div><span class="arrow">›</span></div>').join('') + '</div>';
   } else {
     S.projFilter = S.projFilter || 'Aktív';
     const nFiz = S.data.projektek.filter(fizetesreVar).length;
@@ -122,7 +122,7 @@ function renderUgyfelek() {
 const telepules = (cim) => { const m = String(cim || '').match(/^\s*\d{4}\s+([^,]+)/); return m ? m[1].trim() : String(cim || '').split(',')[0].trim(); };
 function megrItem(p) {
   const ms = mrsOf(p).map(m => m.nev);
-  return '<div class="it" data-p="' + p.id + '"><div class="m"><b>' + esc(ugyfelNev(p)) + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + '</div><small>' + esc([p.sorszam, p.nev || ms.join(', ') || 'nincs munkarész', telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
+  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(ugyfelNev(p)) + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + '</div><small>' + esc([p.sorszam, p.nev || ms.join(', ') || 'nincs munkarész', telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
 }
 
 /* ---------- Ügyfél ---------- */
@@ -146,7 +146,7 @@ function renderUgyfel(r) {
 }
 function megrItemU(p) {
   const ms = mrsOf(p).map(m => m.nev);
-  return '<div class="it" data-p="' + p.id + '"><div class="m"><b>' + esc(p.nev || ms.join(', ') || 'Új megrendelés') + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + '</div><small>' + esc([p.sorszam, dateHu(p.letrehozva), telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
+  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(p.nev || ms.join(', ') || 'Új megrendelés') + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + '</div><small>' + esc([p.sorszam, dateHu(p.letrehozva), telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
 }
 function ugyfelDialog(u, after) {
   const uj = !u; const d = u ? Object.assign({}, u) : { id: uid('U'), nev: '', cim: '', tel: '', email: '', megj: '' };
@@ -179,8 +179,7 @@ function ugyfelDialog(u, after) {
         deleteUgyfel(d.id); closeModal(); S.stack = [{ v: 'proj' }, { v: 'ugyfel', id: cel.id }]; render(); toast('Összevonva');
       };
       $('#udel', m).onclick = () => {
-        if (ms.length) return toast('Előbb töröld vagy vond össze a megrendeléseit (' + ms.length + ' db)');
-        if (confirm('Törlöd ezt az ügyfelet?')) { deleteUgyfel(d.id); closeModal(); S.stack = [{ v: 'proj' }]; render(); }
+        torlesKerdes('ugyfel', d.id, () => { closeModal(); S.stack = [{ v: 'proj' }]; render(); });
       };
     }
   });
@@ -220,10 +219,7 @@ function megrendelesDialog(p, u) {
         upsertProjekt(d); closeModal(); render();
       }
     };
-    if (!uj) $('#mdel', m).onclick = () => {
-      const n = S.data.tetelek.filter(t => t.projektId === d.id).length;
-      if (confirm('Biztosan törlöd a(z) ' + d.sorszam + ' megrendelést' + (n ? ' és a ' + n + ' tételét' : '') + '? Ez nem vonható vissza.')) { deleteProjekt(d.id); closeModal(); toast('Megrendelés törölve'); back(); }
-    };
+    if (!uj) $('#mdel', m).onclick = () => torlesKerdes('megrendeles', d.id, () => { closeModal(); back(); });
   });
 }
 function allapotDialog(p) {
@@ -262,7 +258,7 @@ function renderMegrendeles(r) {
   if (!rooms.length) h += '<div class="small muted" style="padding:2px 4px 6px">Itt rögzíted a helyszíni felmérést: helyiségek, területek méretei, ablakok, ajtók. A munkák tételei ebből számolnak, és ha egy méret változik, minden hozzá kötött tétel frissül.</div>';
   else h += '<div class="card list">' + rooms.map(rm => {
     const mn = mrNevek(rm);
-    return '<div class="it" data-h="' + rm.id + '"><span class="ic">🏠</span><div class="m"><b>' + esc(rm.nev) + '</b><small>' + esc(roomSummary(rm)) + '</small>' +
+    return '<div class="it" data-h="' + rm.id + '" data-del="helyiseg|' + p.id + '|' + rm.id + '"><span class="ic">🏠</span><div class="m"><b>' + esc(rm.nev) + '</b><small>' + esc(roomSummary(rm)) + '</small>' +
       (mn.length ? '<small class="hasznal">🔗 ' + esc(mn.join(', ')) + '</small>' : '<div class="pills"><span class="pill warn">még nincs munka</span></div>') + '</div>' +
       (mn.length ? '<span class="arrow">›</span>' : '<button class="btn sm" data-start="' + rm.id + '">▶ Munka</button>') + '</div>';
   }).join('') + '</div>';
@@ -272,7 +268,7 @@ function renderMegrendeles(r) {
   if (!mrs.length) h += '<div class="empty">Még nincs munkarész. ' + (rooms.length ? 'A felmérésnél a „▶ Munka” gombbal indíthatsz egyet, vagy itt adj hozzá üresen, sablonból.' : 'Adj hozzá egyet üresen vagy sablonból – vagy kezdd a felméréssel.') + '</div>';
   else h += '<div class="card list">' + mrs.map(m => {
     const n = tetelekOfMr(m).length;
-    return '<div class="it" data-mr="' + m.id + '"><span class="ic">🧱</span><div class="m"><b>' + esc(m.nev) + (m.ajanlatban === false ? '<span class="pill gray">ajánlaton kívül</span>' : '') + '</b><small>' + n + ' tétel</small></div><div class="v">' + ft(mrKoltseg(m)) + '</div><span class="arrow">›</span></div>';
+    return '<div class="it" data-mr="' + m.id + '" data-del="munkaresz|' + m.id + '"><span class="ic">🧱</span><div class="m"><b>' + esc(m.nev) + (m.ajanlatban === false ? '<span class="pill gray">ajánlaton kívül</span>' : '') + '</b><small>' + n + ' tétel</small></div><div class="v">' + ft(mrKoltseg(m)) + '</div><span class="arrow">›</span></div>';
   }).join('') + '</div>';
   h += '</div>';
   if (sc.anyag.length) h += '<h2>Összesített anyaglista</h2><div class="card">' + matsTable(sc.anyag) + '</div>';
@@ -319,7 +315,7 @@ function renderMunkaresz(r) {
     const c = CALC_BY_ID[t.calc]; const cost = sumCost((t.mats || []).map(line)); const m0 = t.mats && t.mats[0];
     const room = roomById(p, tetelRoomId(t));
     const sub = t.calc === 'egyeb' ? (!m0 ? '' : m0.k === '_egyeb' ? fmt(m0.q) + ' ' + (m0.u || '') + ' × ' + ft(m0.p) : (line(m0).ptxt || line(m0).qtxt)) : (c ? c.n : t.calc) + (t.out && t.out[0] ? ' · ' + t.out[0][1] : '');
-    return '<div class="it" data-t="' + t.id + '"><span class="ic">' + (c ? c.i : '➕') + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc((room ? '🏠 ' + room.nev + ' · ' : '') + sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
+    return '<div class="it" data-t="' + t.id + '" data-del="tetel|' + t.id + '"><span class="ic">' + (c ? c.i : '➕') + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc((room ? '🏠 ' + room.nev + ' · ' : '') + sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
   };
   h += '<h2>Tételek</h2>' + (ts.length ? '<div class="card list">' + ts.map(tetelItem).join('') + '</div>' : '<div class="empty">Még nincs tétel ebben a munkarészben.' + (rooms.length ? '' : ' Tipp: a megrendelés Felmérés részében add meg a helyiségeket, és a kalkulátorok onnan veszik a méreteket.') + '</div>');
   if (sc.anyag.length) h += '<h2>Anyaglista</h2><div class="card">' + matsTable(sc.anyag) + '</div>';
@@ -338,7 +334,7 @@ function renderMunkaresz(r) {
   $('#addk').onclick = () => { S.targetMr = mr.id; setTab('kalk'); };
   $('#addm').onclick = () => egyebDialog(mr.id, null, 'md_ora');
   $('#adde').onclick = () => egyebDialog(mr.id, null);
-  $('#mrdel').onclick = () => { if (confirm('Törlöd a(z) „' + mr.nev + '” munkarészt' + (ts.length ? ' és a ' + ts.length + ' tételét' : '') + '?')) { deleteMunkaresz(mr.id); toast('Munkarész törölve'); back(); } };
+  $('#mrdel').onclick = () => torlesKerdes('munkaresz', mr.id, () => back());
   document.querySelectorAll('[data-t]').forEach(el => el.onclick = () => {
     const t = S.data.tetelek.find(x => x.id === el.dataset.t); if (!t) return;
     if (t.calc === 'egyeb') egyebDialog(mr.id, t); else openCalc(t.calc, t);

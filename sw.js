@@ -1,6 +1,6 @@
 // Építőkalkulátor service worker – az app offline is megnyílik
-const CACHE = 'epitokalk-1.2';
-const FILES = ['./', 'index.html', 'style.css?v=1.2', 'config.js?v=1.2', 'calc.js?v=1.2', 'app.js?v=1.2', 'szamologep.js?v=1.2', 'megrendeles.js?v=1.2', 'helyiseg.js?v=1.2', 'ajanlat.js?v=1.2', 'szamla.js?v=1.2', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+const CACHE = 'epitokalk-1.3';
+const FILES = ['./', 'index.html', 'style.css?v=1.3', 'config.js?v=1.3', 'calc.js?v=1.3', 'app.js?v=1.3', 'szamologep.js?v=1.3', 'megrendeles.js?v=1.3', 'helyiseg.js?v=1.3', 'ajanlat.js?v=1.3', 'szamla.js?v=1.3', 'kuka.js?v=1.3', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

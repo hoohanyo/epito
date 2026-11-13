@@ -72,12 +72,7 @@ function roomDialog(p, room, after) {
         closeModal(); if (after) after(d); else if (uj) mitCsinalunkDialog(p, d); else render();
         if (n) toast(n + ' tétel frissítve a helyiség alapján');
       };
-      if (!uj) $('#hdel', m).onclick = () => {
-        if (!confirm('Törlöd a(z) „' + d.nev + '” helyiséget?' + (linked ? ' A ' + linked + ' tétel megmarad, de már nem frissül a helyiségből.' : ''))) return;
-        p.helyisegek = roomsOf(p).filter(r => r.id !== d.id); upsertProjekt(p);
-        for (const t of S.data.tetelek.filter(t => t.projektId === p.id && tetelRoomId(t) === d.id)) { t.roomId = ''; if (t.values) delete t.values._room; upsertTetel(t); }
-        closeModal(); render();
-      };
+      if (!uj) $('#hdel', m).onclick = () => torlesKerdes('helyiseg', p.id + '|' + d.id, () => { closeModal(); render(); });
     });
   };
   show();
