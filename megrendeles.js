@@ -255,18 +255,26 @@ function renderMegrendeles(r) {
     (p.megj ? '<div class="small muted" style="margin-top:4px;white-space:pre-wrap">' + esc(p.megj) + '</div>' : '') +
     '<div class="btns" style="margin-bottom:0;margin-top:10px"><button class="btn sm" id="pedit">✏️ Adatok</button>' + (u ? '<button class="btn sm" id="pugy">👤 ' + esc(u.nev) + '</button>' : '') + '<button class="btn sm" id="pshare">🛒 Bevásárlólista</button></div></div>';
   h += '<div class="btns"><button class="btn pri wide" id="paj">📄 Árajánlat</button><button class="btn wide' + (p.allapot === 'Elfogadva' || p.allapot === 'Kész' ? ' pri' : '') + '" id="pszl">🧾 Számlázás</button></div>';
-  // munkarészek
-  h += '<div class="ghdr"><h2>Munkarészek</h2><button class="btn sm" id="addmr">+ Munkarész</button></div>';
-  if (!mrs.length) h += '<div class="empty">Még nincs munkarész. Adj hozzá egyet üresen vagy sablonból (pl. fürdőszoba-felújítás, szobafestés).</div>';
+  // 1. felmérés (helyiségek) – külön, keretes blokkban, a munkák előtt
+  const rooms = roomsOf(p);
+  const mrNevek = (rm) => [...new Set(ts.filter(t => tetelRoomId(t) === rm.id).map(t => (mrById(t.munkareszId) || {}).nev).filter(Boolean))];
+  h += '<div class="szakasz felm"><div class="ghdr"><h2>📐 Felmérés</h2><button class="btn sm" id="addh">+ Helyiség felmérése</button></div>';
+  if (!rooms.length) h += '<div class="small muted" style="padding:2px 4px 6px">Itt rögzíted a helyszíni felmérést: helyiségek, területek méretei, ablakok, ajtók. A munkák tételei ebből számolnak, és ha egy méret változik, minden hozzá kötött tétel frissül.</div>';
+  else h += '<div class="card list">' + rooms.map(rm => {
+    const mn = mrNevek(rm);
+    return '<div class="it" data-h="' + rm.id + '"><span class="ic">🏠</span><div class="m"><b>' + esc(rm.nev) + '</b><small>' + esc(roomSummary(rm)) + '</small>' +
+      (mn.length ? '<small class="hasznal">🔗 ' + esc(mn.join(', ')) + '</small>' : '<div class="pills"><span class="pill warn">még nincs munka</span></div>') + '</div>' +
+      (mn.length ? '<span class="arrow">›</span>' : '<button class="btn sm" data-start="' + rm.id + '">▶ Munka</button>') + '</div>';
+  }).join('') + '</div>';
+  h += '</div>';
+  // 2. munkák (munkarészek)
+  h += '<div class="szakasz"><div class="ghdr"><h2>🧱 Munkarészek</h2><button class="btn sm" id="addmr">+ Munkarész</button></div>';
+  if (!mrs.length) h += '<div class="empty">Még nincs munkarész. ' + (rooms.length ? 'A felmérésnél a „▶ Munka” gombbal indíthatsz egyet, vagy itt adj hozzá üresen, sablonból.' : 'Adj hozzá egyet üresen vagy sablonból – vagy kezdd a felméréssel.') + '</div>';
   else h += '<div class="card list">' + mrs.map(m => {
     const n = tetelekOfMr(m).length;
     return '<div class="it" data-mr="' + m.id + '"><span class="ic">🧱</span><div class="m"><b>' + esc(m.nev) + (m.ajanlatban === false ? '<span class="pill gray">ajánlaton kívül</span>' : '') + '</b><small>' + n + ' tétel</small></div><div class="v">' + ft(mrKoltseg(m)) + '</div><span class="arrow">›</span></div>';
   }).join('') + '</div>';
-  // helyiségek
-  const rooms = roomsOf(p);
-  h += '<div class="ghdr"><h2>Helyiségek, területek</h2><button class="btn sm" id="addh">+ Helyiség</button></div>';
-  if (!rooms.length) h += '<div class="empty small" style="padding:14px">A helyszín helyiségeit egyszer add meg – minden munkarész kalkulátora ebből számolhat, és módosításkor frissül.</div>';
-  else h += '<div class="card list">' + rooms.map(rm => { const n = ts.filter(t => tetelRoomId(t) === rm.id).length; return '<div class="it" data-h="' + rm.id + '"><span class="ic">🏠</span><div class="m"><b>' + esc(rm.nev) + '</b><small>' + esc(roomSummary(rm)) + (n ? ' · ' + n + ' tétel' : '') + '</small></div><span class="arrow">›</span></div>'; }).join('') + '</div>';
+  h += '</div>';
   if (sc.anyag.length) h += '<h2>Összesített anyaglista</h2><div class="card">' + matsTable(sc.anyag) + '</div>';
   h += fotokHtml(p);
   $('#view').innerHTML = h;
@@ -280,6 +288,7 @@ function renderMegrendeles(r) {
   $('#addmr').onclick = () => ujMunkareszDialog(p);
   $('#addh').onclick = () => roomDialog(p, null);
   document.querySelectorAll('[data-h]').forEach(el => el.onclick = () => roomDialog(p, roomById(p, el.dataset.h)));
+  document.querySelectorAll('[data-start]').forEach(b => b.onclick = (e) => { e.stopPropagation(); mitCsinalunkDialog(p, roomById(p, b.dataset.start)); });
   document.querySelectorAll('[data-mr]').forEach(el => el.onclick = () => go({ v: 'munkaresz', id: el.dataset.mr }));
 }
 function ujMunkareszDialog(p) {
@@ -312,7 +321,7 @@ function renderMunkaresz(r) {
     const sub = t.calc === 'egyeb' ? (!m0 ? '' : m0.k === '_egyeb' ? fmt(m0.q) + ' ' + (m0.u || '') + ' × ' + ft(m0.p) : (line(m0).ptxt || line(m0).qtxt)) : (c ? c.n : t.calc) + (t.out && t.out[0] ? ' · ' + t.out[0][1] : '');
     return '<div class="it" data-t="' + t.id + '"><span class="ic">' + (c ? c.i : '➕') + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc((room ? '🏠 ' + room.nev + ' · ' : '') + sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
   };
-  h += '<h2>Tételek</h2>' + (ts.length ? '<div class="card list">' + ts.map(tetelItem).join('') + '</div>' : '<div class="empty">Még nincs tétel ebben a munkarészben.' + (rooms.length ? '' : ' Tipp: a megrendelésnél add meg a helyiségeket, és a kalkulátorok onnan veszik a méreteket.') + '</div>');
+  h += '<h2>Tételek</h2>' + (ts.length ? '<div class="card list">' + ts.map(tetelItem).join('') + '</div>' : '<div class="empty">Még nincs tétel ebben a munkarészben.' + (rooms.length ? '' : ' Tipp: a megrendelés Felmérés részében add meg a helyiségeket, és a kalkulátorok onnan veszik a méreteket.') + '</div>');
   if (sc.anyag.length) h += '<h2>Anyaglista</h2><div class="card">' + matsTable(sc.anyag) + '</div>';
   if (sc.munka.length) h += '<h2>Munkadíjak</h2><div class="card">' + matsTable(sc.munka) + '</div>';
   if (sc.egyeb.length) h += '<h2>Egyéb tételek</h2><div class="card">' + matsTable(sc.egyeb) + '</div>';

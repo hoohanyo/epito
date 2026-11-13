@@ -48,7 +48,7 @@ function roomDialog(p, room, after) {
   const d = room ? JSON.parse(JSON.stringify(room)) : { id: uid('H'), nev: '', L: '', W: '', H: 2.6, nyl: [] };
   const linked = uj ? 0 : S.data.tetelek.filter(t => t.projektId === p.id && tetelRoomId(t) === d.id).length;
   const show = () => {
-    const h = '<h3>' + (uj ? 'Új helyiség' : 'Helyiség') + '</h3>' +
+    const h = '<h3>' + (uj ? 'Helyiség felmérése' : 'Felmérés: ' + esc(d.nev)) + '</h3>' +
       '<div class="fld"><label>Megnevezés</label><input id="hn" value="' + esc(d.nev) + '" placeholder="pl. Fürdőszoba, Nappali, Kocsibeálló"></div>' +
       '<div class="row2"><div class="fld"><label>Hossz (m)</label><input id="hL" inputmode="decimal" value="' + esc(numStr(d.L)) + '"></div><div class="fld"><label>Szélesség (m)</label><input id="hW" inputmode="decimal" value="' + esc(numStr(d.W)) + '"></div><div class="fld"><label>Belmagasság (m)</label><input id="hH" inputmode="decimal" value="' + esc(numStr(d.H)) + '"></div></div>' +
       '<div class="small muted" style="margin:-4px 0 10px">Kültéri területnél (pl. kocsibeálló) a belmagasság 0 is lehet.</div>' +
@@ -69,7 +69,7 @@ function roomDialog(p, room, after) {
         if (i >= 0) list[i] = d; else list.push(d);
         p.helyisegek = list; upsertProjekt(p);
         const n = recalcRoom(p, d);
-        closeModal(); if (after) after(d); else render();
+        closeModal(); if (after) after(d); else if (uj) mitCsinalunkDialog(p, d); else render();
         if (n) toast(n + ' tétel frissítve a helyiség alapján');
       };
       if (!uj) $('#hdel', m).onclick = () => {
@@ -109,7 +109,7 @@ function roomPickerHtml(c, v) {
   const p = S.calc && S.calc.projektId && S.data.projektek.find(x => x.id === S.calc.projektId);
   const rooms = roomsOf(p);
   if (!ROOM_MAP[c.id] || !rooms.length) return '';
-  return '<div class="f sel roompick"><label for="f__room">🏠 Méretek a helyiségből' + '<span class="help">Ha választasz, a helyiség módosításakor ez a tétel is frissül</span></label><select id="f__room"><option value="">– kézi megadás –</option>' +
+  return '<div class="f sel roompick"><label for="f__room">🏠 Méretek a felmérésből' + '<span class="help">Ha választasz, a felmérés módosításakor ez a tétel is frissül</span></label><select id="f__room"><option value="">– kézi megadás –</option>' +
     rooms.map(r => '<option value="' + r.id + '"' + (v._room === r.id ? ' selected' : '') + '>' + esc(r.nev) + ' (' + fmt(roomGeo(r).A, 2) + ' m²)</option>').join('') + '</select></div>';
 }
 function bindRoomPicker(c, v) {
@@ -128,7 +128,7 @@ const sablonKell = (sab) => sab.items.some(it => (it.calc && ROOM_MAP[it.calc]) 
 
 function sablonDialog(p) {
   const all = SABLONOK.map(s => Object.assign({ beepitett: true }, s)).concat(sajatSablonok());
-  const h = '<h3>Tételek sablonból</h3><p class="small muted" style="margin-top:-6px">A sablon egyszerre több tételt hoz létre. Utána bármelyik tétel szerkeszthető.</p>' +
+  const h = '<h3>Új munkarész sablonból</h3><p class="small muted" style="margin-top:-6px">A sablon új munkarészt nyit, benne az összes tétellel. Utána bármelyik tétel szerkeszthető.</p>' +
     '<div class="card list">' + all.map((s, i) => '<div class="it" data-s="' + i + '"><span class="ic">' + (s.i || '📋') + '</span><div class="m"><b>' + esc(s.n) + (s.beepitett ? '' : '<span class="pill">saját</span>') + '</b><small>' + esc(s.desc || s.items.map(x => x.nev).join(', ')) + '</small></div>' +
       (s.beepitett ? '<span class="arrow">›</span>' : '<button class="nydel" data-del="' + s.id + '" title="Sablon törlése">✕</button>') + '</div>').join('') + '</div>' +
     '<div class="btns"><button class="btn" id="sx">Mégse</button></div>';
@@ -143,7 +143,7 @@ function sablonRoomStep(p, sab) {
   const rooms = roomsOf(p);
   const h = '<h3>' + esc(sab.n) + '</h3><p class="small muted" style="margin-top:-6px">Melyik ' + (sab.kint ? 'területre' : 'helyiségre') + ' vonatkozik? A tételek ennek a méreteiből számolnak.</p>' +
     (rooms.length ? '<div class="card list">' + rooms.map(r => '<div class="it" data-r="' + r.id + '"><span class="ic">🏠</span><div class="m"><b>' + esc(r.nev) + '</b><small>' + esc(roomSummary(r)) + '</small></div><span class="arrow">›</span></div>').join('') + '</div>' : '') +
-    '<div class="btns"><button class="btn pri wide" id="sr_uj">+ Új ' + (sab.kint ? 'terület' : 'helyiség') + ' megadása</button><button class="btn" id="sr_x">Mégse</button></div>';
+    '<div class="btns"><button class="btn pri wide" id="sr_uj">+ Új ' + (sab.kint ? 'terület' : 'helyiség') + ' felmérése</button><button class="btn" id="sr_x">Mégse</button></div>';
   openModal(h, m => {
     $('#sr_x', m).onclick = closeModal;
     m.querySelectorAll('[data-r]').forEach(el => el.onclick = () => { closeModal(); applySablon(p, sab, roomById(p, el.dataset.r)); });
@@ -152,8 +152,9 @@ function sablonRoomStep(p, sab) {
 }
 function applySablon(p, sab, room) {
   let n = 0; const base = Date.now();
+  const mr = ujMunkaresz(p, sab.n + (room ? ' – ' + room.nev : ''));
   for (const it of sab.items) {
-    const t = { id: uid('T'), projektId: p.id, nev: it.nev, letrehozva: new Date(base + n).toISOString() };
+    const t = { id: uid('T'), projektId: p.id, munkareszId: mr.id, nev: it.nev, letrehozva: new Date(base + n).toISOString() };
     if (it.calc && CALC_BY_ID[it.calc]) {
       const c = CALC_BY_ID[it.calc];
       const v = Object.assign(defaults(c), it.v || {});
@@ -171,13 +172,13 @@ function applySablon(p, sab, room) {
     } else continue;
     upsertTetel(t); n++;
   }
-  S.stack = [{ v: 'proj' }, { v: 'projekt', id: p.id }]; S.tab = 'proj'; render();
-  toast(n + ' tétel létrehozva' + (room ? ' – ' + room.nev : ''));
+  S.tab = 'proj'; S.stack = [{ v: 'proj' }, { v: 'projekt', id: p.id }, { v: 'munkaresz', id: mr.id }]; render();
+  toast('„' + mr.nev + '” – ' + n + ' tétel létrehozva');
 }
 function saveAsSablon(p) {
-  const ts = S.data.tetelek.filter(t => t.projektId === p.id).sort((a, b) => String(a.letrehozva || '').localeCompare(String(b.letrehozva || '')));
-  if (!ts.length) return toast('A projektben nincs tétel');
-  const h = '<h3>Mentés sablonként</h3><p class="small muted" style="margin-top:-6px">A projekt ' + ts.length + ' tétele a beállításaival együtt sablon lesz. A méreteket alkalmazáskor a kiválasztott helyiségből veszi.</p>' +
+  const ts = tetelekOfMr(p);
+  if (!ts.length) return toast('A munkarészben nincs tétel');
+  const h = '<h3>Mentés sablonként</h3><p class="small muted" style="margin-top:-6px">A munkarész ' + ts.length + ' tétele a beállításaival együtt sablon lesz. A méreteket alkalmazáskor a kiválasztott helyiségből veszi.</p>' +
     '<div class="fld"><label>Sablon neve</label><input id="sn" value="' + esc(p.nev) + '"></div>' +
     '<div class="btns"><button class="btn pri wide" id="sok">Mentés</button><button class="btn" id="sx">Mégse</button></div>';
   openModal(h, m => {
@@ -282,6 +283,32 @@ function fotoDialog(p, i) {
       if (!LOCAL) enqueue('deleteFoto', { id: f.id, tid: f.tid });
       idbTry(IDB.del('f_' + f.id)); idbTry(IDB.del('f_' + f.tid));
       closeModal(); render();
+    };
+  });
+}
+
+/* ---------- Helyiség felmérése után: mit csinálunk benne? ---------- */
+function mitCsinalunkDialog(p, room) {
+  if (!room) return;
+  const all = SABLONOK.map(s => Object.assign({ beepitett: true }, s)).concat(sajatSablonok());
+  const h = '<h3>Mit csinálunk itt: ' + esc(room.nev) + '?</h3><p class="small muted" style="margin-top:-6px">' + esc(roomSummary(room)) + '</p>' +
+    '<div class="lgrp" style="padding-top:0">Munka indítása most</div><div class="card list">' +
+    all.map((s, i) => '<div class="it" data-s="' + i + '"><span class="ic">' + (s.i || '📋') + '</span><div class="m"><b>' + esc(s.n) + (s.beepitett ? '' : '<span class="pill">saját</span>') + '</b><small>' + esc(s.desc || s.items.map(x => x.nev).join(', ')) + '</small></div><span class="arrow">›</span></div>').join('') +
+    '<div class="it" data-ures="1"><span class="ic">＋</span><div class="m"><b>Üres munkarész</b><small>Saját tételekkel, a méreteket a felmérésből választod</small></div><span class="arrow">›</span></div></div>' +
+    '<div class="lgrp">Nem most</div><div class="card list">' +
+    '<div class="it" data-kesobb="1"><span class="ic">🗓</span><div class="m"><b>Későbbi munkához – külön megrendelésbe</b><small>Új megrendelés ' + esc(ugyfelNev(p)) + ' részére, saját ajánlattal; ide nem keveredik</small></div><span class="arrow">›</span></div>' +
+    '<div class="it" data-csak="1"><span class="ic">✓</span><div class="m"><b>Csak felmérés, a munkát később döntjük el</b><small>A helyiség itt marad „még nincs munka” jelöléssel</small></div></div></div>';
+  openModal(h, m => {
+    m.querySelectorAll('[data-s]').forEach(el => el.onclick = () => { closeModal(); applySablon(p, all[el.dataset.s], room); });
+    $('[data-ures]', m).onclick = () => { closeModal(); const mr = ujMunkaresz(p, room.nev); go({ v: 'munkaresz', id: mr.id }); };
+    $('[data-csak]', m).onclick = () => { closeModal(); render(); };
+    $('[data-kesobb]', m).onclick = () => {
+      const u = ugyfelOf(p) || ugyfelByNameOrNew('Névtelen ügyfél');
+      const np = ujMegrendeles(u, { hely: p.hely, nev: '', megj: '' });
+      np.helyisegek = [JSON.parse(JSON.stringify(room))]; upsertProjekt(np);
+      if (!S.data.tetelek.some(t => t.projektId === p.id && tetelRoomId(t) === room.id)) { p.helyisegek = roomsOf(p).filter(r => r.id !== room.id); upsertProjekt(p); }
+      closeModal(); S.tab = 'proj'; S.stack = [{ v: 'proj' }, { v: 'ugyfel', id: u.id }, { v: 'projekt', id: np.id }]; render();
+      toast('Új megrendelés: ' + np.sorszam + ' – a felmérés átkerült');
     };
   });
 }

@@ -339,3 +339,9 @@ html.dark .modal .sheet{background:#161a1f}
 html.dark .list .it .ic{background:#1f252c}
 html.dark input[type=date]{color-scheme:dark}
 html.dark select{color-scheme:dark}
+.szakasz{margin-top:18px}
+.szakasz.felm{background:var(--card2);border:1px solid var(--line);border-left:4px solid var(--pri);border-radius:var(--r);padding:4px 10px 6px;margin-left:-2px;margin-right:-2px}
+.szakasz.felm .ghdr{margin-top:8px}
+.szakasz.felm .card{margin-bottom:6px}
+.hasznal{color:var(--pri)!important;font-weight:600}
+.list .it .btn.sm{flex:none}
