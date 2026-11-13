@@ -1,6 +1,6 @@
 // Építőkalkulátor service worker – az app offline is megnyílik
-const CACHE = 'epitokalk-0.9';
-const FILES = ['./', 'index.html', 'style.css?v=0.9', 'config.js?v=0.9', 'calc.js?v=0.9', 'app.js?v=0.9', 'szamologep.js?v=0.9', 'helyiseg.js?v=0.9', 'ajanlat.js?v=0.9', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+const CACHE = 'epitokalk-1.1';
+const FILES = ['./', 'index.html', 'style.css?v=1.1', 'config.js?v=1.1', 'calc.js?v=1.1', 'app.js?v=1.1', 'szamologep.js?v=1.1', 'megrendeles.js?v=1.1', 'helyiseg.js?v=1.1', 'ajanlat.js?v=1.1', 'szamla.js?v=1.1', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
