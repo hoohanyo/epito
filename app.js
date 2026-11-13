@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '0.7';
+const APP_VERSION = '0.8';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -27,6 +27,7 @@ const S = {
   calc: null, targetProj: null, projFilter: 'Aktív', kalkKeres: '', arKeres: '',
 };
 if (!S.data.arlista) S.data.arlista = {};
+if (!S.data.ceg) S.data.ceg = {};
 const saveCache = () => LS.set('ek_cache', S.data);
 const saveQueue = () => LS.set('ek_queue', S.queue);
 
@@ -40,7 +41,11 @@ function mat(k) {
     pn: o.pn || d.pn, p: o.p === '' || o.p == null ? d.p : Number(o.p), megj: o.megj || ''
   });
 }
-function line(m) {
+const isMunkaKey = (k) => k !== '_egyeb' && mat(k).g === 'Munkadíj';
+const munkaKeys = () => allMatKeys().filter(isMunkaKey);
+function line(m) { const l = line0(m); l.cat = m.k === '_egyeb' ? (m.cat || 'egyeb') : isMunkaKey(m.k) ? 'munka' : 'anyag'; return l; }
+const splitCats = (ls) => ({ anyag: ls.filter(l => l.cat === 'anyag'), munka: ls.filter(l => l.cat === 'munka'), egyeb: ls.filter(l => l.cat === 'egyeb') });
+function line0(m) {
   if (m.k === '_egyeb') {
     const q = Number(m.q) || 0, p = Number(m.p) || 0;
     return { k: m.k, name: m.n || 'Egyéb tétel', q, u: m.u || '', packs: null, pn: '', price: p, cost: q * p, qtxt: fmt(q) + ' ' + (m.u || ''), ptxt: '' };
@@ -61,7 +66,7 @@ const mjPref = () => LS.get('ek_mj', 'm3');
 function aggregate(tetelek) {
   const map = new Map();
   for (const t of tetelek) for (const m of (t.mats || [])) {
-    const key = m.k === '_egyeb' ? '_e|' + (m.n || '') + '|' + (m.u || '') + '|' + (m.p || 0) : m.k;
+    const key = m.k === '_egyeb' ? '_e|' + (m.n || '') + '|' + (m.u || '') + '|' + (m.p || 0) + '|' + (m.cat || '') : m.k;
     const cur = map.get(key);
     if (cur) cur.q += Number(m.q) || 0; else map.set(key, Object.assign({}, m, { q: Number(m.q) || 0 }));
   }
@@ -107,7 +112,8 @@ async function load(force) {
     if (j.alapkod) { S.kodBeallitas = true; return; }
     const arl = {};
     for (const r of (j.arlista || [])) arl[r.kulcs] = { n: r.anyag, g: r.csoport, u: r.egyseg, pack: r.kiszereles, pn: r.kiszNev, p: r.ar, megj: r.megj };
-    S.data = { projektek: j.projektek || [], tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl };
+    const be = j.beallitas || {};
+    S.data = { ceg: safeJson(be.ceg, {}), logo: be.logo || '', projektek: (j.projektek || []).map(p => Object.assign(p, { aj: safeJson(p.aj, {}) })), tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl };
     saveCache(); S.lastErr = ''; S.loaded = true;
     const hianyzo = Object.keys(MATERIALS).filter(k => !arl[k]);
     if (hianyzo.length) enqueue('saveArak', { items: hianyzo.map(k => arRow(k, MATERIALS[k])) });
@@ -126,7 +132,7 @@ function upsertProjekt(p) {
   p.modositva = now(); if (!p.letrehozva) p.letrehozva = p.modositva;
   const i = S.data.projektek.findIndex(x => x.id === p.id);
   if (i >= 0) S.data.projektek[i] = p; else S.data.projektek.unshift(p);
-  saveCache(); enqueue('saveProjekt', { p });
+  saveCache(); enqueue('saveProjekt', { p: Object.assign({}, p, { aj: JSON.stringify(p.aj || {}), ajAllapot: (p.aj && p.aj.allapot) || '' }) });
 }
 function deleteProjekt(id) {
   S.data.projektek = S.data.projektek.filter(p => p.id !== id);
@@ -157,6 +163,8 @@ const isEgyedi = (k) => !MATERIALS[k];
 const allMatKeys = () => Object.keys(MATERIALS).concat(Object.keys(S.data.arlista).filter(k => isEgyedi(k) && S.data.arlista[k]));
 const allGroups = () => [...new Set(allMatKeys().map(k => mat(k).g))];
 function deleteAr(k) { delete S.data.arlista[k]; saveCache(); enqueue('deleteAr', { kulcs: k }); }
+function saveCeg(ceg) { S.data.ceg = ceg; saveCache(); enqueue('saveBeallitas', { kulcs: 'ceg', ertek: JSON.stringify(ceg) }); }
+function saveLogo(dataUrl) { S.data.logo = dataUrl || ''; saveCache(); enqueue('saveBeallitas', { kulcs: 'logo', ertek: S.data.logo }); }
 function saveAr(k, o) {
   S.data.arlista[k] = o; saveCache();
   enqueue('saveArak', { items: [arRow(k, mat(k))] });
@@ -165,7 +173,7 @@ function saveAr(k, o) {
 /* ---------- Navigáció ---------- */
 function go(route) { S.stack.push(route); history.pushState({ d: S.stack.length }, ''); render(); window.scrollTo(0, 0); }
 function back() { if (S.stack.length > 1) { S.stack.pop(); render(); } }
-window.addEventListener('popstate', () => { if (!$('#szg').hidden) { closeSzg(); return; } if (!$('#modal').hidden) { closeModal(); return; } back(); });
+window.addEventListener('popstate', () => { if (!$('#szg').hidden) { closeSzg(); return; } if ($('#quote') && !$('#quote').hidden) { closeQuote(); return; } if (!$('#modal').hidden) { closeModal(); return; } back(); });
 function setTab(tab) { S.tab = tab; S.stack = [{ v: tab }]; render(); window.scrollTo(0, 0); }
 document.querySelectorAll('nav.bottom button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
 $('#btnBack').onclick = () => back();
@@ -220,7 +228,7 @@ function render() {
   if (!LOCAL && S.kodBeallitas) { nav.hidden = true; return renderKodBeallit(); }
   nav.hidden = false;
   const r = S.stack[S.stack.length - 1];
-  ({ kalk: renderKalk, calc: renderCalc, proj: renderProj, projekt: renderProjekt, ar: renderAr, tobb: renderTobb }[r.v] || renderKalk)(r);
+  ({ kalk: renderKalk, calc: renderCalc, proj: renderProj, projekt: renderProjekt, ar: renderAr, tobb: renderTobb, ceg: (x) => renderCeg(x), ajanlat: (x) => renderAjanlat(x) }[r.v] || renderKalk)(r);
 }
 
 function renderLogin() {
@@ -300,19 +308,19 @@ function renderCalc() {
   const c = CALC_BY_ID[st.id];
   const p = st.projektId && S.data.projektek.find(x => x.id === st.projektId);
   setHeader(c.n, st.tetelId ? 'Tétel szerkesztése' + (p ? ' · ' + p.nev : '') : (p ? 'Projekt: ' + p.nev : ''));
-  let h = '<p class="desc">' + esc(c.desc) + '</p><div class="card" id="form"></div><div id="res"></div>';
+  let h = '<p class="desc">' + esc(c.desc) + '</p><div class="card" id="form"></div><div id="res"></div><div id="munka"></div><div id="calcTot"></div>';
   h += '<div class="btns"><button class="btn pri wide" id="ment">' + (st.tetelId ? 'Módosítás mentése' : 'Mentés projektbe') + '</button>' +
     (st.tetelId ? '<button class="btn" id="ujkent">Mentés újként</button>' : '') +
     '<button class="btn" id="alap">Alapértékek</button></div>';
   if (st.tetelId) h += '<div class="btns"><button class="btn danger" id="torol">Tétel törlése</button></div>';
   $('#view').innerHTML = h;
-  renderForm(); renderRes();
+  renderForm(); renderMunka(); renderRes();
   $('#ment').onclick = () => saveDialog(false);
   if (st.tetelId) {
     $('#ujkent').onclick = () => saveDialog(true);
     $('#torol').onclick = () => { if (confirm('Biztosan törlöd ezt a tételt?')) { deleteTetel(st.tetelId); toast('Tétel törölve'); back(); } };
   }
-  $('#alap').onclick = () => { st.v = defaults(c); LS.del('ek_utolso_' + c.id); renderForm(); renderRes(); };
+  $('#alap').onclick = () => { st.v = defaults(c); LS.del('ek_utolso_' + c.id); renderForm(); renderMunka(); renderRes(); };
 }
 function renderForm() {
   const st = S.calc, c = CALC_BY_ID[st.id], v = st.v;
@@ -377,21 +385,64 @@ function openNyilas(fid) {
     $('#nyok', m).onclick = () => {
       rows = rows.filter(r => nz(r.sz) > 0 && nz(r.m) > 0 && nz(r.db) > 0);
       const st = nyStats({ nyl: rows });
-      v.nyl = rows; v[fid] = Math.round(st.m2 * 100) / 100;
+      const fdef = CALC_BY_ID[S.calc.id].fields.find(f => f.id === fid);
+      v.nyl = rows; v[fid] = Math.round((fdef && fdef.nyHelp === 'ajto' ? st.ajtoSz : st.m2) * 100) / 100;
       remember(); closeModal(); renderForm(); renderRes();
     };
     draw(m);
   });
 }
 function remember() { if (S.calc && !S.calc.tetelId) LS.set('ek_utolso_' + S.calc.id, S.calc.v); }
+// Teljes eredmény: anyagok + (ha be van kapcsolva) a kalkulációhoz tartozó munkadíj
+function fullResult(c, v) {
+  const r = computeSafe(c, v);
+  r.munka = null;
+  if (c.md && v.mdOn !== false) {
+    const key = v.mdK && mat(v.mdK) && isMunkaKey(v.mdK) ? v.mdK : c.md; const P = mat(key);
+    let mq = [0, '']; try { mq = c.mq(v); } catch (e) {}
+    const auto = P.u === mq[1];
+    const q = Math.round((auto ? mq[0] : nz(v.mdQ)) * 100) / 100;
+    r.munka = { key, q, u: P.u, auto, mq };
+    if (q > 0) r.mats = r.mats.concat([{ k: key, q }]);
+  }
+  return r;
+}
+function renderMunka() {
+  const st = S.calc, c = CALC_BY_ID[st.id], v = st.v, box = $('#munka');
+  if (!box) return;
+  if (!c.md) { box.innerHTML = ''; return; }
+  const on = v.mdOn !== false; const key = v.mdK && isMunkaKey(v.mdK) ? v.mdK : c.md; const P = mat(key);
+  let mq = [0, '']; try { mq = c.mq(v); } catch (e) {}
+  let h = '<h2>Munkadíj</h2><div class="card">' +
+    '<div class="f"><label for="mdOn">Munkadíj számolása ehhez a tételhez</label><label class="sw"><input type="checkbox" id="mdOn"' + (on ? ' checked' : '') + '><i></i></label></div>';
+  if (on) {
+    h += '<div class="f sel"><label for="mdK">Díjtétel</label><select id="mdK">' + munkaKeys().map(k => '<option value="' + k + '"' + (k === key ? ' selected' : '') + '>' + esc(mat(k).n) + ' (' + ft(mat(k).p) + '/' + esc(mat(k).u) + ')</option>').join('') + '</select></div>';
+    if (P.u !== mq[1]) h += '<div class="f"><label for="mdQ">Mennyiség</label><span class="in"><input id="mdQ" inputmode="decimal" value="' + esc(numStr(v.mdQ)) + '"><span class="u">' + esc(P.u) + '</span></span></div>';
+    h += '<div class="small muted" id="mdInfo" style="padding-top:8px"></div>';
+  }
+  box.innerHTML = h + '</div>';
+  $('#mdOn').onchange = (e) => { v.mdOn = e.target.checked; remember(); renderMunka(); renderRes(); };
+  if (on) {
+    $('#mdK').onchange = (e) => { v.mdK = e.target.value; remember(); renderMunka(); renderRes(); };
+    const q = $('#mdQ'); if (q) { q.oninput = () => { v.mdQ = parseNum(q.value); remember(); renderRes(); }; q.onfocus = () => q.select(); }
+  }
+}
 function computeSafe(c, v) { try { return c.compute(v); } catch (e) { console.error(e); return { out: [['Hiba', 'Ellenőrizd a megadott értékeket']], mats: [], warn: [] }; } }
 function renderRes() {
   const st = S.calc, c = CALC_BY_ID[st.id];
-  const r = computeSafe(c, st.v); st.r = r;
+  const r = fullResult(c, st.v); st.r = r;
   let h = '<h2>Eredmény</h2><div class="card res">' + r.out.map(o => '<div class="row"><span>' + esc(o[0]) + '</span><b>' + esc(o[1]) + '</b></div>').join('') + '</div>';
   for (const w of r.warn) h += '<div class="warn">' + esc(w) + '</div>';
-  if (r.mats.length) h += '<h2>Anyagok és költség</h2><div class="card">' + matsTable(r.mats.map(line)) + '</div>';
+  const ls = r.mats.map(line); const sc = splitCats(ls);
+  if (sc.anyag.length) h += '<h2>Anyagok és költség</h2><div class="card">' + matsTable(sc.anyag) + '</div>';
   $('#res').innerHTML = h;
+  const info = $('#mdInfo');
+  if (info && r.munka) {
+    const P = mat(r.munka.key);
+    info.innerHTML = (r.munka.auto ? 'A kalkulációból: ' : '') + fmt(r.munka.q) + ' ' + esc(P.u) + ' × ' + ft(P.p) + ' = <b style="color:var(--text)">' + ft(r.munka.q * P.p) + '</b>' + (P.p ? '' : ' – <span class="noprice">nincs díj megadva (Árlista → Munkadíj)</span>');
+  }
+  const tot = $('#calcTot');
+  if (tot) tot.innerHTML = sc.munka.length && sc.anyag.length ? '<div class="card hero"><div class="total"><span>Anyag + munkadíj</span><b>' + ft(sumCost(ls)) + '</b></div><div class="small muted" style="margin-top:4px">Anyag ' + ft(sumCost(sc.anyag)) + ' · munkadíj ' + ft(sumCost(sc.munka)) + '</div></div>' : '';
 }
 function saveDialog(asNew) {
   const st = S.calc, c = CALC_BY_ID[st.id];
@@ -411,7 +462,7 @@ function saveDialog(asNew) {
         const n = $('#mpn', m).value.trim(); if (!n) { $('#mpn', m).focus(); return; }
         const p = { id: uid('P'), nev: n, hely: '', megj: '', allapot: 'Aktív' }; upsertProjekt(p); pid = p.id;
       }
-      const r = computeSafe(c, st.v);
+      const r = fullResult(c, st.v);
       const t = { id: st.tetelId && !asNew ? st.tetelId : uid('T'), projektId: pid, calc: c.id, nev: $('#mn', m).value.trim() || c.n, values: Object.assign({}, st.v), mats: r.mats.map(x => ({ k: x.k, q: round3(x.q) })), out: r.out };
       const old = st.tetelId && !asNew && S.data.tetelek.find(x => x.id === st.tetelId);
       if (old) t.letrehozva = old.letrehozva;
@@ -437,7 +488,8 @@ function renderProj() {
   if (!ps.length) h += '<div class="empty">' + (S.data.projektek.length ? 'Ebben a nézetben nincs projekt.' : 'Még nincs projekted. Hozz létre egyet, vagy egy kalkulációnál nyomd meg a „Mentés projektbe” gombot.') + '</div>';
   else h += '<div class="card list">' + ps.map(p => {
     const n = S.data.tetelek.filter(t => t.projektId === p.id).length;
-    return '<div class="it" data-p="' + p.id + '"><div class="m"><b>' + esc(p.nev) + (p.allapot === 'Lezárt' ? '<span class="pill gray">lezárt</span>' : '') + '</b><small>' + esc([p.hely, n + ' tétel', dateHu(p.modositva)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(projKoltseg(p.id)) + '</div><span class="arrow">›</span></div>';
+    const ajs = p.aj && p.aj.allapot && p.aj.allapot !== 'Tervezet' ? '<span class="pill' + (p.aj.allapot === 'Elfogadva' ? ' ok' : p.aj.allapot === 'Elutasítva' ? ' gray' : '') + '">' + esc(p.aj.allapot) + '</span>' : '';
+    return '<div class="it" data-p="' + p.id + '"><div class="m"><b>' + esc(p.nev) + (p.allapot === 'Lezárt' ? '<span class="pill gray">lezárt</span>' : '') + ajs + '</b><small>' + esc([p.hely, n + ' tétel', dateHu(p.modositva)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(projKoltseg(p.id)) + '</div><span class="arrow">›</span></div>';
   }).join('') + '</div>';
   $('#view').innerHTML = h;
   $('#uj').onclick = () => projDialog(null);
@@ -449,7 +501,11 @@ function projDialog(p) {
   const h = '<h3>' + (uj ? 'Új projekt' : 'Projekt adatai') + '</h3>' +
     '<div class="fld"><label>Név</label><input id="pn" value="' + esc(p.nev) + '" placeholder="pl. Fürdőszoba felújítás"></div>' +
     '<div class="fld"><label>Helyszín</label><input id="ph" value="' + esc(p.hely) + '" placeholder="pl. Maglód, otthon"></div>' +
-    '<div class="fld"><label>Megjegyzés</label><textarea id="pm">' + esc(p.megj) + '</textarea></div>' +
+    '<div class="fld"><label>Megjegyzés / a munka leírása</label><textarea id="pm">' + esc(p.megj) + '</textarea></div>' +
+    '<h2 style="margin-top:16px">Megrendelő</h2>' +
+    '<div class="fld"><label>Név</label><input id="mrn" value="' + esc(p.megrNev || '') + '" placeholder="pl. Kovács János"></div>' +
+    '<div class="fld"><label>Cím</label><input id="mrc" value="' + esc(p.megrCim || '') + '"></div>' +
+    '<div class="row2"><div class="fld"><label>Telefon</label><input id="mrt" inputmode="tel" value="' + esc(p.megrTel || '') + '"></div><div class="fld"><label>E-mail</label><input id="mre" inputmode="email" value="' + esc(p.megrEmail || '') + '"></div></div>' +
     (uj ? '' : '<div class="fld"><label>Állapot</label><select id="pa"><option' + (p.allapot !== 'Lezárt' ? ' selected' : '') + '>Aktív</option><option' + (p.allapot === 'Lezárt' ? ' selected' : '') + '>Lezárt</option></select></div>') +
     '<div class="btns"><button class="btn pri wide" id="pok">Mentés</button><button class="btn" id="px">Mégse</button></div>' +
     (uj ? '' : '<div class="btns"><button class="btn danger" id="pdel">Projekt törlése</button></div>');
@@ -457,7 +513,7 @@ function projDialog(p) {
     $('#px', m).onclick = closeModal;
     $('#pok', m).onclick = () => {
       const n = $('#pn', m).value.trim(); if (!n) { $('#pn', m).focus(); return; }
-      Object.assign(p, { nev: n, hely: $('#ph', m).value.trim(), megj: $('#pm', m).value.trim() });
+      Object.assign(p, { nev: n, hely: $('#ph', m).value.trim(), megj: $('#pm', m).value.trim(), megrNev: $('#mrn', m).value.trim(), megrCim: $('#mrc', m).value.trim(), megrTel: $('#mrt', m).value.trim(), megrEmail: $('#mre', m).value.trim() });
       if (!uj) p.allapot = $('#pa', m).value;
       upsertProjekt(p); closeModal();
       if (uj) go({ v: 'projekt', id: p.id }); else render();
@@ -474,10 +530,13 @@ function renderProjekt(r) {
   const ts = S.data.tetelek.filter(t => t.projektId === p.id).sort((a, b) => String(a.letrehozva || '').localeCompare(String(b.letrehozva || '')));
   const agg = aggregate(ts);
   setHeader(p.nev, [p.hely, p.allapot === 'Lezárt' ? 'lezárt' : ''].filter(Boolean).join(' · '));
-  let h = '<div class="card hero"><div class="total"><span>Becsült anyagköltség</span><b>' + ft(sumCost(agg)) + '</b></div>' +
+  const sc = splitCats(agg);
+  let h = '<div class="card hero"><div class="total"><span>Becsült összköltség</span><b>' + ft(sumCost(agg)) + '</b></div>' +
+    '<div class="small muted" style="margin-top:4px">Anyag ' + ft(sumCost(sc.anyag)) + ' · munkadíj ' + ft(sumCost(sc.munka)) + (sc.egyeb.length ? ' · egyéb ' + ft(sumCost(sc.egyeb)) : '') + ' <span style="opacity:.7">(nettó)</span></div>' +
     (p.megj ? '<div class="small muted" style="margin-top:6px;white-space:pre-wrap">' + esc(p.megj) + '</div>' : '') +
     '<div class="btns" style="margin-bottom:0;margin-top:10px"><button class="btn sm" id="pedit">✏️ Adatok</button><button class="btn sm" id="pxls">⬇️ Excel</button><button class="btn sm" id="pshare">🛒 Bevásárlólista</button></div></div>';
-  h += '<div class="btns"><button class="btn pri wide" id="addk">+ Kalkuláció</button><button class="btn wide" id="adde">+ Egyéb tétel</button></div>';
+  h += '<div class="btns"><button class="btn pri wide" id="paj">📄 Árajánlat készítése</button></div>';
+  h += '<div class="btns"><button class="btn sm wide" id="addk">+ Kalkuláció</button><button class="btn sm wide" id="addm">+ Munkadíj</button><button class="btn sm wide" id="adde">+ Egyéb</button></div>';
   h += '<h2>Tételek</h2>';
   if (!ts.length) h += '<div class="empty">Még nincs tétel. Adj hozzá egy kalkulációt, vagy egyéb tételt (pl. fuvar, szerszámbérlés).</div>';
   else h += '<div class="card list">' + ts.map(t => {
@@ -486,11 +545,15 @@ function renderProjekt(r) {
     const sub = t.calc === 'egyeb' ? (!m0 ? '' : m0.k === '_egyeb' ? fmt(m0.q) + ' ' + (m0.u || '') + ' × ' + ft(m0.p) : (line(m0).ptxt || line(m0).qtxt) + ' · árlistából') : (c ? c.n : t.calc) + (t.out && t.out[0] ? ' · ' + t.out[0][1] : '');
     return '<div class="it" data-t="' + t.id + '"><span class="ic">' + (c ? c.i : '➕') + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc(sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
   }).join('') + '</div>';
-  if (agg.length) h += '<h2>Összesített anyaglista</h2><div class="card">' + matsTable(agg) + '<div class="small muted" style="margin-top:6px">Azonos anyagok összevonva; a kiszerelésre kerekítés az összegből történik, ezért kevesebb lehet, mint a tételek összege.</div></div>';
+  if (sc.anyag.length) h += '<h2>Összesített anyaglista</h2><div class="card">' + matsTable(sc.anyag) + '<div class="small muted" style="margin-top:6px">Azonos anyagok összevonva; a kiszerelésre kerekítés az összegből történik, ezért kevesebb lehet, mint a tételek összege.</div></div>';
+  if (sc.munka.length) h += '<h2>Munkadíjak</h2><div class="card">' + matsTable(sc.munka) + '</div>';
+  if (sc.egyeb.length) h += '<h2>Egyéb tételek</h2><div class="card">' + matsTable(sc.egyeb) + '</div>';
   $('#view').innerHTML = h;
   $('#pedit').onclick = () => projDialog(p);
   $('#pxls').onclick = () => exportProjekt(p);
-  $('#pshare').onclick = () => shareList(p, agg);
+  $('#pshare').onclick = () => shareList(p, sc.anyag);
+  $('#paj').onclick = () => go({ v: 'ajanlat', id: p.id });
+  $('#addm').onclick = () => egyebDialog(p.id, null, 'md_ora');
   $('#addk').onclick = () => { S.targetProj = p.id; setTab('kalk'); };
   $('#adde').onclick = () => egyebDialog(p.id, null);
   document.querySelectorAll('[data-t]').forEach(el => el.onclick = () => {
@@ -501,13 +564,14 @@ function renderProjekt(r) {
 function matOptions(sel) {
   return allGroups().map(g => '<optgroup label="' + esc(g) + '">' + allMatKeys().filter(k => mat(k).g === g).map(k => '<option value="' + k + '"' + (k === sel ? ' selected' : '') + '>' + esc(mat(k).n) + '</option>').join('') + '</optgroup>').join('');
 }
-function egyebDialog(pid, t) {
-  const m0 = t && t.mats[0] || { k: '_egyeb', n: '', q: 1, u: 'db', p: 0 };
-  const h = '<h3>' + (t ? 'Egyéb tétel' : 'Új egyéb tétel') + '</h3>' +
+function egyebDialog(pid, t, pre) {
+  const m0 = t && t.mats[0] || { k: pre || '_egyeb', n: '', q: 1, u: 'db', p: 0 };
+  const h = '<h3>' + (t ? 'Tétel' : pre ? 'Új munkadíj tétel' : 'Új egyéb tétel') + '</h3>' +
     '<div class="fld"><label>Forrás</label><select id="es"><option value="_egyeb"' + (m0.k === '_egyeb' ? ' selected' : '') + '>Kézi tétel (fuvar, bérlés, munkadíj…)</option>' + matOptions(m0.k) + '</select></div>' +
     '<div class="fld"><label>Megnevezés</label><input id="en" value="' + esc(t ? t.nev : '') + '" placeholder="pl. Fuvardíj, konténer, szerszámbérlés"></div>' +
     '<div class="row2"><div class="fld"><label>Mennyiség</label><input id="eq" inputmode="decimal" value="' + esc(numStr(m0.q)) + '"></div><div class="fld" id="euw"><label>Egység</label><input id="eu" value="' + esc(m0.u || '') + '" list="egysegek"></div></div>' +
     '<datalist id="egysegek"><option>db</option><option>alkalom</option><option>óra</option><option>nap</option><option>m²</option><option>fm</option><option>m³</option><option>t</option><option>kg</option><option>l</option></datalist>' +
+    '<div class="fld" id="ecw"><label>Jellege</label><select id="ec"><option value="egyeb"' + (m0.cat !== 'munka' ? ' selected' : '') + '>Egyéb (anyag, fuvar, bérlés…)</option><option value="munka"' + (m0.cat === 'munka' ? ' selected' : '') + '>Munkadíj</option></select></div>' +
     '<div class="fld" id="epw"><label>Egységár (Ft)</label><input id="ep" inputmode="numeric" value="' + (m0.p ? dotted(m0.p) : '') + '"></div>' +
     '<div class="small muted" id="einfo" style="margin:-4px 0 10px"></div>' +
     '<div class="btns"><button class="btn pri wide" id="eok">Mentés</button><button class="btn" id="ex">Mégse</button></div>' +
@@ -517,7 +581,7 @@ function egyebDialog(pid, t) {
     let elozo = m0.k;
     const frissit = () => {
       const k = $('#es', m).value, kezi = k === '_egyeb';
-      $('#euw', m).hidden = !kezi; $('#epw', m).hidden = !kezi;
+      $('#euw', m).hidden = !kezi; $('#epw', m).hidden = !kezi; $('#ecw', m).hidden = !kezi;
       if (kezi) { $('#einfo', m).textContent = ''; }
       else {
         const P = mat(k), en = $('#en', m);
@@ -534,7 +598,7 @@ function egyebDialog(pid, t) {
       const n = $('#en', m).value.trim() || (k !== '_egyeb' ? mat(k).n : ''); if (!n) { $('#en', m).focus(); return; }
       const q = Number(parseNum($('#eq', m).value)) || 0;
       let mats, out;
-      if (k === '_egyeb') { const u = $('#eu', m).value.trim(), pr = priceVal($('#ep', m)); mats = [{ k: '_egyeb', n, q, u, p: pr }]; out = [['Mennyiség', fmt(q) + ' ' + u], ['Egységár', ft(pr)]]; }
+      if (k === '_egyeb') { const u = $('#eu', m).value.trim(), pr = priceVal($('#ep', m)); mats = [{ k: '_egyeb', n, q, u, p: pr, cat: $('#ec', m).value }]; out = [['Mennyiség', fmt(q) + ' ' + u], ['Egységár', ft(pr)]]; }
       else { mats = [{ k, q }]; out = [['Mennyiség', fmt(q) + ' ' + mat(k).u]]; }
       upsertTetel({ id: t ? t.id : uid('T'), projektId: pid, calc: 'egyeb', nev: n, values: {}, mats, out, letrehozva: t ? t.letrehozva : '' });
       closeModal(); render();
@@ -676,6 +740,7 @@ function renderTobb() {
   else h += '<div class="kv"><span>Mód</span><b>Google Sheet</b></div><div class="kv"><span>Állapot</span><b>' + esc(S.syncing ? 'Szinkronizál…' : S.queue.length ? S.queue.length + ' módosítás várakozik' : S.lastErr || 'Minden mentve') + '</b></div>';
   h += '<div class="kv"><span>Projektek / tételek</span><b>' + S.data.projektek.length + ' / ' + S.data.tetelek.length + '</b></div></div>';
   h += '<div class="btns">' + (LOCAL ? '' : '<button class="btn wide" id="sync">⟳ Szinkron most</button><button class="btn wide" id="xall">⬇️ Teljes Excel</button>') + '</div>';
+  h += '<h2>Árajánlat</h2><div class="card list"><div class="it" id="cegb"><span class="ic">🏢</span><div class="m"><b>Vállalkozói adatok és ajánlat-alapbeállítások</b><small>' + esc((S.data.ceg && S.data.ceg.nev) || 'Még nincs kitöltve – az árajánlat fejlécéhez kell') + '</small></div><span class="arrow">›</span></div></div>';
   h += '<h2>Megjelenés</h2><div class="card"><div class="kv"><span>Téma</span><b>' + (document.documentElement.classList.contains('dark') ? 'Sötét' : 'Világos') + ' – a fejléc ' + (document.documentElement.classList.contains('dark') ? '☀️' : '🌙') + ' gombjával váltasz</b></div></div>';
   if (!LOCAL) h += '<h2>Belépés</h2><div class="btns"><button class="btn wide" id="kodmod">🔑 Kód módosítása</button></div><div class="btns"><button class="btn danger" id="kilep">Kilépés (kód törlése erről az eszközről)</button></div>';
   h += '<h2>Eszköz</h2><div class="btns"><button class="btn danger" id="cache">Helyi adatok törlése</button></div>';
@@ -691,11 +756,12 @@ function renderTobb() {
     });
     $('#kilep').onclick = () => { if (confirm('Kilépsz? Az el nem küldött módosítások elvesznek.')) { S.queue = []; saveQueue(); logout(); } };
   }
+  $('#cegb').onclick = () => go({ v: 'ceg' });
   $('#cache').onclick = () => {
     const msg = LOCAL ? 'Helyi módban ez MINDEN projektet és árat töröl erről az eszközről. Biztos?' : 'Törlöd a helyi gyorsítótárat? A Sheetben lévő adatok megmaradnak, újratöltjük őket.' + (S.queue.length ? ' FIGYELEM: ' + S.queue.length + ' el nem küldött módosítás elveszik!' : '');
     if (!confirm(msg)) return;
     Object.keys(localStorage).filter(k => k.startsWith('ek_') && k !== 'ek_kod' && k !== 'ek_tema').forEach(k => localStorage.removeItem(k));
-    S.data = { projektek: [], tetelek: [], arlista: {} }; S.queue = [];
+    S.data = { projektek: [], tetelek: [], arlista: {}, ceg: LOCAL ? {} : S.data.ceg, logo: LOCAL ? '' : S.data.logo }; S.queue = [];
     if (LOCAL) render(); else load(true);
   };
 }

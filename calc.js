@@ -116,6 +116,32 @@ const MATERIALS = {
   terasz_gerenda:{ n: 'Terasz alátétgerenda', g: 'Fa', u: 'fm', pack: 0, pn: 'fm', p: 1700 },
   facsavar:     { n: 'Facsavar', g: 'Fa', u: 'db', pack: 200, pn: 'doboz (200 db)', p: 4500 },
   fureszaru:    { n: 'Fűrészáru', g: 'Fa', u: 'm³', pack: 0, pn: 'm³', p: 190000 },
+  // Munkadíjak (minta árak – írd át a sajátodra). A "Munkadíj" csoport tételei munkadíjként számítanak.
+  md_ora:       { n: 'Szakmunka (óradíj)', g: 'Munkadíj', u: 'óra', pack: 0, pn: 'óra', p: 8000 },
+  md_segedora:  { n: 'Segédmunka (óradíj)', g: 'Munkadíj', u: 'óra', pack: 0, pn: 'óra', p: 5000 },
+  md_nap:       { n: 'Napidíj (1 fő)', g: 'Munkadíj', u: 'nap', pack: 0, pn: 'nap', p: 55000 },
+  md_kiszallas: { n: 'Kiszállás', g: 'Munkadíj', u: 'alkalom', pack: 0, pn: 'alkalom', p: 10000 },
+  md_km:        { n: 'Kiszállás km-díj', g: 'Munkadíj', u: 'km', pack: 0, pn: 'km', p: 150 },
+  md_bontas:    { n: 'Bontás', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 3000 },
+  md_sitt:      { n: 'Sittszállítás (konténer)', g: 'Munkadíj', u: 'alkalom', pack: 0, pn: 'alkalom', p: 60000 },
+  md_beton:     { n: 'Betonozás', g: 'Munkadíj', u: 'm³', pack: 0, pn: 'm³', p: 30000 },
+  md_esztrich:  { n: 'Aljzatkészítés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 3500 },
+  md_falazas:   { n: 'Falazás', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 9000 },
+  md_zsaluko:   { n: 'Zsalukő fal építése', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 10000 },
+  md_vakolas:   { n: 'Vakolás', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 4500 },
+  md_festes:    { n: 'Glettelés, festés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 3000 },
+  md_gipszkarton:{ n: 'Gipszkarton szerelés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 8000 },
+  md_burkolas:  { n: 'Burkolás', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 9000 },
+  md_vizszig:   { n: 'Vízszigetelés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 4000 },
+  md_homlokzat: { n: 'Homlokzati hőszigetelés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 9000 },
+  md_fodem:     { n: 'Födém-, tetőszigetelés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 1800 },
+  md_teto:      { n: 'Tetőfedés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 6500 },
+  md_eresz:     { n: 'Ereszcsatorna szerelés', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 3500 },
+  md_terko:     { n: 'Térkövezés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 8000 },
+  md_teritese:  { n: 'Ömlesztett anyag terítése', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 1500 },
+  md_kerites:   { n: 'Kerítésépítés', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 7000 },
+  md_deszka:    { n: 'Deszkaburkolat szerelés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 8000 },
+  md_terasz:    { n: 'Teraszépítés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 12000 },
   lazur:        { n: 'Fa felületkezelő (lazúr/olaj)', g: 'Fa', u: 'l', pack: 2.5, pn: 'doboz (2,5 l)', p: 10000 },
 };
 
@@ -149,7 +175,7 @@ function TQ(t, k, mode) {
 
 /* ---------- Nyílások (ablak, ajtó) listája ----------
    v.nyl = [{ t, sz (cm), m (cm), db }] – a "Nyílások" segédablak tölti ki */
-const NY_TYPES = [['ablak', 'Ablak', 120, 150], ['ajto', 'Ajtó', 90, 210], ['erkely', 'Erkélyajtó', 90, 210], ['kapu', 'Garázskapu', 250, 210], ['egyeb', 'Egyéb nyílás', 100, 100]];
+const NY_TYPES = [['ablak', 'Ablak', 120, 150], ['ajto', 'Ajtó', 90, 210], ['erkely', 'Erkélyajtó', 90, 210], ['kapu', 'Garázskapu', 250, 210], ['tetoablak', 'Tetőablak', 78, 118], ['egyeb', 'Egyéb nyílás', 100, 100]];
 const NY_AJTO = { ajto: 1, erkely: 1, kapu: 1 };
 function nyStats(v) {
   const L = Array.isArray(v.nyl) ? v.nyl : [];
@@ -161,6 +187,18 @@ function nyStats(v) {
     else st.kavaKer += 2 * (sz + m) * db;
   }
   return st;
+}
+
+// Káva (ablak/ajtó bélése) – a nyíláslistából
+const kavaFields = (mely, cimke) => [
+  C('kava', cimke || 'Kávák (ablak-, ajtóbéllet) is', false),
+  F('kmely', 'Káva mélysége', 'cm', mely, { show: v => v.kava, help: 'A nyíláslista alapján számol' }),
+];
+function kavaArea(v, warn) {
+  if (!v.kava) return 0;
+  const st = nyStats(v);
+  if (!st.list) { if (warn) warn.push('A kávákhoz add meg az ablakokat, ajtókat a „Nyílások listából” gombbal.'); return 0; }
+  return st.kavaKer * nz(v.kmely) / 100;
 }
 
 // Felület-megadás blokkok
@@ -377,15 +415,16 @@ const CALCS = [
     ...areaFields('wall'),
     F('vast', 'Vakolatvastagság', 'cm', 1.5),
     F('fogy', 'Anyagszükséglet', 'kg/m²/cm', 13, { help: 'Gépi alapvakolat jellemzően 12–14' }),
+    ...kavaFields(25),
     C('alap', 'Mélyalapozó előtte', false),
     RAH(5),
   ],
   compute(v) {
-    const A = areaOf(v, 'wall').net; const k = 1 + nz(v.rah) / 100;
+    const warn = []; const kA = kavaArea(v, warn); const A = areaOf(v, 'wall').net + kA; const k = 1 + nz(v.rah) / 100;
     const kg = A * nz(v.vast) * nz(v.fogy) * k;
-    const out = [['Felület', fmt(A, 2) + ' m²'], ['Vakolat', fmt(kg, 0) + ' kg']]; const mats = [{ k: 'vakolat', q: kg }];
+    const out = [['Felület', fmt(A, 2) + ' m²' + (kA ? ' (ebből káva ' + fmt(kA, 2) + ')' : '')], ['Vakolat', fmt(kg, 0) + ' kg']]; const mats = [{ k: 'vakolat', q: kg }];
     if (v.alap) { const l = A / 8 * k; mats.push({ k: 'mely_alapozo', q: l }); out.push(['Mélyalapozó (8 m²/l)', fmt(l, 1) + ' l']); }
-    return { out, mats, warn: [] };
+    return { out, mats, warn };
   }
 },
 {
@@ -393,6 +432,7 @@ const CALCS = [
   desc: 'Helyiség falai (+mennyezet): glett, alapozó és festék.',
   fields: [
     ...areaFields('room'),
+    ...kavaFields(25),
     C('gl', 'Glettelés', true),
     F('glmm', 'Glett összvastagság', 'mm', 1.5, { show: v => v.gl, help: 'Két vékony réteg együtt kb. 1–2 mm' }),
     C('alap', 'Mélyalapozó', true),
@@ -403,12 +443,12 @@ const CALCS = [
     RAH(5),
   ],
   compute(v) {
-    const ar = areaOf(v, 'room'); const A = ar.net; const k = 1 + nz(v.rah) / 100;
-    const out = [['Festendő felület', fmt(A, 2) + ' m²' + (ar.ceil ? ' (ebből mennyezet ' + fmt(ar.ceil, 1) + ')' : '')]], mats = [];
+    const warn = []; const kA = kavaArea(v, warn); const ar = areaOf(v, 'room'); const A = ar.net + kA; const k = 1 + nz(v.rah) / 100;
+    const out = [['Festendő felület', fmt(A, 2) + ' m²' + (ar.ceil || kA ? ' (ebből ' + [ar.ceil ? 'mennyezet ' + fmt(ar.ceil, 1) : '', kA ? 'káva ' + fmt(kA, 2) : ''].filter(Boolean).join(', ') + ')' : '')]], mats = [];
     if (v.gl) { const kg = A * nz(v.glmm) * 1.0 * k; mats.push({ k: 'glett', q: kg }); out.push(['Glett (≈1 kg/m²/mm)', fmt(kg, 0) + ' kg']); }
     if (v.alap) { const l = A / nz(v.alapk || 8) * k; mats.push({ k: 'mely_alapozo', q: l }); out.push(['Mélyalapozó', fmt(l, 1) + ' l']); }
     if (v.fest) { const l = A * nz(v.ret) / nz(v.kiad || 8) * k; mats.push({ k: 'festek', q: l }); out.push(['Festék', fmt(l, 1) + ' l']); }
-    return { out, mats, warn: [] };
+    return { out, mats, warn };
   }
 },
 {
@@ -479,7 +519,7 @@ const CALCS = [
     F('fsz', 'Fugaszélesség', 'mm', 3),
     F('rag', 'Ragasztó', 'kg/m²', 4, { help: '8 mm fogazás ≈ 3–4, nagylap / kültér 5–7' }),
     C('lab', 'Lábazat (padlónál)', true, { show: v => v.hol === 'padlo' }),
-    F('ajto', 'Ajtók szélessége összesen (lábazatból levonva)', 'm', 0.9, { show: v => v.hol === 'padlo' && v.lab }),
+    F('ajto', 'Ajtók szélessége összesen (lábazatból levonva)', 'm', 0.9, { show: v => v.hol === 'padlo' && v.lab, nyHelp: 'ajto' }),
     C('szig', 'Kenhető vízszigetelés (vizes helyiség)', false),
     F('szkg', 'Szigetelés anyagigény (2 réteg)', 'kg/m²', 2, { show: v => v.szig }),
   ],
@@ -604,6 +644,7 @@ const CALCS = [
     F('Av', 'Tető vízszintes vetülete (ereszekkel)', 'm²', 120, { show: v => v.am === 'alap' }),
     F('fok', 'Hajlásszög', '°', 35, { show: v => v.am === 'alap' }),
     F('A', 'Tetőfelület', 'm²', 150, { show: v => v.am === 'm2' }),
+    F('tny', 'Tetőablakok, kémények levonása', 'm²', 0, { nyHelp: true }),
     F('cdb', 'Cserép / m²', 'db', 10, { help: 'Gyártói adat: hornyolt nagyelem ≈ 10, hódfarkú ≈ 35–38' }),
     F('ger', 'Gerinc + élgerinc hossza', 'fm', 10),
     F('gdb', 'Gerinccserép / fm', 'db', 2.5),
@@ -613,13 +654,14 @@ const CALCS = [
     RAH(5),
   ],
   compute(v) {
-    const A = v.am === 'm2' ? nz(v.A) : nz(v.Av) / Math.cos(nz(v.fok) * Math.PI / 180);
+    const Ab = v.am === 'm2' ? nz(v.A) : nz(v.Av) / Math.cos(nz(v.fok) * Math.PI / 180);
+    const A = Math.max(0, Ab - nz(v.tny));
     const k = 1 + nz(v.rah) / 100;
     const cs = CEIL(A * nz(v.cdb) * k); const gc = CEIL(nz(v.ger) * nz(v.gdb));
     const lec = nz(v.lo) > 0 ? A / (nz(v.lo) / 100) * 1.1 : 0; const ell = nz(v.sz) > 0 ? A / (nz(v.sz) / 100) * 1.1 : 0;
-    const out = [['Tetőfelület', fmt(A, 1) + ' m²'], ['Cserép', cs + ' db'], ['Gerinccserép', gc + ' db'], ['Tetőléc', fmt(lec, 0) + ' fm'], ['Ellenléc', fmt(ell, 0) + ' fm']];
+    const out = [['Tetőfelület', fmt(Ab, 1) + ' m²' + (nz(v.tny) ? ' (fedendő ' + fmt(A, 1) + ')' : '')], ['Cserép', cs + ' db'], ['Gerinccserép', gc + ' db'], ['Tetőléc', fmt(lec, 0) + ' fm'], ['Ellenléc', fmt(ell, 0) + ' fm']];
     const mats = [{ k: 'cserep', q: cs }, { k: 'gerinccserep', q: gc }, { k: 'tetolec', q: lec }, { k: 'ellenlec', q: ell }];
-    if (v.fol) { mats.push({ k: 'tetofolia', q: A * 1.12 }); out.push(['Tetőfólia (12% átfedés)', fmt(A * 1.12, 0) + ' m²']); }
+    if (v.fol) { mats.push({ k: 'tetofolia', q: Ab * 1.12 }); out.push(['Tetőfólia (12% átfedés)', fmt(Ab * 1.12, 0) + ' m²']); }
     const warn = ['Szegélycserép, szellőzőcserép, hófogó, gerincszellőző szalag és kúpcserép-lezáró a rendszertől függ – a gyártói kalkulátorral érdemes pontosítani.'];
     if (v.am === 'alap' && (nz(v.fok) < 15 || nz(v.fok) > 70)) warn.unshift('Szokatlan hajlásszög – ellenőrizd a cserép minimális hajlásszögét.');
     return { out, mats, warn };
@@ -696,6 +738,7 @@ const CALCS = [
   fields: [
     F('L', 'Kerítés hossza', 'm', 30),
     SEL('tip', 'Típus', [['drot', 'Drótfonat + feszítőhuzal'], ['panel', 'Táblás kerítéspanel']], 'drot'),
+    F('kapu', 'Kapuk szélessége összesen (levonva)', 'm', 0, { help: 'Pl. 1 kiskapu (1 m) + 1 nagykapu (3,5 m) = 4,5' }),
     F('koz', 'Oszlopköz / panelszélesség', 'm', 2.5),
     F('sar', 'Sarkok, végek, kapuoszlopok (plusz)', 'db', 2),
     F('sor', 'Feszítőhuzal sorok', 'sor', 3, { show: v => v.tip === 'drot' }),
@@ -704,7 +747,7 @@ const CALCS = [
     SEL('mod', 'Oszlopalap beton', [['zsak', 'Zsákos szárazbeton'], ['kevert', 'Helyben kevert (C16)'], ['kesz', 'Kész beton']], 'zsak'),
   ],
   compute(v) {
-    const L = nz(v.L), koz = nz(v.koz) || 2.5;
+    const L = Math.max(0, nz(v.L) - nz(v.kapu)), koz = nz(v.koz) || 2.5;
     const mezo = CEIL(L / koz); const oszl = mezo + 1 + nz(v.sar);
     const Vo = nz(v.la) / 100 * nz(v.la) / 100 * nz(v.lm) / 100; const V = Vo * oszl * 1.05;
     const out = [['Mezők', mezo + ' db'], ['Oszlop', oszl + ' db'], ['Oszlopalap beton', fmt(V, 3) + ' m³ (' + fmt(Vo * 1000, 0) + ' l/oszlop)']];
@@ -873,6 +916,37 @@ const CALCS = [
 
 const CALC_BY_ID = Object.fromEntries(CALCS.map(c => [c.id, c]));
 
+// Munkadíj: alapértelmezett díjtétel és a munka mennyisége (mq) minden kalkulátorhoz
+function betonVol(v) {
+  if (v.alak === 'lemez') return nz(v.Lh) * nz(v.Ls) * nz(v.vast) / 100;
+  if (v.alak === 'sav') return nz(v.Lh) * nz(v.sz) / 100 * nz(v.mely) / 100;
+  if (v.alak === 'pill') return nz(v.a) / 100 * nz(v.b) / 100 * nz(v.h) / 100 * nz(v.db);
+  if (v.alak === 'kor') return Math.PI * Math.pow(nz(v.d) / 200, 2) * nz(v.h) / 100 * nz(v.db);
+  return nz(v.V);
+}
+const wallA = (v) => areaOf(v, 'wall').net;
+const MUNKA = {
+  beton: ['md_beton', v => [betonVol(v), 'm³']],
+  esztrich: ['md_esztrich', v => [areaOf(v, 'floor').net, 'm²']],
+  falazas: ['md_falazas', v => [wallA(v), 'm²']],
+  zsaluko: ['md_zsaluko', v => [wallA(v), 'm²']],
+  vakolas: ['md_vakolas', v => [wallA(v) + kavaArea(v), 'm²']],
+  festes: ['md_festes', v => [areaOf(v, 'room').net + kavaArea(v), 'm²']],
+  gipszkarton: ['md_gipszkarton', v => [v.tip === 'am' ? nz(v.Lh) * nz(v.Ls) : Math.max(0, nz(v.L) * nz(v.Hm) - nz(v.ny)), 'm²']],
+  burkolas: ['md_burkolas', v => [v.hol === 'padlo' ? nz(v.Lh) * nz(v.Ls) : v.hol === 'fal' ? Math.max(0, 2 * (nz(v.Lh) + nz(v.Ls)) * nz(v.Hm) - nz(v.ny)) : nz(v.A), 'm²']],
+  vizszig: ['md_vizszig', v => [wallA(v), 'm²']],
+  homlokzat: ['md_homlokzat', v => [wallA(v), 'm²']],
+  fodem: ['md_fodem', v => [areaOf(v, 'floor').net, 'm²']],
+  teto: ['md_teto', v => [Math.max(0, (v.am === 'm2' ? nz(v.A) : nz(v.Av) / Math.cos(nz(v.fok) * Math.PI / 180)) - nz(v.tny)), 'm²']],
+  eresz: ['md_eresz', v => [nz(v.L), 'fm']],
+  terko: ['md_terko', v => [areaOf(v, 'floor').net, 'm²']],
+  omlesztett: ['md_teritese', v => [areaOf(v, 'floor').net, 'm²']],
+  kerites: ['md_kerites', v => [nz(v.L), 'fm']],
+  deszka: ['md_deszka', v => [Math.max(0, nz(v.L) * nz(v.Hm) - nz(v.ny)), 'm²']],
+  terasz: ['md_terasz', v => [nz(v.Lh) * nz(v.Ls), 'm²']],
+};
+for (const id in MUNKA) { CALC_BY_ID[id].md = MUNKA[id][0]; CALC_BY_ID[id].mq = MUNKA[id][1]; }
+
 // Ömlesztett anyag mértékegysége – a választást az app megjegyzi, minden kalkulátorban ugyanaz
 const MJ_SHOW = { terko: () => true, omlesztett: () => true, beton: v => v.mod === 'kevert', esztrich: v => v.mod === 'ch', zsaluko: v => v.mod === 'kevert', kerites: v => v.mod === 'kevert' };
 for (const id in MJ_SHOW) CALC_BY_ID[id].fields.push(SEL('mj', 'Ömlesztett anyag mértékegysége', MJ_OPTS, 'm3', { show: MJ_SHOW[id], help: 'Az app megjegyzi, és mindenhol ezt használja' }));
@@ -883,4 +957,4 @@ function defaults(calc) {
   return v;
 }
 
-if (typeof module !== 'undefined') module.exports = { bulkTxt, MJ_OPTS, MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };
+if (typeof module !== 'undefined') module.exports = { nyStats, kavaArea, bulkTxt, MJ_OPTS, MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };
