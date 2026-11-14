@@ -275,7 +275,7 @@ const GROUPS = [
 const CALCS = [
 /* ===== SZERKEZET ===== */
 {
-  id: 'beton', g: 'szerk', n: 'Beton (lemez, alap, pillér)', i: '🏗️',
+  id: 'beton', g: 'szerk', n: 'Beton (lemez, alap, pillér)', i: 'beton',
   desc: 'Betonmennyiség és alapanyag – kész beton, helyben kevert vagy zsákos szárazbeton.',
   fields: [
     SEL('alak', 'Szerkezet', [['lemez', 'Lemez, járda, aljzat'], ['sav', 'Sávalap'], ['pill', 'Szögletes pillér / oszlopalap'], ['kor', 'Kör keresztmetszetű oszlop'], ['m3', 'Kész térfogat (m³)']], 'lemez'),
@@ -330,7 +330,7 @@ const CALCS = [
   }
 },
 {
-  id: 'esztrich', g: 'szerk', n: 'Esztrich, aljzat, önterülő', i: '▭',
+  id: 'esztrich', g: 'szerk', n: 'Esztrich, aljzat, önterülő', i: 'esztrich',
   desc: 'Padlóaljzat: zsákos esztrich, cement + homok vagy önterülő kiegyenlítő.',
   fields: [
     ...areaFields('floor'),
@@ -360,7 +360,7 @@ const CALCS = [
   }
 },
 {
-  id: 'falazas', g: 'szerk', n: 'Falazás', i: '🧱',
+  id: 'falazas', g: 'szerk', n: 'Falazás', i: 'falazas',
   desc: 'Falazóelem darabszám és habarcs / ragasztó a fal felületéből.',
   fields: [
     SEL('elem', 'Falazóelem', [
@@ -403,7 +403,7 @@ const CALCS = [
   }
 },
 {
-  id: 'zsaluko', g: 'szerk', n: 'Zsalukő fal', i: '🔲',
+  id: 'zsaluko', g: 'szerk', n: 'Zsalukő fal', i: 'zsaluko',
   desc: 'Zsalukő darabszám és kitöltő beton.',
   fields: [
     SEL('tip', 'Zsalukő szélessége', [['15', '15 cm'], ['20', '20 cm'], ['25', '25 cm'], ['30', '30 cm']], '30'),
@@ -426,7 +426,7 @@ const CALCS = [
 
 /* ===== FELÜLETEK ===== */
 {
-  id: 'vakolas', g: 'felulet', n: 'Vakolás', i: '🪣',
+  id: 'vakolas', g: 'felulet', n: 'Vakolás', i: 'vakolas',
   desc: 'Alapvakolat mennyisége a falfelület és a vastagság alapján.',
   fields: [
     ...areaFields('wall'),
@@ -445,7 +445,7 @@ const CALCS = [
   }
 },
 {
-  id: 'festes', g: 'felulet', n: 'Glettelés, festés', i: '🖌️',
+  id: 'festes', g: 'felulet', n: 'Glettelés, festés', i: 'festes',
   desc: 'Helyiség falai (+mennyezet): glett, alapozó és festék.',
   fields: [
     ...areaFields('room'),
@@ -473,7 +473,7 @@ const CALCS = [
   }
 },
 {
-  id: 'gipszkarton', g: 'felulet', n: 'Gipszkarton', i: '📋',
+  id: 'gipszkarton', g: 'felulet', n: 'Gipszkarton', i: 'gipszkarton',
   desc: 'Válaszfal, előtétfal vagy álmennyezet: lapok, profilok, csavar, hézagoló.',
   fields: [
     SEL('tip', 'Szerkezet', [['vf', 'Válaszfal (két oldal)'], ['et', 'Előtétfal / falburkolat (egy oldal)'], ['am', 'Álmennyezet']], 'vf'),
@@ -522,7 +522,7 @@ const CALCS = [
   }
 },
 {
-  id: 'burkolas', g: 'felulet', n: 'Burkolás (csempe, járólap)', i: '🔳',
+  id: 'burkolas', g: 'felulet', n: 'Burkolás (csempe, járólap)', i: 'burkolas',
   desc: 'Lapmennyiség ráhagyással, ragasztó, fuga, lábazat és kenhető szigetelés.',
   fields: [
     SEL('hol', 'Hova', [['padlo', 'Padló'], ['fal', 'Fal (csempe)'], ['m2', 'Kész terület (m²)']], 'padlo'),
@@ -571,7 +571,7 @@ const CALCS = [
   }
 },
 {
-  id: 'vizszig', g: 'felulet', n: 'Vízszigetelés (lábazat, alap, terasz)', i: '💧',
+  id: 'vizszig', g: 'felulet', n: 'Vízszigetelés (lábazat, alap, terasz)', i: 'vizszig',
   desc: 'Bitumenes lemez vagy kenhető szigetelés felületre.',
   fields: [
     ...areaFields('wall'),
@@ -592,7 +592,7 @@ const CALCS = [
 
 /* ===== SZIGETELÉS ===== */
 {
-  id: 'homlokzat', g: 'szig', n: 'Homlokzati hőszigetelés (dryvit)', i: '🏢',
+  id: 'homlokzat', g: 'szig', n: 'Homlokzati hőszigetelés (dryvit)', i: 'homlokzat',
   desc: 'Teljes rendszer: hőszigetelő lap, ragasztó, dübel, háló, alapozó, színvakolat, profilok.',
   fields: [
     ...areaFields('wall'),
@@ -637,7 +637,7 @@ const CALCS = [
   }
 },
 {
-  id: 'fodem', g: 'szig', n: 'Födém, padlás, tető hőszigetelés', i: '🧶',
+  id: 'fodem', g: 'szig', n: 'Födém, padlás, tető hőszigetelés', i: 'fodem',
   desc: 'Üveggyapot, kőzetgyapot vagy EPS köbméterben, párazáró fóliával.',
   fields: [
     ...areaFields('floor'),
@@ -658,7 +658,7 @@ const CALCS = [
 
 /* ===== TETŐ ===== */
 {
-  id: 'teto', g: 'teto', n: 'Tetőfedés', i: '🏠',
+  id: 'teto', g: 'teto', n: 'Tetőfedés', i: 'teto',
   desc: 'Tetőfelület hajlásszögből, cserép, gerinccserép, léc, ellenléc, fólia.',
   fields: [
     SEL('am', 'Felület megadása', [['alap', 'Alapterület (vetület) + hajlásszög'], ['m2', 'Tényleges tetőfelület (m²)']], 'alap'),
@@ -689,7 +689,7 @@ const CALCS = [
   }
 },
 {
-  id: 'eresz', g: 'teto', n: 'Ereszcsatorna', i: '🌧️',
+  id: 'eresz', g: 'teto', n: 'Ereszcsatorna', i: 'eresz',
   desc: 'Csatorna, tartók, lefolyók és idomok.',
   fields: [
     F('L', 'Eresz hossza összesen', 'fm', 30),
@@ -712,7 +712,7 @@ const CALCS = [
 
 /* ===== KERT ===== */
 {
-  id: 'terko', g: 'kert', n: 'Térkövezés', i: '🟫',
+  id: 'terko', g: 'kert', n: 'Térkövezés', i: 'terko',
   desc: 'Térkő, zúzottkő alap, ágyazat, szegélykő, fugahomok, geotextil.',
   fields: [
     ...areaFields('floor'),
@@ -736,7 +736,7 @@ const CALCS = [
   }
 },
 {
-  id: 'omlesztett', g: 'kert', n: 'Ömlesztett anyag (murva, sóder, föld)', i: '⛰️',
+  id: 'omlesztett', g: 'kert', n: 'Ömlesztett anyag (murva, sóder, föld)', i: 'omlesztett',
   desc: 'Térfogat és tonna terület × rétegvastagság alapján.',
   fields: [
     SEL('any', 'Anyag', [['murva', 'Murva / díszkavics (≈1,5 t/m³)'], ['zuzottko', 'Zúzottkő (≈1,6 t/m³)'], ['kozuzalek', 'Kőzúzalék 0/4 (≈1,6 t/m³)'], ['soder', 'Homokos kavics (≈1,8 t/m³)'], ['homok', 'Homok (≈1,5 t/m³)'], ['termofold', 'Termőföld (≈1,3 t/m³)']], 'murva'),
@@ -754,7 +754,7 @@ const CALCS = [
   }
 },
 {
-  id: 'kerites', g: 'kert', n: 'Kerítés', i: '🚧',
+  id: 'kerites', g: 'kert', n: 'Kerítés', i: 'kerites',
   desc: 'Oszlopok, oszlopalap, drótfonat vagy panel.',
   fields: [
     F('L', 'Kerítés hossza', 'm', 30),
@@ -784,7 +784,7 @@ const CALCS = [
 
 /* ===== FA ===== */
 {
-  id: 'deszka', g: 'fa', n: 'Deszkaburkolat (fal, mennyezet)', i: '🪵',
+  id: 'deszka', g: 'fa', n: 'Deszkaburkolat (fal, mennyezet)', i: 'deszka',
   desc: 'Vízszintes vagy függőleges deszkák lécvázon, árnyékfugával – fm, szál, léc, csavar, felületkezelés.',
   fields: [
     F('L', 'Felület szélessége', 'm', 3.5),
@@ -817,7 +817,7 @@ const CALCS = [
   }
 },
 {
-  id: 'terasz', g: 'fa', n: 'Teraszburkolat', i: '🪑',
+  id: 'terasz', g: 'fa', n: 'Teraszburkolat', i: 'terasz',
   desc: 'Teraszdeszka, alátétgerenda, csavar.',
   fields: [
     F('Lh', 'Terasz hossza (deszkairány)', 'm', 4),
@@ -843,7 +843,7 @@ const CALCS = [
   }
 },
 {
-  id: 'kobozes', g: 'fa', n: 'Faanyag köbözés', i: '📏',
+  id: 'kobozes', g: 'fa', n: 'Faanyag köbözés', i: 'kobozes',
   desc: 'Gerenda, léc, deszka köbtartalma és ára.',
   fields: [
     F('db', 'Darabszám', 'db', 10),
@@ -859,7 +859,7 @@ const CALCS = [
 
 /* ===== SEGÉD ===== */
 {
-  id: 'alakzat', g: 'seged', n: 'Terület, kerület', i: '📐', noSave: false,
+  id: 'alakzat', g: 'seged', n: 'Terület, kerület', i: 'alakzat', noSave: false,
   desc: 'Téglalap, L-alak, háromszög, trapéz, kör terület és kerület.',
   fields: [
     SEL('a', 'Alakzat', [['tegla', 'Téglalap'], ['L', 'L-alak (két téglalap)'], ['har', 'Háromszög (3 oldal)'], ['trap', 'Trapéz'], ['kor', 'Kör / félkör']], 'tegla'),
@@ -885,7 +885,7 @@ const CALCS = [
   }
 },
 {
-  id: 'lejtes', g: 'seged', n: 'Lejtés, esés, hajlásszög', i: '📉',
+  id: 'lejtes', g: 'seged', n: 'Lejtés, esés, hajlásszög', i: 'lejtes',
   desc: 'Átváltás % ↔ fok ↔ cm/m, szintkülönbség adott hosszon.',
   fields: [
     SEL('be', 'Mit adsz meg', [['sz', 'Lejtés %-ban'], ['fok', 'Hajlásszög fokban'], ['dh', 'Szintkülönbség és hossz']], 'sz'),
@@ -903,7 +903,7 @@ const CALCS = [
   }
 },
 {
-  id: 'lepcso', g: 'seged', n: 'Lépcső méretezés', i: '🪜',
+  id: 'lepcso', g: 'seged', n: 'Lépcső méretezés', i: 'lepcso',
   desc: 'Fokok száma, fellépő, belépő (2m + b ≈ 63 cm), lépcső hossza és dőlése.',
   fields: [
     F('H', 'Szintkülönbség (padlótól padlóig)', 'cm', 280),
@@ -918,7 +918,7 @@ const CALCS = [
   }
 },
 {
-  id: 'keveres', g: 'seged', n: 'Keverés arányból', i: '⚖️',
+  id: 'keveres', g: 'seged', n: 'Keverés arányból', i: 'keveres',
   desc: 'Cement : homok (vagy sóder) arányból kész habarcs / beton alapanyaga.',
   fields: [
     F('ar', 'Arány 1 : x (cement : adalék, térfogat)', 'x', 4),
@@ -1003,7 +1003,7 @@ const ROOM_Q = {
 
 /* ---------- Beépített projektsablonok ---------- */
 const SABLONOK = [
-  { id: 'furdo', n: 'Fürdőszoba-felújítás', i: '🛁', desc: 'Bontás, vízszigetelés, padló- és falburkolás, festés a csempe felett, sittszállítás',
+  { id: 'furdo', n: 'Fürdőszoba-felújítás', i: 'furdo', desc: 'Bontás, vízszigetelés, padló- és falburkolás, festés a csempe felett, sittszállítás',
     items: [
       { nev: 'Régi burkolat bontása', md: 'md_bontas', rq: 'csempe' },
       { nev: 'Padlóburkolás vízszigeteléssel', calc: 'burkolas', v: { hol: 'padlo', szig: true } },
@@ -1011,15 +1011,15 @@ const SABLONOK = [
       { nev: 'Glettelés, festés (csempe felett + mennyezet)', calc: 'festes', v: { csempeH: 2.1, menny: true } },
       { nev: 'Sittszállítás', md: 'md_sitt', rq: 'egy' },
     ] },
-  { id: 'festes', n: 'Szobafestés', i: '🖌️', desc: 'Glettelés, alapozás, festés falakra és mennyezetre',
+  { id: 'festes', n: 'Szobafestés', i: 'szobafestes', desc: 'Glettelés, alapozás, festés falakra és mennyezetre',
     items: [{ nev: 'Glettelés, festés', calc: 'festes', v: { menny: true } }] },
-  { id: 'padlo', n: 'Padlócsere', i: '▭', desc: 'Régi padló bontása, aljzatkiegyenlítés, új burkolat lábazattal',
+  { id: 'padlo', n: 'Padlócsere', i: 'padlo', desc: 'Régi padló bontása, aljzatkiegyenlítés, új burkolat lábazattal',
     items: [
       { nev: 'Régi padló bontása', md: 'md_bontas', rq: 'padlo' },
       { nev: 'Aljzatkiegyenlítés (önterülő)', calc: 'esztrich', v: { mod: 'ont', vmm: 5 } },
       { nev: 'Padlóburkolás', calc: 'burkolas', v: { hol: 'padlo', lab: true } },
     ] },
-  { id: 'kocsibeallo', n: 'Kocsibeálló, térkövezés', i: '🚗', desc: 'Földkiemelés, zúzottkő alap autós terhelésre, térkő, szegély, földelszállítás', kint: true,
+  { id: 'kocsibeallo', n: 'Kocsibeálló, térkövezés', i: 'kocsibeallo', desc: 'Földkiemelés, zúzottkő alap autós terhelésre, térkő, szegély, földelszállítás', kint: true,
     items: [
       { nev: 'Földkiemelés, tükörkészítés', md: 'md_foldkiemeles', rq: 'padlo' },
       { nev: 'Térkövezés (autós terhelés)', calc: 'terko', v: { alap: 25, agy: 4 } },

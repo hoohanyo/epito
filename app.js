@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '2.0';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -215,7 +215,7 @@ function navMove() {
 }
 const IC_SUN = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>';
 const IC_MOON = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.7 6.7 0 0 0 10.7 10.7z"/></svg>';
-function themeIcon() { const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = document.documentElement.classList.contains('dark') ? '#100D0E' : '#3F3937'; $('#btnTheme').innerHTML = document.documentElement.classList.contains('dark') ? IC_SUN : IC_MOON; }
+function themeIcon() { const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = document.documentElement.classList.contains('dark') ? '#0E1116' : '#3F3937'; $('#btnTheme').innerHTML = document.documentElement.classList.contains('dark') ? IC_SUN : IC_MOON; }
 $('#btnSync').onclick = () => { if (LOCAL) setTab('tobb'); else load(true); };
 window.addEventListener('online', () => flush());
 window.addEventListener('offline', updateSync);
@@ -322,7 +322,7 @@ function renderKalk() {
   for (const [gid, gn] of GROUPS) {
     const cs = CALCS.filter(c => c.g === gid && (!q || (c.n + ' ' + c.desc).toLowerCase().includes(q)));
     if (!cs.length) continue;
-    h += '<h2>' + esc(gn) + '</h2><div class="grid">' + cs.map(c => '<button class="tile g-' + c.g + '" data-c="' + c.id + '"><span class="ic">' + c.i + '</span><b>' + esc(c.n) + '</b></button>').join('') + '</div>';
+    h += '<h2>' + esc(gn) + '</h2><div class="grid">' + cs.map(c => '<button class="tile g-' + c.g + '" data-c="' + c.id + '"><span class="ic">' + icoHtml(c.i) + '</span><b>' + esc(c.n) + '</b></button>').join('') + '</div>';
   }
   if (q && !CALCS.some(c => (c.n + ' ' + c.desc).toLowerCase().includes(q))) h += '<div class="empty">Nincs ilyen kalkulátor.</div>';
   $('#view').innerHTML = h;

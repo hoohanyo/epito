@@ -124,7 +124,7 @@ const sablonKell = (sab) => sab.items.some(it => (it.calc && ROOM_MAP[it.calc]) 
 function sablonDialog(p) {
   const all = SABLONOK.map(s => Object.assign({ beepitett: true }, s)).concat(sajatSablonok());
   const h = '<h3>Új munkarész sablonból</h3><p class="small muted" style="margin-top:-6px">A sablon új munkarészt nyit, benne az összes tétellel. Utána bármelyik tétel szerkeszthető.</p>' +
-    '<div class="card list">' + all.map((s, i) => '<div class="it" data-s="' + i + '"><span class="ic">' + (s.i || '📋') + '</span><div class="m"><b>' + esc(s.n) + (s.beepitett ? '' : '<span class="pill">saját</span>') + '</b><small>' + esc(s.desc || s.items.map(x => x.nev).join(', ')) + '</small></div>' +
+    '<div class="card list">' + all.map((s, i) => '<div class="it" data-s="' + i + '"><span class="ic">' + icoHtml(s.i || 'clipboard') + '</span><div class="m"><b>' + esc(s.n) + (s.beepitett ? '' : '<span class="pill">saját</span>') + '</b><small>' + esc(s.desc || s.items.map(x => x.nev).join(', ')) + '</small></div>' +
       (s.beepitett ? '<span class="arrow">›</span>' : '<button class="nydel" data-del="' + s.id + '" title="Sablon törlése">✕</button>') + '</div>').join('') + '</div>' +
     '<div class="btns"><button class="btn" id="sx">Mégse</button></div>';
   openModal(h, m => {
@@ -288,7 +288,7 @@ function mitCsinalunkDialog(p, room) {
   const all = SABLONOK.map(s => Object.assign({ beepitett: true }, s)).concat(sajatSablonok());
   const h = '<h3>Mit csinálunk itt: ' + esc(room.nev) + '?</h3><p class="small muted" style="margin-top:-6px">' + esc(roomSummary(room)) + '</p>' +
     '<div class="lgrp" style="padding-top:0">Munka indítása most</div><div class="card list">' +
-    all.map((s, i) => '<div class="it" data-s="' + i + '"><span class="ic">' + (s.i || '📋') + '</span><div class="m"><b>' + esc(s.n) + (s.beepitett ? '' : '<span class="pill">saját</span>') + '</b><small>' + esc(s.desc || s.items.map(x => x.nev).join(', ')) + '</small></div><span class="arrow">›</span></div>').join('') +
+    all.map((s, i) => '<div class="it" data-s="' + i + '"><span class="ic">' + icoHtml(s.i || 'clipboard') + '</span><div class="m"><b>' + esc(s.n) + (s.beepitett ? '' : '<span class="pill">saját</span>') + '</b><small>' + esc(s.desc || s.items.map(x => x.nev).join(', ')) + '</small></div><span class="arrow">›</span></div>').join('') +
     '<div class="it" data-ures="1"><span class="ic">＋</span><div class="m"><b>Üres munkarész</b><small>Saját tételekkel, a méreteket a felmérésből választod</small></div><span class="arrow">›</span></div></div>' +
     '<div class="lgrp">Nem most</div><div class="card list">' +
     '<div class="it" data-kesobb="1"><span class="ic">🗓</span><div class="m"><b>Későbbi munkához – külön megrendelésbe</b><small>Új megrendelés ' + esc(ugyfelNev(p)) + ' részére, saját ajánlattal; ide nem keveredik</small></div><span class="arrow">›</span></div>' +

@@ -315,7 +315,7 @@ function renderMunkaresz(r) {
     const c = CALC_BY_ID[t.calc]; const cost = sumCost((t.mats || []).map(line)); const m0 = t.mats && t.mats[0];
     const room = roomById(p, tetelRoomId(t));
     const sub = t.calc === 'egyeb' ? (!m0 ? '' : m0.k === '_egyeb' ? fmt(m0.q) + ' ' + (m0.u || '') + ' × ' + ft(m0.p) : (line(m0).ptxt || line(m0).qtxt)) : (c ? c.n : t.calc) + (t.out && t.out[0] ? ' · ' + t.out[0][1] : '');
-    return '<div class="it" data-t="' + t.id + '" data-del="tetel|' + t.id + '"><span class="ic">' + (c ? c.i : '➕') + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc((room ? '🏠 ' + room.nev + ' · ' : '') + sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
+    return '<div class="it" data-t="' + t.id + '" data-del="tetel|' + t.id + '"><span class="ic">' + (c ? icoHtml(c.i) : ico('plus')) + '</span><div class="m"><b>' + esc(t.nev) + '</b><small>' + esc((room ? '🏠 ' + room.nev + ' · ' : '') + sub) + '</small></div><div class="v">' + ft(cost) + '</div><span class="arrow">›</span></div>';
   };
   h += '<h2>Tételek</h2>' + (ts.length ? '<div class="card list">' + ts.map(tetelItem).join('') + '</div>' : '<div class="empty">Még nincs tétel ebben a munkarészben.' + (rooms.length ? '' : ' Tipp: a megrendelés Felmérés részében add meg a helyiségeket, és a kalkulátorok onnan veszik a méreteket.') + '</div>');
   if (sc.anyag.length) h += '<h2>Anyaglista</h2><div class="card">' + matsTable(sc.anyag) + '</div>';
