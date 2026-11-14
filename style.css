@@ -436,10 +436,10 @@ nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;height
 .nb-bubble.pop{animation:nbPop .5s cubic-bezier(.34,1.45,.55,1)}
 @keyframes nbPop{0%{transform:scale(.7)}55%{transform:scale(1.08)}100%{transform:scale(1)}}
 nav.bottom button{position:relative;flex:1;background:none;border:0;padding:0;cursor:pointer;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;padding-bottom:9px;min-height:64px;-webkit-tap-highlight-color:transparent}
-.nb-ic{display:flex;align-items:center;justify-content:center;width:44px;height:30px;transition:transform .5s cubic-bezier(.34,1.45,.55,1),color .25s}
+.nb-ic{position:absolute;left:50%;top:13px;margin-left:-22px;display:flex;align-items:center;justify-content:center;width:44px;height:30px;transition:transform .5s cubic-bezier(.34,1.45,.55,1),color .25s}
 .nb-lb{font-size:11.5px;font-weight:600;letter-spacing:.01em;transition:color .25s,transform .35s,opacity .25s}
 nav.bottom button.on{color:var(--text)}
-nav.bottom button.on .nb-ic{transform:translateY(-22px) scale(1.1);color:#fff}
+nav.bottom button.on .nb-ic{transform:translateY(-23px) scale(1.1);color:#fff}
 nav.bottom button.on .nb-lb{font-weight:750;color:var(--nb-lbl);transform:translateY(-1px)}
 nav.bottom button:not(.on):active .nb-ic{transform:scale(.88)}
 :root{--nav-solid:linear-gradient(180deg,#FCFBFB 0%,#EFECEC 100%);--nb-bub:linear-gradient(160deg,#6B7C98 0%,#4E5D78 55%,#3F4A60 100%);--nb-ledge:#2E3646;--nb-glow:rgba(63,74,96,.55);--nb-lbl:#3F4A60}
