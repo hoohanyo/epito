@@ -952,7 +952,7 @@ const MUNKA = {
   falazas: ['md_falazas', v => [wallA(v), 'm²']],
   zsaluko: ['md_zsaluko', v => [wallA(v), 'm²']],
   vakolas: ['md_vakolas', v => [wallA(v) + kavaArea(v), 'm²']],
-  festes: ['md_festes', v => [Math.max(0, areaOf(v, 'room').net - csempeSav(v)) + kavaArea(v), 'm²']],
+  festes: ['md_festes', v => [(v.gl || v.alap || v.fest) ? Math.max(0, areaOf(v, 'room').net - csempeSav(v)) + kavaArea(v) : 0, 'm²']], // ha csak részmunka kell (pl. ajtómázolás), a fő munka 0
   gipszkarton: ['md_gipszkarton', v => [v.tip === 'am' ? nz(v.Lh) * nz(v.Ls) : Math.max(0, nz(v.L) * nz(v.Hm) - nz(v.ny)), 'm²']],
   burkolas: ['md_burkolas', v => [v.hol === 'padlo' ? nz(v.Lh) * nz(v.Ls) : v.hol === 'fal' ? Math.max(0, 2 * (nz(v.Lh) + nz(v.Ls)) * nz(v.Hm) - nz(v.ny)) : nz(v.A), 'm²']],
   vizszig: ['md_vizszig', v => [wallA(v), 'm²']],
@@ -967,6 +967,178 @@ const MUNKA = {
   terasz: ['md_terasz', v => [nz(v.Lh) * nz(v.Ls), 'm²']],
 };
 for (const id in MUNKA) { CALC_BY_ID[id].md = MUNKA[id][0]; CALC_BY_ID[id].mq = MUNKA[id][1]; }
+
+/* ---------- Részmunkák ----------
+   Minden kalkulátorhoz a szokásos, külön is kérhető részmunkák (a megrendelő gyakran csak egy részét kéri).
+   t: 'c' = kapcsoló, a mennyiséget a kalkulációból veszi (q(v), alapból a fő munka mennyisége)
+   t: 'n' = darab / fm / m² beírása
+   mats: [anyagkulcs, mennyiség egységenként] – a részmunkához tartozó anyag is bekerül az anyaglistába */
+const RSZ = (id, n, u, p, t, extra) => Object.assign({ id, n, u, p, t }, extra || {});
+const festFal = (v) => { const ar = areaOf(v, 'room'); return Math.max(0, (ar.walls || 0) - csempeSav(v, ar)); };
+const festA = (v) => Math.max(0, areaOf(v, 'room').net - csempeSav(v)) + kavaArea(v);
+const festPadlo = (v) => v.am === 'hel' ? nz(v.Lh) * nz(v.Ls) : 0;
+const RESZ = {
+  festes: [
+    RSZ('takaras', 'Takarás, bútormozgatás', 'm²', 400, 'c', { q: festPadlo, help: 'A padló területe – fólia és festőszalag is', mats: [['takaro', 1]] }),
+    RSZ('kaparas', 'Régi festék kaparása, felület lemosása', 'm²', 1200, 'c', { q: festA }),
+    RSZ('tapeta', 'Régi tapéta eltávolítása', 'm²', 1500, 'c', { q: festFal, help: 'Csak a falfelület, mennyezet nélkül' }),
+    RSZ('javitas', 'Repedések, lyukak javítása', 'fm', 1500, 'n', { mats: [['glett', 0.4]] }),
+    RSZ('penesz', 'Penészmentesítés', 'm²', 1500, 'n', { mats: [['penesz', 0.15]] }),
+    RSZ('ajto', 'Ajtó + tok mázolása (mindkét oldal)', 'db', 15000, 'n', { mats: [['zomanc', 0.9], ['zomanc_alap', 0.45]] }),
+    RSZ('tok', 'Csak ajtótok mázolása', 'db', 7000, 'n', { mats: [['zomanc', 0.3], ['zomanc_alap', 0.15]] }),
+    RSZ('ablak', 'Ablak + keret mázolása', 'db', 15000, 'n', { help: 'Közepes, kb. 120×120 cm-es ablak', mats: [['zomanc', 0.5], ['zomanc_alap', 0.25]] }),
+    RSZ('radiator', 'Radiátor festése', 'db', 12000, 'n', { mats: [['radiator_festek', 0.6]] }),
+    RSZ('radle', 'Radiátor le- és visszaszerelése', 'db', 5000, 'n', { help: 'Hogy a mögötte lévő fal is festhető legyen' }),
+    RSZ('cso', 'Fűtéscső festése', 'fm', 800, 'n', { mats: [['radiator_festek', 0.02]] }),
+    RSZ('lec', 'Szegélyléc, lábazati léc festése', 'fm', 1000, 'n', { mats: [['zomanc', 0.03]] }),
+  ],
+  burkolas: [
+    RSZ('bontas', 'Régi burkolat bontása', 'm²', 3000, 'c', { md: 'md_bontas' }),
+    RSZ('kiegy', 'Aljzat- vagy falkiegyenlítés', 'm²', 3000, 'c'),
+    RSZ('alapoz', 'Mélyalapozás', 'm²', 800, 'c', { mats: [['mely_alapozo', 0.125]] }),
+    RSZ('vszig', 'Kenhető vízszigetelés (2 réteg)', 'm²', 3500, 'n', { mats: [['kenheto_szig', 1.5]] }),
+    RSZ('hajlat', 'Hajlaterősítő szalag beépítése', 'fm', 1300, 'n', { mats: [['hajlat_szalag', 1]] }),
+    RSZ('elvedo', 'Élvédő, díszcsík, bordűr rakása', 'fm', 2500, 'n'),
+    RSZ('labazat', 'Lábazat burkolása', 'fm', 3000, 'n'),
+    RSZ('szilikon', 'Szilikonozás', 'fm', 900, 'n', { mats: [['szilikon', 1]] }),
+    RSZ('fugazas', 'Régi burkolat újrafugázása', 'm²', 2000, 'n', { mats: [['fugazo', 0.5]] }),
+    RSZ('folyoka', 'Zuhanyfolyóka beépítése', 'db', 20000, 'n'),
+    RSZ('sitt', 'Sitt elszállítása', 'alkalom', 60000, 'n', { md: 'md_sitt' }),
+  ],
+  vakolas: [
+    RSZ('leveres', 'Régi vakolat leverése', 'm²', 2500, 'c'),
+    RSZ('elokeszit', 'Felület előkészítése, gúzolás', 'm²', 1200, 'c'),
+    RSZ('elvedo', 'Élvédő beépítése', 'fm', 800, 'n'),
+    RSZ('javit', 'Javítóvakolás foltokban', 'm²', 6000, 'n', { mats: [['vakolat', 15]] }),
+    RSZ('kava', 'Ablak-, ajtókáva vakolása', 'fm', 3000, 'n', { mats: [['vakolat', 6]] }),
+    RSZ('sitt', 'Sitt elszállítása', 'alkalom', 60000, 'n', { md: 'md_sitt' }),
+  ],
+  gipszkarton: [
+    RSZ('gyapot', 'Hang-/hőszigetelő gyapot beépítése', 'm²', 1500, 'c'),
+    RSZ('glett', 'Hézagolás, teljes felületű glettelés', 'm²', 2500, 'c'),
+    RSZ('ajto', 'Ajtónyílás kialakítása (UA profillal)', 'db', 20000, 'n'),
+    RSZ('kava', 'Ablakkáva burkolása gipszkartonnal', 'fm', 7000, 'n'),
+    RSZ('revizio', 'Revíziós ajtó beépítése', 'db', 8000, 'n'),
+    RSZ('spot', 'Spotlámpa-kivágás', 'db', 1500, 'n'),
+  ],
+  vizszig: [
+    RSZ('elokeszit', 'Felület előkészítése, tisztítása', 'm²', 800, 'c'),
+    RSZ('hajlat', 'Hajlaterősítés, sarokkiképzés', 'fm', 1300, 'n', { mats: [['hajlat_szalag', 1]] }),
+    RSZ('vedo', 'Védőréteg (pl. dombornyomott lemez)', 'm²', 2000, 'n'),
+  ],
+  homlokzat: [
+    RSZ('allvany', 'Állványozás', 'm²', 1500, 'c'),
+    RSZ('elokeszit', 'Felület előkészítése (mosás, javítás)', 'm²', 1000, 'c'),
+    RSZ('labszig', 'Lábazat XPS szigetelése', 'm²', 9000, 'n'),
+    RSZ('parkany', 'Ablakpárkány beépítése', 'fm', 5000, 'n'),
+    RSZ('leszer', 'Homlokzati elemek le- és visszaszerelése', 'db', 5000, 'n', { help: 'Lámpa, csengő, lefolyócső-bilincs, klíma kültéri egység stb.' }),
+    RSZ('csakszin', 'Csak színezés (régi szigetelésen)', 'm²', 3500, 'n', { mats: [['vakolat_alapozo', 0.25], ['szinvakolat', 2.5]] }),
+  ],
+  fodem: [
+    RSZ('takarit', 'Padlás kitakarítása', 'm²', 500, 'c'),
+    RSZ('parazaro', 'Párazáró fólia terítése', 'm²', 400, 'c', { mats: [['parazaro', 1.1]] }),
+    RSZ('pallo', 'Járható pallósor készítése', 'fm', 4000, 'n'),
+  ],
+  teto: [
+    RSZ('bontas', 'Régi fedés bontása', 'm²', 2500, 'c'),
+    RSZ('lecezes', 'Lécezés, ellenlécezés cseréje', 'm²', 2500, 'c'),
+    RSZ('folia', 'Tetőfólia fektetése', 'm²', 800, 'c'),
+    RSZ('gerinc', 'Gerinc, élgerinc rakása', 'fm', 3500, 'n'),
+    RSZ('badog', 'Bádogozás (kémény, vápa, szegély)', 'fm', 6000, 'n'),
+    RSZ('tetoablak', 'Tetőablak beépítése', 'db', 45000, 'n'),
+    RSZ('hofogo', 'Hófogó szerelése', 'fm', 2500, 'n'),
+    RSZ('javitas', 'Tetőjavítás, cserépcsere (beázás)', 'óra', 8000, 'n'),
+    RSZ('sitt', 'Sitt elszállítása', 'alkalom', 60000, 'n', { md: 'md_sitt' }),
+  ],
+  eresz: [
+    RSZ('bontas', 'Régi csatorna bontása', 'fm', 800, 'c'),
+    RSZ('tisztitas', 'Csatornatisztítás', 'fm', 800, 'n'),
+    RSZ('lomb', 'Lombfogó háló szerelése', 'fm', 1500, 'n'),
+  ],
+  terko: [
+    RSZ('bontas', 'Régi burkolat bontása', 'm²', 3000, 'c', { md: 'md_bontas' }),
+    RSZ('tukor', 'Földkiemelés, tükörkészítés', 'm²', 3000, 'c', { md: 'md_foldkiemeles' }),
+    RSZ('alap', 'Alapréteg terítése, tömörítése', 'm²', 2500, 'c'),
+    RSZ('szegely', 'Szegélykő beépítése betonágyba', 'fm', 3000, 'n'),
+    RSZ('folyoka', 'Vízelvezető folyóka beépítése', 'fm', 6000, 'n'),
+    RSZ('sitt', 'Föld, sitt elszállítása', 'alkalom', 60000, 'n', { md: 'md_sitt' }),
+  ],
+  omlesztett: [
+    RSZ('gyom', 'Gyomtalanítás, terület előkészítése', 'm²', 300, 'c'),
+    RSZ('geotex', 'Geotextília terítése', 'm²', 400, 'c', { mats: [['geotextil', 1.1]] }),
+    RSZ('szegely', 'Szegély beépítése', 'fm', 3000, 'n'),
+  ],
+  kerites: [
+    RSZ('bontas', 'Régi kerítés bontása', 'fm', 3000, 'c'),
+    RSZ('oszlop', 'Oszlopok alapozása, betonozása', 'db', 6000, 'n'),
+    RSZ('kapu', 'Kapu beépítése', 'db', 40000, 'n'),
+    RSZ('festes', 'Kerítés festése, lazúrozása', 'm²', 2500, 'n', { mats: [['lazur', 0.25]] }),
+  ],
+  deszka: [
+    RSZ('lecvaz', 'Lécváz készítése', 'm²', 2500, 'c'),
+    RSZ('lazur', 'Felületkezelés (2 réteg lazúr)', 'm²', 2000, 'c', { mats: [['lazur', 0.2]] }),
+    RSZ('szegely', 'Szegély-, sarokléc felrakása', 'fm', 1200, 'n'),
+  ],
+  terasz: [
+    RSZ('vaz', 'Alépítmény, tartóváz készítése', 'm²', 6000, 'c'),
+    RSZ('olaj', 'Olajozás, felületkezelés', 'm²', 1800, 'c', { mats: [['teraszolaj', 0.12]] }),
+    RSZ('lepcso', 'Lépcső készítése', 'fok', 15000, 'n'),
+    RSZ('korlat', 'Korlát szerelése', 'fm', 12000, 'n'),
+  ],
+  beton: [
+    RSZ('zsalu', 'Zsaluzás', 'm²', 4000, 'n'),
+    RSZ('vas', 'Vasszerelés', 'kg', 150, 'n'),
+    RSZ('pumpa', 'Betonpumpa', 'alkalom', 70000, 'n'),
+  ],
+  esztrich: [
+    RSZ('lepeshang', 'Lépéshang-szigetelés terítése', 'm²', 800, 'c'),
+    RSZ('perem', 'Peremszigetelő szalag', 'fm', 300, 'n', { mats: [['peremszalag', 1]] }),
+    RSZ('bontas', 'Régi aljzat bontása', 'm²', 3000, 'c', { md: 'md_bontas' }),
+  ],
+  falazas: [
+    RSZ('athidalo', 'Áthidaló elhelyezése', 'db', 6000, 'n'),
+    RSZ('koszoru', 'Koszorú zsaluzása, betonozása', 'fm', 12000, 'n'),
+    RSZ('falszig', 'Vízszintes falszigetelés', 'fm', 1500, 'n'),
+    RSZ('bontas', 'Falbontás', 'm²', 6000, 'n'),
+  ],
+  zsaluko: [
+    RSZ('vas', 'Vasszerelés', 'kg', 150, 'n'),
+    RSZ('szig', 'Talajnedvesség elleni szigetelés', 'm²', 3000, 'n'),
+  ],
+};
+// Új anyagok, amiket a részmunkák használnak
+Object.assign(MATERIALS, {
+  zomanc:          { n: 'Zománcfesték (fa, fém)', g: 'Vakolat, festés', u: 'l', pack: 0.75, pn: 'doboz (0,75 l)', p: 6000 },
+  zomanc_alap:     { n: 'Alapozó festék (fa, fém)', g: 'Vakolat, festés', u: 'l', pack: 0.75, pn: 'doboz (0,75 l)', p: 5000 },
+  radiator_festek: { n: 'Radiátorfesték (hőálló)', g: 'Vakolat, festés', u: 'l', pack: 0.75, pn: 'doboz (0,75 l)', p: 6500 },
+  takaro:          { n: 'Takarófólia + festőszalag', g: 'Vakolat, festés', u: 'm²', pack: 0, pn: 'm²', p: 150 },
+  penesz:          { n: 'Penészgátló oldat', g: 'Vakolat, festés', u: 'l', pack: 1, pn: 'flakon (1 l)', p: 3000 },
+  szilikon:        { n: 'Szaniter szilikon', g: 'Burkolás', u: 'fm', pack: 8, pn: 'kartus (≈8 fm)', p: 2500 },
+  lazur:           { n: 'Vékonylazúr', g: 'Fa', u: 'l', pack: 2.5, pn: 'kanna (2,5 l)', p: 14000 },
+  teraszolaj:      { n: 'Teraszolaj', g: 'Fa', u: 'l', pack: 2.5, pn: 'kanna (2,5 l)', p: 18000 },
+});
+for (const id in RESZ) {
+  const c = CALC_BY_ID[id]; if (!c) continue;
+  c.resz = RESZ[id].map(r => {
+    r.md = r.md || ('md_' + id + '_' + r.id);
+    if (!MATERIALS[r.md]) MATERIALS[r.md] = { n: r.n, g: 'Munkadíj', u: r.u, pack: 0, pn: r.u, p: r.p };
+    if (r.t === 'c' && !r.q) r.q = (v) => { try { const m = c.mq(v); return m[1] === r.u ? m[0] : 0; } catch (e) { return 0; } };
+    return r;
+  });
+}
+// Részmunkák eredménye: [{ r, q }] – csak a bekapcsolt / kitöltött tételek
+function reszOf(c, v) {
+  const out = [];
+  for (const r of (c.resz || [])) {
+    const k = 'rm_' + r.id;
+    let q = 0;
+    if (r.t === 'c') { if (v[k] === true) { try { q = nz(r.q(v)); } catch (e) { q = 0; } } }
+    else q = nz(v[k]);
+    q = Math.round(q * 100) / 100;
+    if (q > 0) out.push({ r, q });
+  }
+  return out;
+}
 
 /* ---------- Helyiségek ----------
    Helyiség: { id, nev, L, W, H (m), nyl: [nyílások] }. A ROOM_MAP megmondja, egy kalkulátor mely mezőit tölti a helyiség. */
@@ -1037,4 +1209,4 @@ function defaults(calc) {
   return v;
 }
 
-if (typeof module !== 'undefined') module.exports = { ROOM_MAP, ROOM_Q, SABLONOK, roomGeo, nyInBand, nyStats, kavaArea, bulkTxt, MJ_OPTS, MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };
+if (typeof module !== 'undefined') module.exports = { RESZ, reszOf, ROOM_MAP, ROOM_Q, SABLONOK, roomGeo, nyInBand, nyStats, kavaArea, bulkTxt, MJ_OPTS, MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };

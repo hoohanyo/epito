@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.4';
+const APP_VERSION = '2.5';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -457,7 +457,7 @@ function remember() { if (S.calc && !S.calc.tetelId) LS.set('ek_utolso_' + S.cal
 // Teljes eredmény: anyagok + (ha be van kapcsolva) a kalkulációhoz tartozó munkadíj
 function fullResult(c, v) {
   const r = computeSafe(c, v);
-  r.munka = null;
+  r.munka = null; r.resz = [];
   if (c.md && v.mdOn !== false) {
     const key = v.mdK && mat(v.mdK) && isMunkaKey(v.mdK) ? v.mdK : c.md; const P = mat(key);
     let mq = [0, '']; try { mq = c.mq(v); } catch (e) {}
@@ -466,31 +466,59 @@ function fullResult(c, v) {
     r.munka = { key, q, u: P.u, auto, mq };
     if (q > 0) r.mats = r.mats.concat([{ k: key, q }]);
   }
+  // részmunkák: díjtétel + a hozzájuk tartozó anyag
+  for (const x of reszOf(c, v)) {
+    r.resz.push(x);
+    r.mats = r.mats.concat([{ k: x.r.md, q: x.q }], (x.r.mats || []).map(m => ({ k: m[0], q: Math.round(x.q * m[1] * 1000) / 1000 })));
+    if (x.r.mats && x.r.mats.length) r.out.push([x.r.n, fmt(x.q) + ' ' + x.r.u]);
+  }
+  if (r.resz.length) { // azonos anyag egy sorba (pl. ajtó + ablak zománcfestéke), hogy egyszer kerekítsen kiszerelésre
+    const m = new Map(); for (const x of r.mats) { if (x.k === '_egyeb' || !m.has(x.k)) m.set(x.k === '_egyeb' ? Symbol() : x.k, Object.assign({}, x)); else m.get(x.k).q = Math.round((m.get(x.k).q + x.q) * 1000) / 1000; }
+    r.mats = [...m.values()];
+  }
   return r;
 }
 function renderMunka() {
   const st = S.calc, c = CALC_BY_ID[st.id], v = st.v, box = $('#munka');
   if (!box) return;
-  if (!c.md) { box.innerHTML = ''; return; }
-  const on = v.mdOn !== false; const key = v.mdK && isMunkaKey(v.mdK) ? v.mdK : c.md; const P = mat(key);
-  let mq = [0, '']; try { mq = c.mq(v); } catch (e) {}
-  let h = '<h2>Munkadíj</h2><div class="card">' +
-    '<div class="f"><label for="mdOn">Munkadíj számolása ehhez a tételhez</label><label class="sw"><input type="checkbox" id="mdOn"' + (on ? ' checked' : '') + '><i></i></label></div>';
-  if (on) {
-    h += '<div class="f sel"><label for="mdK">Díjtétel</label><select id="mdK">' + munkaKeys().map(k => '<option value="' + k + '"' + (k === key ? ' selected' : '') + '>' + esc(mat(k).n) + ' (' + ft(mat(k).p) + '/' + esc(mat(k).u) + ')</option>').join('') + '</select></div>';
-    if (P.u !== mq[1]) h += '<div class="f"><label for="mdQ">Mennyiség</label><span class="in"><input id="mdQ" inputmode="decimal" value="' + esc(numStr(v.mdQ)) + '"><span class="u">' + esc(P.u) + '</span></span></div>';
-    h += '<div class="small muted" id="mdInfo" style="padding-top:8px"></div>';
+  if (!c.md && !(c.resz && c.resz.length)) { box.innerHTML = ''; return; }
+  let h = '<h2>Munkadíj</h2><div class="card">';
+  if (c.md) {
+    const on = v.mdOn !== false; const key = v.mdK && isMunkaKey(v.mdK) ? v.mdK : c.md; const P = mat(key);
+    let mq = [0, '']; try { mq = c.mq(v); } catch (e) {}
+    h += '<div class="f"><label for="mdOn">Fő munka díja<small class="muted" style="display:block;font-weight:400">' + esc(mat(c.md).n) + '</small></label><label class="sw"><input type="checkbox" id="mdOn"' + (on ? ' checked' : '') + '><i></i></label></div>';
+    if (on) {
+      h += '<div class="f sel"><label for="mdK">Díjtétel</label><select id="mdK">' + munkaKeys().map(k => '<option value="' + k + '"' + (k === key ? ' selected' : '') + '>' + esc(mat(k).n) + ' (' + ft(mat(k).p) + '/' + esc(mat(k).u) + ')</option>').join('') + '</select></div>';
+      if (P.u !== mq[1]) h += '<div class="f"><label for="mdQ">Mennyiség</label><span class="in"><input id="mdQ" inputmode="decimal" value="' + esc(numStr(v.mdQ)) + '"><span class="u">' + esc(P.u) + '</span></span></div>';
+      h += '<div class="small muted" id="mdInfo" style="padding-top:8px"></div>';
+    }
+  }
+  if (c.resz && c.resz.length) {
+    const db = reszOf(c, v).length;
+    h += '<div class="resz-fej"><b>Részmunkák</b><span class="small muted">' + (db ? db + ' kiválasztva' : 'külön is kérhetők') + '</span></div>' +
+      '<div class="small muted" style="margin:-2px 0 6px">Ha a megrendelő csak ezek közül kér valamit, kapcsold ki fent a fő munkát (és az anyagokat).</div>';
+    for (const r of c.resz) {
+      const k = 'rm_' + r.id; const P = mat(r.md);
+      const ar = '<span class="resz-ar">' + ft(P.p) + '/' + esc(P.u) + '</span>';
+      if (r.t === 'c') {
+        let q = 0; try { q = nz(r.q(v)); } catch (e) {}
+        h += '<div class="f resz"><label for="' + k + '">' + esc(r.n) + '<small class="muted"><span id="rq_' + r.id + '">' + (q > 0 ? fmt(q) + ' ' + esc(r.u) + ' · ' : '') + '</span>' + ar + (r.help ? ' · ' + esc(r.help) : '') + '</small></label><label class="sw"><input type="checkbox" id="' + k + '" data-rc="' + r.id + '"' + (v[k] === true ? ' checked' : '') + '><i></i></label></div>';
+      } else {
+        h += '<div class="f resz"><label for="' + k + '">' + esc(r.n) + '<small class="muted">' + ar + (r.help ? ' · ' + esc(r.help) : '') + '</small></label><span class="in"><input id="' + k + '" data-rn="' + r.id + '" inputmode="decimal" placeholder="0" value="' + esc(numStr(v[k] || '')) + '"><span class="u">' + esc(r.u) + '</span></span></div>';
+      }
+    }
   }
   box.innerHTML = h + '</div>';
-  $('#mdOn').onchange = (e) => { v.mdOn = e.target.checked; remember(); renderMunka(); renderRes(); };
-  if (on) {
-    $('#mdK').onchange = (e) => { v.mdK = e.target.value; remember(); renderMunka(); renderRes(); };
-    const q = $('#mdQ'); if (q) { q.oninput = () => { v.mdQ = parseNum(q.value); remember(); renderRes(); }; q.onfocus = () => q.select(); }
-  }
+  if ($('#mdOn')) $('#mdOn').onchange = (e) => { v.mdOn = e.target.checked; remember(); renderMunka(); renderRes(); };
+  if ($('#mdK')) $('#mdK').onchange = (e) => { v.mdK = e.target.value; remember(); renderMunka(); renderRes(); };
+  const q = $('#mdQ'); if (q) { q.oninput = () => { v.mdQ = parseNum(q.value); remember(); renderRes(); }; q.onfocus = () => q.select(); }
+  box.querySelectorAll('[data-rc]').forEach(el => el.onchange = () => { v['rm_' + el.dataset.rc] = el.checked; remember(); renderMunka(); renderRes(); });
+  box.querySelectorAll('[data-rn]').forEach(el => { el.oninput = () => { v['rm_' + el.dataset.rn] = parseNum(el.value); remember(); renderRes(); const fe = box.querySelector('.resz-fej .muted'); if (fe) { const n = reszOf(c, v).length; fe.textContent = n ? n + ' kiválasztva' : 'külön is kérhetők'; } }; el.onfocus = () => el.select(); });
 }
 function computeSafe(c, v) { try { return c.compute(v); } catch (e) { console.error(e); return { out: [['Hiba', 'Ellenőrizd a megadott értékeket']], mats: [], warn: [] }; } }
 function renderRes() {
   const st = S.calc, c = CALC_BY_ID[st.id];
+  (c.resz || []).filter(r => r.t === 'c').forEach(r => { const el = document.getElementById('rq_' + r.id); if (!el) return; let q = 0; try { q = nz(r.q(st.v)); } catch (e) {} el.textContent = q > 0 ? fmt(q) + ' ' + r.u + ' · ' : ''; });
   const r = fullResult(c, st.v); st.r = r;
   let h = '<h2>Eredmény</h2><div class="card res">' + r.out.map(o => '<div class="row"><span>' + esc(o[0]) + '</span><b>' + esc(o[1]) + '</b></div>').join('') + '</div>';
   for (const w of r.warn) h += '<div class="warn">' + esc(w) + '</div>';

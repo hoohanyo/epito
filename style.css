@@ -538,3 +538,10 @@ html.dark .kovetes{background:linear-gradient(135deg,#2A2620 0%,#221F1B 100%);bo
 .ds-dat .svgi{width:16px;height:16px;color:var(--acc)}
 .ds-unnep{margin-left:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 7px;border-radius:10px;background:var(--acc-soft);color:var(--c2t)}
 .datumsor+main{padding-top:8px}
+
+/* ===== 2.5: részmunkák a munkadíj kártyában ===== */
+.resz-fej{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.resz-fej b{font-size:14px}
+.f.resz label small{display:block;font-size:12px;font-weight:400;margin-top:1px}
+.f.resz .in input{width:70px}
+.resz-ar{color:var(--pri);font-weight:600}
