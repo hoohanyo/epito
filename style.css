@@ -394,3 +394,13 @@ html.dark header.top{box-shadow:inset 0 -2px 0 #DC1F26,0 6px 20px -10px rgba(220
 /* Áttetsző csempék és kereső: átdereng a háttér */
 .tile,.search{background:rgba(249,248,248,.80)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 html.dark .tile,html.dark .search{background:rgba(35,30,29,.72)!important;border-color:rgba(90,78,74,.55)}
+/* 3D csempék: felülről jövő fény, alsó "vastagság", lenyomáskor besüpped */
+.tile{background:linear-gradient(180deg,rgba(255,255,255,.96) 0%,rgba(243,241,241,.86) 100%)!important;border:1px solid rgba(255,255,255,.9);
+  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(94,86,83,.08),0 3px 0 #D3CBC6,0 10px 22px -10px rgba(46,41,39,.32);
+  transform:translateY(0);transition:transform .08s ease,box-shadow .08s ease}
+.tile:active{transform:translateY(3px)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 rgba(94,86,83,.16),0 4px 10px -6px rgba(46,41,39,.30)}
+.tile .ic{box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -2px 3px rgba(0,0,0,.08),0 2px 4px -1px rgba(46,41,39,.22);background-image:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0))}
+html.dark .tile{background:linear-gradient(180deg,rgba(52,44,42,.92) 0%,rgba(30,25,24,.88) 100%)!important;border:1px solid rgba(255,255,255,.07);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.4),0 3px 0 #0B0909,0 12px 24px -10px rgba(0,0,0,.85)}
+html.dark .tile:active{transform:translateY(3px)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 #0B0909,0 0 0 1px rgba(220,31,38,.55),0 6px 18px -6px rgba(220,31,38,.55);border-color:rgba(220,31,38,.6)}
+html.dark .tile .ic{box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -2px 4px rgba(0,0,0,.35),0 2px 5px -1px rgba(0,0,0,.6);background-image:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0))}
