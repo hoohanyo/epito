@@ -563,3 +563,6 @@ html.dark .kovetes{background:linear-gradient(135deg,#2A2620 0%,#221F1B 100%);bo
 .alcs.belso .alcs-d{border:1px solid var(--line2);border-radius:12px;background:var(--card2)}
 .alcs.belso .alcs-d summary{min-height:44px}
 .alcs.belso .alcs-d summary b{font-size:14px}
+/* 2.7.1: kereső és az árlista-csoportok közötti térköz */
+#ak.search{margin-bottom:0}
+#ak+.alcs{margin-top:18px}
