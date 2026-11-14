@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '1.3';
+const APP_VERSION = '1.4';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -203,7 +203,7 @@ function setTab(tab) { S.tab = tab; S.stack = [{ v: tab }]; render(); window.scr
 document.querySelectorAll('nav.bottom button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
 $('#btnBack').onclick = () => back();
 $('#btnTheme').onclick = () => { const d = document.documentElement.classList.toggle('dark'); try { localStorage.setItem('ek_tema', d ? 'sotet' : 'vilagos'); } catch (e) {} themeIcon(); };
-function themeIcon() { $('#btnTheme').textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙'; }
+function themeIcon() { const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = document.documentElement.classList.contains('dark') ? '#100D0E' : '#3F3937'; $('#btnTheme').textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙'; }
 $('#btnSync').onclick = () => { if (LOCAL) setTab('tobb'); else load(true); };
 window.addEventListener('online', () => flush());
 window.addEventListener('offline', updateSync);
