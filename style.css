@@ -553,6 +553,13 @@ html.dark .kovetes{background:linear-gradient(135deg,#2A2620 0%,#221F1B 100%);bo
 .alcs-d summary::-webkit-details-marker{display:none}
 .alcs-d summary b{flex:1;font-size:15px}
 .alcs-d summary:after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-4px 4px 0 4px;transition:transform .2s}
-.alcs-d[open] summary:after{transform:rotate(-135deg);margin-top:4px}
-.alcs-d[open] summary{border-bottom:1px solid var(--line2)}
+.alcs-d[open]>summary:after{transform:rotate(-135deg);margin-top:4px}
+.alcs-d[open]>summary{border-bottom:1px solid var(--line2)}
 .alcs-d .list{padding:0 14px}
+/* 2.7: minden árlista-csoport lenyitható */
+.alcs-d.csop>summary b{font-size:16px}
+.alcs-d.csop>summary .btn{min-height:36px;padding:0 12px}
+.alcs.belso{padding:10px 10px 12px;gap:8px}
+.alcs.belso .alcs-d{border:1px solid var(--line2);border-radius:12px;background:var(--card2)}
+.alcs.belso .alcs-d summary{min-height:44px}
+.alcs.belso .alcs-d summary b{font-size:14px}
