@@ -250,7 +250,7 @@ async function openQuote(p) {
   $('#qx').onclick = () => closeQuote();
   $('#qp').onclick = () => {
     const old = document.title; document.title = (aj.szam + ' ' + ugyfelNev(p) + ' ' + megrLabel(p)).replace(/[\\/:*?"<>|]+/g, '_');
-    if (p.allapot === 'Ajánlat') { p.allapot = 'Kiküldve'; upsertProjekt(p); }
+    if (p.allapot === 'Ajánlat') { p.allapot = 'Kiküldve'; p.kikuldve = isoDay(); upsertProjekt(p); }
     setTimeout(() => { window.print(); document.title = old; }, 50);
   };
   window.scrollTo(0, 0);

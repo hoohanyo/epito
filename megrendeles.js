@@ -100,19 +100,20 @@ function renderUgyfelek() {
       return { u, ms, akt, last };
     }).sort((a, b) => (b.akt.length > 0) - (a.akt.length > 0) || String(b.last).localeCompare(String(a.last)));
     if (!us.length) h += '<div class="empty">' + (S.data.ugyfelek.length ? 'Nincs találat.' : 'Még nincs ügyfeled. Az „+ Új megrendelés” gombbal kezdj – az ügyfelet ott helyben felveheted.') + '</div>';
-    else h += '<div class="card list">' + us.map(x => '<div class="it" data-u="' + x.u.id + '" data-del="ugyfel|' + x.u.id + '"><span class="ic">👤</span><div class="m"><b>' + esc(x.u.nev) + (x.akt.length ? '<span class="pill">' + x.akt.length + ' aktív</span>' : '') + '</b><small>' + esc([telepules(x.u.cim), x.ms.length + ' megrendelés'].filter(Boolean).join(' · ')) + '</small></div><span class="arrow">›</span></div>').join('') + '</div>';
+    else h += '<div class="card list">' + us.map(x => '<div class="it" data-u="' + x.u.id + '" data-del="ugyfel|' + x.u.id + '"><span class="ic">👤</span><div class="m"><b>' + esc(x.u.nev) + (x.akt.length ? '<span class="pill">' + x.akt.length + ' aktív</span>' : '') + (x.ms.some(kovetendo) ? '<span class="pill kovet">Rákérdezni</span>' : '') + '</b><small>' + esc([telepules(x.u.cim), x.ms.length + ' megrendelés'].filter(Boolean).join(' · ')) + '</small></div><span class="arrow">›</span></div>').join('') + '</div>';
   } else {
     S.projFilter = S.projFilter || 'Aktív';
     const nFiz = S.data.projektek.filter(fizetesreVar).length;
     h += '<div class="seg">' + [['Aktív', 'Aktív'], ['Fiz', 'Fizetésre vár' + (nFiz ? ' (' + nFiz + ')' : '')], ['Lezárt', 'Lezárt'], ['Mind', 'Mind']].map(x => '<button data-f="' + x[0] + '"' + (S.projFilter === x[0] ? ' class="on"' : '') + '>' + x[1] + '</button>').join('') + '</div>';
-    const ps = S.data.projektek.filter(p => S.projFilter === 'Mind' || (S.projFilter === 'Fiz' ? fizetesreVar(p) : (S.projFilter === 'Aktív') === isAktiv(p)))
+    if (S.projFilter === 'Kovet') h += '<div class="banner ar-vissza"><span>Szűrő: 7 napnál régebben kiküldött ajánlatok</span><button class="btn sm" data-f="Aktív">Szűrő törlése</button></div>';
+    const ps = S.data.projektek.filter(p => S.projFilter === 'Mind' || (S.projFilter === 'Kovet' ? kovetendo(p) : S.projFilter === 'Fiz' ? fizetesreVar(p) : (S.projFilter === 'Aktív') === isAktiv(p)))
       .filter(p => !q || [ugyfelNev(p), megrLabel(p), p.sorszam, p.hely, mrsOf(p).map(m => m.nev).join(' ')].join(' ').toLowerCase().includes(q))
       .sort((a, b) => String(b.modositva || '').localeCompare(String(a.modositva || '')));
     h += ps.length ? '<div class="card list">' + ps.map(megrItem).join('') + '</div>' : '<div class="empty">Ebben a nézetben nincs megrendelés.</div>';
   }
   $('#view').innerHTML = h;
   document.querySelectorAll('.seg button[data-n]').forEach(b => b.onclick = () => { S.ugyNezet = b.dataset.n; renderUgyfelek(); });
-  document.querySelectorAll('.seg button[data-f]').forEach(b => b.onclick = () => { S.projFilter = b.dataset.f; renderUgyfelek(); });
+  document.querySelectorAll('button[data-f]').forEach(b => b.onclick = () => { S.projFilter = b.dataset.f; renderUgyfelek(); });
   const uk = $('#uk'); uk.oninput = () => { S.ugyKeres = uk.value; const pos = uk.selectionStart; renderUgyfelek(); const n = $('#uk'); n.focus(); n.setSelectionRange(pos, pos); };
   if ($('#ujmeg')) $('#ujmeg').onclick = () => megrendelesDialog(null, null);
   if ($('#ujugy')) $('#ujugy').onclick = () => ugyfelDialog(null);
@@ -122,7 +123,7 @@ function renderUgyfelek() {
 const telepules = (cim) => { const m = String(cim || '').match(/^\s*\d{4}\s+([^,]+)/); return m ? m[1].trim() : String(cim || '').split(',')[0].trim(); };
 function megrItem(p) {
   const ms = mrsOf(p).map(m => m.nev);
-  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(ugyfelNev(p)) + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + '</div><small>' + esc([p.sorszam, p.nev || ms.join(', ') || 'nincs munkarész', telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
+  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(ugyfelNev(p)) + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + kovetesPill(p) + '</div><small>' + esc([p.sorszam, p.nev || ms.join(', ') || 'nincs munkarész', telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
 }
 
 /* ---------- Ügyfél ---------- */
@@ -146,7 +147,7 @@ function renderUgyfel(r) {
 }
 function megrItemU(p) {
   const ms = mrsOf(p).map(m => m.nev);
-  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(p.nev || ms.join(', ') || 'Új megrendelés') + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + '</div><small>' + esc([p.sorszam, dateHu(p.letrehozva), telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
+  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(p.nev || ms.join(', ') || 'Új megrendelés') + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + kovetesPill(p) + '</div><small>' + esc([p.sorszam, dateHu(p.letrehozva), telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
 }
 function ugyfelDialog(u, after) {
   const uj = !u; const d = u ? Object.assign({}, u) : { id: uid('U'), nev: '', cim: '', tel: '', email: '', megj: '' };
@@ -231,6 +232,7 @@ function allapotDialog(p) {
       const a = el.dataset.a; p.allapot = a;
       if (a === 'Elfogadva' && !p.elfogadva) p.elfogadva = isoDay();
       if (a === 'Kész') p.kesz = isoDay();
+      if (a === 'Kiküldve') p.kikuldve = isoDay();
       upsertProjekt(p); closeModal(); render(); toast('Állapot: ' + a);
     });
   });
@@ -243,7 +245,7 @@ function renderMegrendeles(r) {
   const agg = aggregate(ts); const sc = splitCats(agg);
   setHeader(ugyfelNev(p), [p.sorszam, p.nev].filter(Boolean).join(' · '));
   const datumok = [p.elfogadva ? 'elfogadva ' + dateHu(p.elfogadva) : '', p.kesz && p.allapot === 'Kész' ? 'kész ' + dateHu(p.kesz) : ''].filter(Boolean).join(' · ');
-  let h = '<div class="card hero"><div class="hero-top"><button class="allapot-btn" id="pall">' + allapotPill(p.allapot) + ' <span>▾</span></button><span class="muted small">' + esc(datumok) + '</span></div>' +
+  let h = kovetesHtml(p) + '<div class="card hero"><div class="hero-top"><button class="allapot-btn" id="pall">' + allapotPill(p.allapot) + ' <span>▾</span></button><span class="muted small">' + esc(datumok) + '</span></div>' +
     (p.szamla && p.szamla.szam ? '<div style="margin-top:8px" class="small">🧾 ' + esc(p.szamla.szam) + ' · ' + ft(p.szamla.osszeg) + ' ' + szamlaPill(p) + '</div>' : '') +
     '<div class="total" style="margin-top:8px"><span>Összesen (nettó)</span><b>' + ft(sumCost(agg)) + '</b></div>' +
     '<div class="small muted" style="margin-top:4px">Anyag ' + ft(sumCost(sc.anyag)) + ' · munkadíj ' + ft(sumCost(sc.munka)) + (sc.egyeb.length ? ' · egyéb ' + ft(sumCost(sc.egyeb)) : '') + '</div>' +
@@ -271,10 +273,11 @@ function renderMegrendeles(r) {
     return '<div class="it" data-mr="' + m.id + '" data-del="munkaresz|' + m.id + '"><span class="ic">🧱</span><div class="m"><b>' + esc(m.nev) + (m.ajanlatban === false ? '<span class="pill gray">ajánlaton kívül</span>' : '') + '</b><small>' + n + ' tétel</small></div><div class="v">' + ft(mrKoltseg(m)) + '</div><span class="arrow">›</span></div>';
   }).join('') + '</div>';
   h += '</div>';
+  h += penzugyHtml(p, sumCost(agg), sumCost(sc.munka));
   if (sc.anyag.length) h += '<h2>Összesített anyaglista</h2><div class="card">' + matsTable(sc.anyag) + '</div>';
   h += fotokHtml(p);
   $('#view').innerHTML = h;
-  bindFotok(p);
+  bindFotok(p); bindPenzugy(p); bindKovetes(p);
   $('#pall').onclick = () => allapotDialog(p);
   $('#pedit').onclick = () => megrendelesDialog(p);
   if ($('#pugy')) $('#pugy').onclick = () => go({ v: 'ugyfel', id: u.id });

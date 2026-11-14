@@ -505,3 +505,28 @@ html.dark .pill.done{background:#1F2B38;color:#9DC0E0}
 html.dark .cpy{background:#232B37}
 html.dark .modal .sheet{background:#171C24}
 html.dark .list .it .ic{background:#232B37}
+
+/* ===== 2.2: pénzügy, napló, utánkövetés, havi összesítő ===== */
+a.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none}
+.pill.kovet{background:#F4E6D2;color:#7A4E14}
+html.dark .pill.kovet{background:#3A2E1C;color:#F0C98A}
+.kovetes{border-radius:var(--r);padding:12px 14px;margin-bottom:12px;background:linear-gradient(135deg,#F7EEE3 0%,#EFE3D6 100%);border:1px solid #E2CFB9;
+  box-shadow:inset 1px 1px 0 var(--hi),inset -1px -1px 0 var(--lo),0 3px 0 var(--ledge),var(--drop)}
+html.dark .kovetes{background:linear-gradient(135deg,#2A2620 0%,#221F1B 100%);border-color:#4A4033}
+.kovetes .kv-cim{font-weight:700;font-size:15px;margin-bottom:2px}
+.kovetes .btns .btn{flex:1}
+.haszon .kv:last-child,.havi .kv:last-child{border-bottom:0}
+.kv.hsz b{font-size:17px}
+.kv.hsz.poz b{color:var(--ok)}
+.kv.hsz.neg b{color:var(--err)}
+.kv b small{font-weight:600;color:var(--muted)}
+.havi-fej{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 0 8px;border-bottom:1px solid var(--line2)}
+.havi-fej b{font-size:16px}
+.havi-fej .btn{min-width:44px;font-size:18px;line-height:1}
+.havi-fej .btn:disabled{opacity:.35}
+.ar-vissza{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.blokk-sor{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.blokk-kep{flex:1;min-width:120px;min-height:56px;border-radius:10px;border:1px dashed var(--line);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;background:var(--card2)}
+.blokk-kep img{max-width:100%;max-height:120px;display:block}
+.blokk-kep.nagy{flex-basis:100%}
+.blokk-kep.nagy img{max-height:70vh}

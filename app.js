@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.1';
+const APP_VERSION = '2.2';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -115,7 +115,7 @@ async function load(force) {
     const arl = {};
     for (const r of (j.arlista || [])) arl[r.kulcs] = { n: r.anyag, g: r.csoport, u: r.egyseg, pack: r.kiszereles, pn: r.kiszNev, p: r.ar, megj: r.megj };
     const be = j.beallitas || {};
-    S.data = { ceg: safeJson(be.ceg, {}), logo: be.logo || '', sablonok: safeJson(be.sablonok, []), projektek: (j.projektek || []).map(p => Object.assign(p, { aj: safeJson(p.aj, {}), helyisegek: safeJson(p.helyisegek, []), fotok: safeJson(p.fotok, []), szamla: safeJson(p.szamla, null) })), tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl,
+    S.data = { ceg: safeJson(be.ceg, {}), logo: be.logo || '', sablonok: safeJson(be.sablonok, []), projektek: (j.projektek || []).map(p => Object.assign(p, { aj: safeJson(p.aj, {}), helyisegek: safeJson(p.helyisegek, []), fotok: safeJson(p.fotok, []), szamla: safeJson(p.szamla, null), kiadasok: safeJson(p.kiadasok, []), naplo: safeJson(p.naplo, []) })), tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl,
       kuka: (j.kuka || []).map(k => ({ id: k.id, tipus: k.tipus, nev: k.nev, torolve: k.torolve, adat: safeJson([1, 2, 3, 4, 5, 6, 7, 8].map(i => k['adat' + i] || '').join(''), {}) })),
       ugyfelek: j.ugyfelek || [], munkareszek: (j.munkareszek || []).map(m => Object.assign(m, { ajanlatban: !(m.ajanlatban === false || m.ajanlatban === 'FALSE' || m.ajanlatban === 'false'), sorrend: Number(m.sorrend) || 0 })) };
     saveCache(); S.lastErr = ''; S.loaded = true;
@@ -137,7 +137,7 @@ function upsertProjekt(p) {
   p.modositva = now(); if (!p.letrehozva) p.letrehozva = p.modositva;
   const i = S.data.projektek.findIndex(x => x.id === p.id);
   if (i >= 0) S.data.projektek[i] = p; else S.data.projektek.unshift(p);
-  saveCache(); enqueue('saveProjekt', { p: Object.assign({}, p, { aj: JSON.stringify(p.aj || {}), ajAllapot: (p.aj && p.aj.allapot) || '', helyisegek: JSON.stringify(p.helyisegek || []), fotok: JSON.stringify(p.fotok || []),
+  saveCache(); enqueue('saveProjekt', { p: Object.assign({}, p, { aj: JSON.stringify(p.aj || {}), ajAllapot: (p.aj && p.aj.allapot) || '', helyisegek: JSON.stringify(p.helyisegek || []), fotok: JSON.stringify(p.fotok || []), kiadasok: JSON.stringify(p.kiadasok || []), naplo: JSON.stringify(p.naplo || []), kikuldve: p.kikuldve || '',
     szamla: p.szamla ? JSON.stringify(p.szamla) : '', szamlaSzam: (p.szamla && p.szamla.szam) || '', szamlaKelt: (p.szamla && p.szamla.kelt) || '', szamlaHatarido: (p.szamla && p.szamla.hatarido) || '', szamlaOsszeg: (p.szamla && p.szamla.osszeg) || '', kifizetve: (p.szamla && p.szamla.fizetve) || '' }) });
 }
 function deleteProjekt(id) {
@@ -571,6 +571,7 @@ function renderAr() {
   const q = S.arKeres.toLowerCase();
   const keys = keys0.filter(k => !q || (mat(k).n + ' ' + mat(k).g).toLowerCase().includes(q));
   let h = '<div class="banner">ℹ️ Az induló árak csak minták. Koppints egy anyagra, és írd át a saját áradra. Ami hiányzik, a csoportoknál a „+ Új” gombbal veheted fel.</div>';
+  h += arVisszaHtml() + '<div class="btns"><button class="btn wide" id="arem">Árak emelése egy lépésben (%)</button></div>';
   h += '<input class="search" id="ak" placeholder="Anyag keresése…" value="' + esc(S.arKeres) + '">';
   const groups = q ? [...new Set(keys.map(k => mat(k).g))] : allGroups();
   for (const g of groups) {
@@ -587,6 +588,7 @@ function renderAr() {
   document.querySelectorAll('[data-k]').forEach(el => el.onclick = () => arDialog(el.dataset.k));
   document.querySelectorAll('[data-ujg]').forEach(el => el.onclick = () => arDialog(null, el.dataset.ujg));
   $('#ujcsop').onclick = () => arDialog(null, '');
+  bindArEmeles();
 }
 function arDialog(k, ujCsoport) {
   const uj = !k; const egyedi = uj || isEgyedi(k);
@@ -641,7 +643,7 @@ function arDialog(k, ujCsoport) {
 /* ----- Több ----- */
 function renderTobb() {
   setHeader('Több', CONFIG.APP_NAME + ' ' + APP_VERSION);
-  let h = '<h2>Adatok</h2><div class="card">';
+  let h = haviHtml() + '<h2>Adatok</h2><div class="card">';
   if (LOCAL) h += '<div class="kv"><span>Mód</span><b>Helyi (csak ez az eszköz)</b></div><div class="small muted" style="padding:6px 0">A Google Sheet bekötéséhez írd be a config.js-be az API_URL-t (Telepites.txt).</div>';
   else h += '<div class="kv"><span>Mód</span><b>Google Sheet</b></div><div class="kv"><span>Állapot</span><b>' + esc(S.syncing ? 'Szinkronizál…' : S.queue.length ? S.queue.length + ' módosítás várakozik' : S.lastErr || 'Minden mentve') + '</b></div>';
   h += '<div class="kv"><span>Ügyfelek / megrendelések / tételek</span><b>' + S.data.ugyfelek.length + ' / ' + S.data.projektek.length + ' / ' + S.data.tetelek.length + '</b></div></div>';
@@ -662,6 +664,7 @@ function renderTobb() {
     });
     $('#kilep').onclick = () => { if (confirm('Kilépsz? Az el nem küldött módosítások elvesznek.')) { S.queue = []; saveQueue(); logout(); } };
   }
+  bindHavi();
   $('#cegb').onclick = () => go({ v: 'ceg' });
   $('#kukab').onclick = () => go({ v: 'kuka' });
   $('#cache').onclick = () => {
