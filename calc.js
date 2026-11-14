@@ -1126,6 +1126,27 @@ for (const id in RESZ) {
     return r;
   });
 }
+// Munkadíjak alcsoportja az Árlistában (szakmánként)
+const SZAKMAK = [
+  ['altalanos', 'Általános (óradíj, kiszállás, sitt…)', []],
+  ['festes', 'Festés, mázolás', ['festes']],
+  ['burkolas', 'Burkolás', ['burkolas']],
+  ['vakolas', 'Vakolás', ['vakolas']],
+  ['gipszkarton', 'Gipszkarton', ['gipszkarton']],
+  ['szig', 'Szigetelés (víz, homlokzat, födém)', ['vizszig', 'homlokzat', 'fodem']],
+  ['teto', 'Tető, ereszcsatorna', ['teto', 'eresz']],
+  ['beton', 'Beton, aljzat, falazás', ['beton', 'esztrich', 'falazas', 'zsaluko']],
+  ['kert', 'Kert, térkő, kerítés', ['terko', 'omlesztett', 'kerites']],
+  ['fa', 'Fa, terasz', ['deszka', 'terasz']],
+  ['sajat', 'Saját munkadíjak', []],
+];
+function munkaSzakma(k) {
+  let calc = null;
+  for (const id in MUNKA) if (MUNKA[id][0] === k || k.indexOf('md_' + id + '_') === 0) { calc = id; break; }
+  if (!calc) return MATERIALS[k] ? 'altalanos' : 'sajat';
+  const sz = SZAKMAK.find(s => s[2].includes(calc));
+  return sz ? sz[0] : 'altalanos';
+}
 // Részmunkák eredménye: [{ r, q }] – csak a bekapcsolt / kitöltött tételek
 function reszOf(c, v) {
   const out = [];
@@ -1209,4 +1230,4 @@ function defaults(calc) {
   return v;
 }
 
-if (typeof module !== 'undefined') module.exports = { RESZ, reszOf, ROOM_MAP, ROOM_Q, SABLONOK, roomGeo, nyInBand, nyStats, kavaArea, bulkTxt, MJ_OPTS, MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };
+if (typeof module !== 'undefined') module.exports = { RESZ, reszOf, SZAKMAK, munkaSzakma, ROOM_MAP, ROOM_Q, SABLONOK, roomGeo, nyInBand, nyStats, kavaArea, bulkTxt, MJ_OPTS, MATERIALS, CALCS, CALC_BY_ID, GROUPS, defaults, fmt, CALC_VERSION };

@@ -545,3 +545,14 @@ html.dark .kovetes{background:linear-gradient(135deg,#2A2620 0%,#221F1B 100%);bo
 .f.resz label small{display:block;font-size:12px;font-weight:400;margin-top:1px}
 .f.resz .in input{width:70px}
 .resz-ar{color:var(--pri);font-weight:600}
+
+/* ===== 2.6: munkadíj alcsoportok az Árlistában ===== */
+.alcs{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+.alcs-d{padding:0;overflow:hidden}
+.alcs-d summary{display:flex;align-items:center;gap:8px;min-height:50px;padding:6px 14px;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent}
+.alcs-d summary::-webkit-details-marker{display:none}
+.alcs-d summary b{flex:1;font-size:15px}
+.alcs-d summary:after{content:"";width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:-4px 4px 0 4px;transition:transform .2s}
+.alcs-d[open] summary:after{transform:rotate(-135deg);margin-top:4px}
+.alcs-d[open] summary{border-bottom:1px solid var(--line2)}
+.alcs-d .list{padding:0 14px}

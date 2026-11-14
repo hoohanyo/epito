@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.6';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -655,12 +655,24 @@ function renderAr() {
   h += arVisszaHtml() + '<div class="btns"><button class="btn wide" id="arem">Árak emelése egy lépésben (%)</button></div>';
   h += '<input class="search" id="ak" placeholder="Anyag keresése…" value="' + esc(S.arKeres) + '">';
   const groups = q ? [...new Set(keys.map(k => mat(k).g))] : allGroups();
+  const arSor = (k) => {
+    const P = mat(k); const unitTxt = P.pack > 0 ? '/ ' + P.pn : '/ ' + P.u;
+    return '<div class="it" data-k="' + k + '"><div class="m"><b>' + esc(P.n) + (isEgyedi(k) ? '<span class="pill">saját</span>' : '') + '</b><small>' + esc(P.pack > 0 ? P.pn + ' · alapegység: ' + P.u : 'egységár: Ft/' + P.u) + (P.megj ? ' · ' + esc(P.megj) : '') + '</small></div><div class="v' + (P.p ? '' : ' noprice') + '">' + (P.p ? ft(P.p) : 'nincs ár') + '<small>' + esc(unitTxt) + '</small></div></div>';
+  };
+  if (!S.arNyitva) S.arNyitva = { altalanos: true };
   for (const g of groups) {
     const gk = keys.filter(k => mat(k).g === g);
-    h += '<div class="ghdr"><h2>' + esc(g) + '</h2><button class="btn sm" data-ujg="' + esc(g) + '">+ Új</button></div><div class="card list">' + (gk.length ? gk.map(k => {
-      const P = mat(k); const unitTxt = P.pack > 0 ? '/ ' + P.pn : '/ ' + P.u;
-      return '<div class="it" data-k="' + k + '"><div class="m"><b>' + esc(P.n) + (isEgyedi(k) ? '<span class="pill">saját</span>' : '') + '</b><small>' + esc(P.pack > 0 ? P.pn + ' · alapegység: ' + P.u : 'egységár: Ft/' + P.u) + (P.megj ? ' · ' + esc(P.megj) : '') + '</small></div><div class="v' + (P.p ? '' : ' noprice') + '">' + (P.p ? ft(P.p) : 'nincs ár') + '<small>' + esc(unitTxt) + '</small></div></div>';
-    }).join('') : '<div class="muted small" style="padding:8px 2px">Nincs anyag.</div>') + '</div>';
+    h += '<div class="ghdr"><h2>' + esc(g) + '</h2><button class="btn sm" data-ujg="' + esc(g) + '">+ Új</button></div>';
+    if (g === 'Munkadíj' && gk.length) {
+      // alcsoportok szakmánként, lenyitható
+      h += '<div class="alcs">' + SZAKMAK.map(([id, nev]) => {
+        const sk = gk.filter(k => munkaSzakma(k) === id); if (!sk.length) return '';
+        const nyitva = q || S.arNyitva[id];
+        return '<details class="card alcs-d" data-alcs="' + id + '"' + (nyitva ? ' open' : '') + '><summary><b>' + esc(nev) + '</b><span class="pill">' + sk.length + '</span></summary><div class="list">' + sk.map(arSor).join('') + '</div></details>';
+      }).join('') + '</div>';
+      continue;
+    }
+    h += '<div class="card list">' + (gk.length ? gk.map(arSor).join('') : '<div class="muted small" style="padding:8px 2px">Nincs anyag.</div>') + '</div>';
   }
   if (!keys.length) h += '<div class="empty">Nincs találat.</div>';
   h += '<div class="btns" style="margin-top:14px"><button class="btn wide" id="ujcsop">+ Új anyag új csoportba</button></div>';
@@ -668,6 +680,7 @@ function renderAr() {
   const ak = $('#ak'); ak.oninput = () => { S.arKeres = ak.value; const pos = ak.selectionStart; renderAr(); const n = $('#ak'); n.focus(); n.setSelectionRange(pos, pos); };
   document.querySelectorAll('[data-k]').forEach(el => el.onclick = () => arDialog(el.dataset.k));
   document.querySelectorAll('[data-ujg]').forEach(el => el.onclick = () => arDialog(null, el.dataset.ujg));
+  document.querySelectorAll('[data-alcs]').forEach(el => el.ontoggle = () => { if (!S.arKeres) S.arNyitva[el.dataset.alcs] = el.open; });
   $('#ujcsop').onclick = () => arDialog(null, '');
   bindArEmeles();
 }
