@@ -47,11 +47,6 @@ header .title small{color:var(--hdr-m);font-size:12px;white-space:nowrap;overflo
 main{max-width:860px;margin:0 auto;padding:14px 14px calc(88px + env(safe-area-inset-bottom))}
 
 /* Alsó navigáció */
-nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;background:var(--nav);border-top:1px solid var(--line);padding:4px 6px env(safe-area-inset-bottom)}
-nav.bottom button{flex:1;background:none;border:0;padding:5px 0 7px;font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;letter-spacing:.01em}
-nav.bottom button span{font-size:18px;filter:grayscale(1);opacity:.6;width:52px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:14px;transition:background .15s}
-nav.bottom button.on{color:var(--text);font-weight:650}
-nav.bottom button.on span{filter:none;opacity:1;background:var(--acc-soft)}
 
 /* Címsorok */
 h2{font-size:12px;margin:22px 2px 9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.09em;display:flex;align-items:center;gap:8px}
@@ -330,7 +325,6 @@ a:active{opacity:.7}
 html.dark .card.hero{border:0}
 html.dark .card{border-color:var(--line)}
 html.dark .tile:active{background:var(--pri-soft)}
-html.dark nav.bottom{border-top-color:var(--line2)}
 html.dark .search,html.dark .tile{background:var(--card)}
 html.dark .f input[type=text],html.dark .f input:not([type]),html.dark .f select,html.dark .fld input,html.dark .fld select,html.dark .fld textarea,html.dark .nyrow input,html.dark .nyrow select{border-color:#463C39;color:var(--text)}
 html.dark .seg{background:var(--card2)}
@@ -378,7 +372,6 @@ html.dark{
     radial-gradient(70% 36% at 20% 100%,rgba(220,31,38,.42) 0%,transparent 70%),
     linear-gradient(180deg,#1A1011 0%,#120E0F 50%,#1C1413 100%);
 }
-nav.bottom{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .card.hero:before{content:"";position:absolute;right:-70px;top:-80px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.20) 0%,rgba(255,255,255,0) 70%);pointer-events:none}
 .card.hero>*{position:relative}
 .btn.pri{background:linear-gradient(180deg,var(--pri) 0%,var(--pri-h) 100%);box-shadow:0 6px 16px -8px var(--pri)}
@@ -394,13 +387,62 @@ html.dark header.top{box-shadow:inset 0 -2px 0 #DC1F26,0 6px 20px -10px rgba(220
 /* Áttetsző csempék és kereső: átdereng a háttér */
 .tile,.search{background:rgba(249,248,248,.80)!important;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 html.dark .tile,html.dark .search{background:rgba(35,30,29,.72)!important;border-color:rgba(90,78,74,.55)}
-/* 3D csempék: felülről jövő fény, alsó "vastagság", lenyomáskor besüpped */
-.tile{background:linear-gradient(180deg,rgba(255,255,255,.96) 0%,rgba(243,241,241,.86) 100%)!important;border:1px solid rgba(255,255,255,.9);
-  box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 rgba(94,86,83,.08),0 3px 0 #D3CBC6,0 10px 22px -10px rgba(46,41,39,.32);
-  transform:translateY(0);transition:transform .08s ease,box-shadow .08s ease}
-.tile:active{transform:translateY(3px)!important;box-shadow:inset 0 1px 0 #fff,0 0 0 rgba(94,86,83,.16),0 4px 10px -6px rgba(46,41,39,.30)}
-.tile .ic{box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -2px 3px rgba(0,0,0,.08),0 2px 4px -1px rgba(46,41,39,.22);background-image:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0))}
-html.dark .tile{background:linear-gradient(180deg,rgba(52,44,42,.92) 0%,rgba(30,25,24,.88) 100%)!important;border:1px solid rgba(255,255,255,.07);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 -1px 0 rgba(0,0,0,.4),0 3px 0 #0B0909,0 12px 24px -10px rgba(0,0,0,.85)}
-html.dark .tile:active{transform:translateY(3px)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 #0B0909,0 0 0 1px rgba(220,31,38,.55),0 6px 18px -6px rgba(220,31,38,.55);border-color:rgba(220,31,38,.6)}
-html.dark .tile .ic{box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -2px 4px rgba(0,0,0,.35),0 2px 5px -1px rgba(0,0,0,.6);background-image:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0))}
+/* ===== 3D hatás minden oldalon: négy oldalú perem (fent-balra fény, lent-jobbra árnyék) ===== */
+:root{
+  --hi:rgba(255,255,255,.95); --lo:rgba(94,86,83,.16); --ledge:#D3CBC6; --ledge-btn:rgba(46,41,39,.20);
+  --drop:0 10px 22px -10px rgba(46,41,39,.32); --sunk:inset 0 2px 4px rgba(46,41,39,.10),inset 0 -1px 0 rgba(255,255,255,.8);
+}
+html.dark{
+  --hi:rgba(255,255,255,.11); --lo:rgba(0,0,0,.50); --ledge:#0B0909; --ledge-btn:rgba(0,0,0,.65);
+  --drop:0 12px 24px -10px rgba(0,0,0,.85); --sunk:inset 0 2px 5px rgba(0,0,0,.55),inset 0 -1px 0 rgba(255,255,255,.05);
+}
+/* Kártyák (listák, űrlapok, összesítők) */
+.card:not(.hero){box-shadow:inset 1px 1px 0 var(--hi),inset -1px -1px 0 var(--lo),0 3px 0 var(--ledge),var(--drop);border-color:transparent}
+.card.hero{box-shadow:inset 1px 1px 0 rgba(255,255,255,.28),inset -1px -1px 0 rgba(0,0,0,.30),0 4px 0 rgba(0,0,0,.28),var(--hero-glow)}
+/* Csempék */
+.tile{background:linear-gradient(180deg,rgba(255,255,255,.96) 0%,rgba(243,241,241,.88) 100%)!important;border:0;
+  box-shadow:inset 1px 1px 0 var(--hi),inset -1px -1px 0 var(--lo),0 3px 0 var(--ledge),var(--drop);transition:transform .08s ease,box-shadow .08s ease}
+html.dark .tile{background:linear-gradient(180deg,rgba(52,44,42,.94) 0%,rgba(30,25,24,.90) 100%)!important}
+.tile:active{transform:translateY(3px)!important;box-shadow:inset 1px 1px 0 var(--hi),inset -1px -1px 0 var(--lo),0 0 0 var(--ledge),0 4px 10px -6px rgba(0,0,0,.35)}
+html.dark .tile:active{box-shadow:inset 1px 1px 0 var(--hi),inset -1px -1px 0 var(--lo),0 0 0 1px rgba(220,31,38,.6),0 6px 18px -6px rgba(220,31,38,.55)}
+/* Ikonpárnák: domború */
+.tile .ic,.list .it .ic{box-shadow:inset 1px 1px 0 rgba(255,255,255,.7),inset -1px -2px 3px rgba(0,0,0,.10),0 2px 4px -1px rgba(46,41,39,.25);background-image:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0))}
+html.dark .tile .ic,html.dark .list .it .ic{box-shadow:inset 1px 1px 0 rgba(255,255,255,.14),inset -1px -2px 4px rgba(0,0,0,.40),0 2px 5px -1px rgba(0,0,0,.6);background-image:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,0))}
+/* Gombok: kiemelkednek, nyomásra besüllyednek */
+.btn{box-shadow:inset 1px 1px 0 rgba(255,255,255,.35),inset -1px -1px 0 rgba(0,0,0,.10),0 2px 0 var(--ledge-btn);transition:transform .07s ease,box-shadow .07s ease,filter .15s}
+.btn:active{transform:translateY(2px);box-shadow:inset 1px 1px 0 rgba(255,255,255,.2),inset -1px -1px 0 rgba(0,0,0,.12),0 0 0 var(--ledge-btn)}
+.btn.pri{box-shadow:inset 1px 1px 0 rgba(255,255,255,.30),inset -1px -1px 0 rgba(0,0,0,.25),0 3px 0 var(--pri-h),0 8px 16px -8px var(--pri)}
+html.dark .btn.pri{box-shadow:inset 1px 1px 0 rgba(255,255,255,.30),inset -1px -1px 0 rgba(0,0,0,.30),0 3px 0 #6E0E12,0 10px 22px -8px rgba(220,31,38,.8)}
+.btn.pri:active{transform:translateY(3px);box-shadow:inset 1px 1px 0 rgba(255,255,255,.2),inset -1px -1px 0 rgba(0,0,0,.25),0 0 0 transparent}
+.btn.danger{box-shadow:none}
+.card.hero .btn{box-shadow:inset 1px 1px 0 rgba(255,255,255,.18),inset -1px -1px 0 rgba(0,0,0,.25),0 2px 0 rgba(0,0,0,.25)}
+/* Szegmensválasztó: a kiválasztott gomb kiemelkedik */
+.seg{box-shadow:var(--sunk)}
+.seg button.on{box-shadow:inset 1px 1px 0 var(--hi),inset -1px -1px 0 var(--lo),0 2px 0 var(--ledge)}
+/* Beviteli mezők: besüllyesztve */
+.f input[type=text],.f input:not([type]),.f select,.fld input,.fld select,.fld textarea,.nyrow input,.nyrow select,.search{box-shadow:var(--sunk)}
+/* Felmérés blokk: enyhén besüllyesztett tálca */
+.szakasz.felm{box-shadow:var(--sunk)}
+
+/* ===== Animált alsó menü (Flutter-stílus): csúszó, domború kör + kivágás a sávban ===== */
+@property --nx{syntax:'<percentage>';inherits:true;initial-value:12.5%}
+nav.bottom{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;height:calc(64px + env(safe-area-inset-bottom));padding:0 0 env(safe-area-inset-bottom);
+  transition:--nx .5s cubic-bezier(.34,1.45,.55,1)}
+.nb-bar{position:absolute;inset:0;background:var(--nav-solid);
+  box-shadow:inset 0 1px 0 var(--hi),0 -1px 0 var(--line);
+  -webkit-mask:radial-gradient(circle 35px at var(--nx) 4px,transparent 34px,#000 35px);mask:radial-gradient(circle 35px at var(--nx) 4px,transparent 34px,#000 35px)}
+.nb-bubble{position:absolute;top:-24px;left:var(--nx);width:56px;height:56px;margin-left:-28px;border-radius:50%;
+  background:var(--nb-bub);box-shadow:inset 1px 2px 0 rgba(255,255,255,.35),inset -1px -2px 0 rgba(0,0,0,.25),0 4px 0 var(--nb-ledge),0 10px 22px -6px var(--nb-glow);pointer-events:none}
+.nb-bubble.pop{animation:nbPop .5s cubic-bezier(.34,1.45,.55,1)}
+@keyframes nbPop{0%{transform:scale(.7)}55%{transform:scale(1.08)}100%{transform:scale(1)}}
+nav.bottom button{position:relative;flex:1;background:none;border:0;padding:0;cursor:pointer;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;padding-bottom:9px;min-height:64px;-webkit-tap-highlight-color:transparent}
+.nb-ic{display:flex;align-items:center;justify-content:center;width:44px;height:30px;transition:transform .5s cubic-bezier(.34,1.45,.55,1),color .25s}
+.nb-lb{font-size:11.5px;font-weight:600;letter-spacing:.01em;transition:color .25s,transform .35s,opacity .25s}
+nav.bottom button.on{color:var(--text)}
+nav.bottom button.on .nb-ic{transform:translateY(-22px) scale(1.1);color:#fff}
+nav.bottom button.on .nb-lb{font-weight:750;color:var(--nb-lbl);transform:translateY(-1px)}
+nav.bottom button:not(.on):active .nb-ic{transform:scale(.88)}
+:root{--nav-solid:linear-gradient(180deg,#FCFBFB 0%,#EFECEC 100%);--nb-bub:linear-gradient(160deg,#6B7C98 0%,#4E5D78 55%,#3F4A60 100%);--nb-ledge:#2E3646;--nb-glow:rgba(63,74,96,.55);--nb-lbl:#3F4A60}
+html.dark{--nav-solid:linear-gradient(180deg,#241E1D 0%,#161212 100%);--nb-bub:linear-gradient(160deg,#FF4D53 0%,#DC1F26 50%,#8E161B 100%);--nb-ledge:#5A0C10;--nb-glow:rgba(220,31,38,.75);--nb-lbl:#FF8A8F}
+#btnTheme svg{display:block}
+@media (prefers-reduced-motion:reduce){nav.bottom,.nb-ic,.nb-lb{transition:none}.nb-bubble.pop{animation:none}}

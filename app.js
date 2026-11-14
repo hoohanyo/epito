@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.9';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -203,7 +203,19 @@ function setTab(tab) { S.tab = tab; S.stack = [{ v: tab }]; render(); window.scr
 document.querySelectorAll('nav.bottom button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
 $('#btnBack').onclick = () => back();
 $('#btnTheme').onclick = () => { const d = document.documentElement.classList.toggle('dark'); try { localStorage.setItem('ek_tema', d ? 'sotet' : 'vilagos'); } catch (e) {} themeIcon(); };
-function themeIcon() { const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = document.documentElement.classList.contains('dark') ? '#100D0E' : '#3F3937'; $('#btnTheme').textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙'; }
+function navMove() {
+  const nav = $('nav.bottom'); const bs = [...nav.querySelectorAll('button')];
+  const i = Math.max(0, bs.findIndex(b => b.dataset.tab === S.tab));
+  bs.forEach((b, j) => { b.classList.toggle('on', j === i); b.setAttribute('aria-current', j === i ? 'page' : 'false'); });
+  const x = ((i + 0.5) * 100 / bs.length) + '%';
+  if (nav.style.getPropertyValue('--nx') !== x) {
+    nav.style.setProperty('--nx', x);
+    const bub = nav.querySelector('.nb-bubble'); bub.classList.remove('pop'); void bub.offsetWidth; bub.classList.add('pop');
+  }
+}
+const IC_SUN = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></svg>';
+const IC_MOON = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.7 6.7 0 0 0 10.7 10.7z"/></svg>';
+function themeIcon() { const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = document.documentElement.classList.contains('dark') ? '#100D0E' : '#3F3937'; $('#btnTheme').innerHTML = document.documentElement.classList.contains('dark') ? IC_SUN : IC_MOON; }
 $('#btnSync').onclick = () => { if (LOCAL) setTab('tobb'); else load(true); };
 window.addEventListener('online', () => flush());
 window.addEventListener('offline', updateSync);
@@ -231,7 +243,7 @@ const priceVal = (el) => Number(String(el.value).replace(/\D/g, '')) || 0;
 function setHeader(title, sub) {
   $('#hdrTitle').textContent = title; $('#hdrSub').textContent = sub || '';
   $('#btnBack').hidden = S.stack.length <= 1;
-  document.querySelectorAll('nav.bottom button').forEach(b => b.classList.toggle('on', b.dataset.tab === S.tab));
+  navMove();
 }
 function matsTable(ls, opts) {
   opts = opts || {};
