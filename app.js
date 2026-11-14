@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.3';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -257,13 +257,65 @@ function matsTable(ls, opts) {
   return h;
 }
 
+/* ---------- Dátum, névnap ---------- */
+const NEVNAPOK = [
+  'Fruzsina|Ábel|Genovéva, Benjámin|Titusz, Leona|Simon|Boldizsár|Attila, Ramóna|Gyöngyvér|Marcell|Melánia|Ágota|Ernő|Veronika|Bódog|Lóránt, Loránd|Gusztáv|Antal, Antónia|Piroska|Sára, Márió|Fábián, Sebestyén|Ágnes|Vince, Artúr|Zelma, Rajmund|Timót|Pál|Vanda, Paula|Angelika|Károly, Karola|Adél|Martina, Gerda|Marcella',
+  'Ignác|Karolina, Aida|Balázs|Ráhel, Csenge|Ágota, Ingrid|Dorottya, Dóra|Tódor, Rómeó|Aranka|Abigél, Alex|Elvira|Bertold, Marietta|Lívia, Lídia|Ella, Linda|Bálint, Valentin|Kolos, Georgina|Julianna, Lilla|Donát|Bernadett|Zsuzsanna|Aladár, Álmos|Eleonóra|Gerzson|Alfréd|Mátyás|Géza|Edina|Ákos, Bátor|Elemér',
+  'Albin|Lujza|Kornélia|Kázmér|Adorján, Adrián|Leonóra, Inez|Tamás|Zoltán|Franciska, Fanni|Ildikó|Szilárd|Gergely|Krisztián, Ajtony|Matild|Kristóf|Henrietta|Gertrúd, Patrik|Sándor, Ede|József, Bánk|Klaudia|Benedek|Beáta, Izolda|Emőke|Gábor, Karina|Irén, Írisz|Emánuel|Hajnalka|Gedeon, Johanna|Auguszta|Zalán|Árpád',
+  'Hugó|Áron|Buda, Richárd|Izidor|Vince|Vilmos, Bíborka|Herman|Dénes|Erhard|Zsolt|Leó, Szaniszló|Gyula|Ida|Tibor|Anasztázia, Tas|Csongor|Rudolf|Andrea, Ilma|Emma|Tivadar|Konrád|Csilla, Noémi|Béla|György|Márk|Ervin|Zita|Valéria|Péter|Katalin, Kitti',
+  'Fülöp, Jakab|Zsigmond|Tímea, Irma|Mónika, Flórián|Györgyi|Ivett, Frida|Gizella|Mihály|Gergely|Ármin, Pálma|Ferenc|Pongrác|Szervác, Imola|Bonifác|Zsófia, Szonja|Mózes, Botond|Paszkál|Erik, Alexandra|Ivó, Milán|Bernát, Felícia|Konstantin|Júlia, Rita|Dezső|Eszter, Eliza|Orbán|Fülöp, Evelin|Hella|Emil, Csanád|Magdolna|Janka, Zsanett|Angéla, Petronella',
+  'Tünde|Kármen, Anita|Klotild|Bulcsú|Fatime|Norbert, Cintia|Róbert|Medárd|Félix|Margit, Gréta|Barnabás|Villő|Antal, Anett|Vazul|Jolán, Vid|Jusztin|Laura, Alida|Arnold, Levente|Gyárfás|Rafael|Alajos, Leila|Paulina|Zoltán|Iván|Vilmos|János, Pál|László|Levente, Irén|Péter, Pál|Pál',
+  'Tihamér, Annamária|Ottó|Kornél, Soma|Ulrik|Emese, Sarolta|Csaba|Apollónia|Ellák|Lukrécia|Amália|Nóra, Lili|Izabella, Dalma|Jenő|Örs, Stella|Henrik, Roland|Valter|Endre, Elek|Frigyes|Emília|Illés|Dániel, Daniella|Magdolna|Lenke|Kinga, Kincső|Kristóf, Jakab|Anna, Anikó|Olga, Liliána|Szabolcs|Márta, Flóra|Judit, Xénia|Oszkár',
+  'Boglárka|Lehel|Hermina|Domonkos, Dominika|Krisztina|Berta, Bettina|Ibolya|László|Emőd|Lőrinc|Zsuzsanna, Tiborc|Klára|Ipoly|Marcell|Mária|Ábrahám|Jácint|Ilona|Huba|István|Sámuel, Hajna|Menyhért, Mirjam|Bence|Bertalan|Lajos, Patrícia|Izsó|Gáspár|Ágoston|Beatrix, Erna|Rózsa|Erika, Bella',
+  'Egyed, Egon|Rebeka, Dorina|Hilda|Rozália|Viktor, Lőrinc|Zakariás|Regina|Mária, Adrienn|Ádám|Nikolett, Hunor|Teodóra|Mária|Kornél|Szeréna, Roxána|Enikő, Melitta|Edit|Zsófia|Diána|Vilhelmina|Friderika|Máté, Míra|Móric|Tekla|Gellért, Mercédesz|Eufrozina, Kende|Jusztina|Adalbert|Vencel|Mihály|Jeromos',
+  'Malvin|Petra|Helga|Ferenc|Aurél|Brúnó, Renáta|Amália|Koppány|Dénes|Gedeon|Brigitta|Miksa|Kálmán, Ede|Helén|Teréz|Gál|Hedvig|Lukács|Nándor|Vendel|Orsolya|Előd|Gyöngyi|Salamon|Blanka, Bianka|Dömötör|Szabina|Simon, Szimonetta|Nárcisz|Alfonz|Farkas',
+  'Marianna|Achilles|Győző|Károly|Imre|Lénárd|Rezső|Zsombor|Tivadar|Réka|Márton|Jónás, Renátó|Szilvia|Aliz|Albert, Lipót|Ödön|Hortenzia, Gergő|Jenő|Erzsébet|Jolán|Olivér|Cecília|Kelemen, Klementina|Emma|Katalin|Virág|Virgil|Stefánia|Taksony|András, Andor',
+  'Elza|Melinda, Vivien|Ferenc, Olívia|Borbála, Barbara|Vilma|Miklós|Ambrus|Mária|Natália|Judit|Árpád|Gabriella|Luca, Otília|Szilárda|Valér|Etelka, Aletta|Lázár, Olimpia|Auguszta|Viola|Teofil|Tamás|Zénó|Viktória|Ádám, Éva|Eugénia|István|János|Kamilla|Tamás, Tamara|Dávid|Szilveszter'
+];
+function nevnap(d) {
+  const y = d.getFullYear(), m = d.getMonth() + 1, n = d.getDate();
+  const szoko = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+  const feb = NEVNAPOK[1].split('|');
+  if (szoko && m === 2 && n >= 24) return n === 24 ? '' : feb[n - 2]; // szökőévben február 24. a szökőnap, utána egy nappal csúsznak a nevek
+  return NEVNAPOK[m - 1].split('|')[n - 1] || '';
+}
+function husvet(y) { // Gauss-féle algoritmus
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, mm = Math.floor((a + 11 * h + 22 * l) / 451);
+  const ho = Math.floor((h + l - 7 * mm + 114) / 31), nap = ((h + l - 7 * mm + 114) % 31) + 1;
+  return new Date(y, ho - 1, nap);
+}
+function unnep(d) {
+  const k = (d.getMonth() + 1) + '-' + d.getDate();
+  const fix = { '1-1': 'Újév', '3-15': 'Nemzeti ünnep', '5-1': 'A munka ünnepe', '8-20': 'Államalapítás ünnepe', '10-23': 'Nemzeti ünnep', '11-1': 'Mindenszentek', '12-24': 'Szenteste', '12-25': 'Karácsony', '12-26': 'Karácsony' };
+  if (fix[k]) return fix[k];
+  const h = husvet(d.getFullYear()); const diff = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - h) / 864e5);
+  return { '-2': 'Nagypéntek', '0': 'Húsvét', '1': 'Húsvéthétfő', '49': 'Pünkösd', '50': 'Pünkösdhétfő' }[diff] || '';
+}
+function datumSor() {
+  const el = $('#datumsor'); if (!el) return;
+  const d = new Date();
+  const het = ['vasárnap', 'hétfő', 'kedd', 'szerda', 'csütörtök', 'péntek', 'szombat'][d.getDay()];
+  const ho = ['január', 'február', 'március', 'április', 'május', 'június', 'július', 'augusztus', 'szeptember', 'október', 'november', 'december'][d.getMonth()];
+  const nn = nevnap(d); const u = unnep(d);
+  const k = d.toDateString() + nn + u;
+  if (el.dataset.k !== k) {
+    el.dataset.k = k;
+    el.innerHTML = '<span class="ds-dat">' + ico('calendar') + '<span><b>' + d.getFullYear() + '. ' + ho + ' ' + d.getDate() + '.</b>, ' + het + '</span>' + (u ? '<span class="ds-unnep">' + esc(u) + '</span>' : '') + '</span>' +
+      '<span class="ds-nev">' + (nn ? 'Névnap: <b>' + esc(nn) + '</b>' : 'Szökőnap') + '</span>';
+  }
+}
+setInterval(() => { if (!$('#datumsor').hidden) datumSor(); }, 60000);
+
 /* ---------- Render ---------- */
 function render() {
   themeIcon(); updateSync();
   const nav = $('nav.bottom');
+  $('#datumsor').hidden = true;
   if (!LOCAL && !S.kod) { nav.hidden = true; return renderLogin(); }
   if (!LOCAL && S.kodBeallitas) { nav.hidden = true; return renderKodBeallit(); }
   nav.hidden = false;
+  $('#datumsor').hidden = S.stack.length > 1; if (S.stack.length <= 1) datumSor();
   const r = S.stack[S.stack.length - 1];
   ({ kalk: renderKalk, calc: renderCalc, proj: (x) => renderUgyfelek(x), ugyfel: (x) => renderUgyfel(x), projekt: (x) => renderMegrendeles(x), munkaresz: (x) => renderMunkaresz(x), szamla: (x) => renderSzamla(x), kuka: () => renderKuka(), ar: renderAr, tobb: renderTobb, ceg: (x) => renderCeg(x), ajanlat: (x) => renderAjanlat(x) }[r.v] || renderKalk)(r);
 }

@@ -530,3 +530,11 @@ html.dark .kovetes{background:linear-gradient(135deg,#2A2620 0%,#221F1B 100%);bo
 .blokk-kep img{max-width:100%;max-height:120px;display:block}
 .blokk-kep.nagy{flex-basis:100%}
 .blokk-kep.nagy img{max-height:70vh}
+
+/* ===== 2.3: dátum + névnap sáv ===== */
+.datumsor{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;max-width:860px;margin:0 auto;padding:9px 16px 2px;font-size:13px;color:var(--muted)}
+.datumsor b{color:var(--text);font-weight:650}
+.ds-dat{display:inline-flex;align-items:center;gap:6px}
+.ds-dat .svgi{width:16px;height:16px;color:var(--acc)}
+.ds-unnep{margin-left:4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:1px 7px;border-radius:10px;background:var(--acc-soft);color:var(--c2t)}
+.datumsor+main{padding-top:8px}
