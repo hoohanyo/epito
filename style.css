@@ -359,29 +359,24 @@ html.dark .swipe-del{color:#1a0d0b}
 /* ===== 1.4 színvilág: B) Urban slate / D) Ruby charcoal ===== */
 html{background:var(--bg)}
 body{background:transparent;min-height:100vh}
-/* Háttér: színátmenet-foltok + halvány tervrajzrács, rögzítve (görgetéskor nem mozog) */
-body:before,body:after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none}
+/* Háttér: színátmenet-foltok, rögzítve (görgetéskor nem mozog) */
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none}
 body:before{background:var(--page-bg)}
-body:after{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px),linear-gradient(var(--grid2) 1px,transparent 1px),linear-gradient(90deg,var(--grid2) 1px,transparent 1px);
-  background-size:96px 96px,96px 96px,24px 24px,24px 24px;
-  -webkit-mask-image:radial-gradient(120% 75% at 50% 35%,#000 0%,rgba(0,0,0,.55) 55%,transparent 100%);mask-image:radial-gradient(120% 75% at 50% 35%,#000 0%,rgba(0,0,0,.55) 55%,transparent 100%)}
 :root{
   --page-bg:
-    radial-gradient(70% 38% at 8% 0%,rgba(86,102,127,.42) 0%,transparent 70%),
-    radial-gradient(60% 34% at 100% 22%,rgba(171,151,140,.45) 0%,transparent 70%),
-    radial-gradient(75% 40% at 0% 78%,rgba(123,127,138,.30) 0%,transparent 70%),
-    radial-gradient(70% 38% at 100% 100%,rgba(196,170,156,.50) 0%,transparent 70%),
-    linear-gradient(165deg,#E4E5EA 0%,#ECE8E7 45%,#E7E0DD 100%);
-  --grid:rgba(78,93,120,.10); --grid2:rgba(78,93,120,.045);
+    radial-gradient(80% 42% at 0% 0%,rgba(78,93,120,.62) 0%,rgba(78,93,120,.22) 45%,transparent 72%),
+    radial-gradient(65% 36% at 100% 25%,rgba(171,151,140,.70) 0%,transparent 70%),
+    radial-gradient(80% 42% at 0% 75%,rgba(107,124,152,.45) 0%,transparent 70%),
+    radial-gradient(75% 40% at 100% 100%,rgba(171,140,125,.72) 0%,transparent 70%),
+    linear-gradient(165deg,#D9DCE4 0%,#E8E3E2 45%,#E0D4CE 100%);
 }
 html.dark{
   --page-bg:
-    radial-gradient(95% 42% at 50% -6%,rgba(220,31,38,.55) 0%,rgba(122,32,37,.26) 45%,transparent 74%),
-    radial-gradient(60% 32% at 0% 55%,rgba(160,32,40,.34) 0%,transparent 70%),
-    radial-gradient(70% 38% at 100% 100%,rgba(79,68,65,.70) 0%,transparent 70%),
-    radial-gradient(55% 28% at 15% 100%,rgba(220,31,38,.28) 0%,transparent 70%),
-    linear-gradient(180deg,#151011 0%,#120F10 50%,#171312 100%);
-  --grid:rgba(255,120,124,.10); --grid2:rgba(255,255,255,.025);
+    radial-gradient(100% 46% at 50% -8%,rgba(220,31,38,.75) 0%,rgba(122,32,37,.38) 42%,transparent 74%),
+    radial-gradient(65% 34% at 0% 55%,rgba(170,30,38,.48) 0%,transparent 70%),
+    radial-gradient(70% 40% at 100% 70%,rgba(110,92,88,.55) 0%,transparent 70%),
+    radial-gradient(70% 36% at 20% 100%,rgba(220,31,38,.42) 0%,transparent 70%),
+    linear-gradient(180deg,#1A1011 0%,#120E0F 50%,#1C1413 100%);
 }
 nav.bottom{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .card.hero:before{content:"";position:absolute;right:-70px;top:-80px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.20) 0%,rgba(255,255,255,0) 70%);pointer-events:none}
