@@ -1,6 +1,6 @@
 {
-  "name": "Építőkalkulátor",
-  "short_name": "Építőkalk",
+  "name": "Metrum – építőkalkulátor",
+  "short_name": "Metrum",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

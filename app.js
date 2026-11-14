@@ -1,5 +1,6 @@
-/* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.3';
+/* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
+const APP_VERSION = '2.4';
+const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -321,7 +322,7 @@ function render() {
 }
 
 function renderLogin() {
-  setHeader(CONFIG.APP_NAME, 'Belépés');
+  setHeader(APP_NEV, 'Belépés');
   $('#btnBack').hidden = true;
   $('#view').innerHTML = '<div class="card" style="margin-top:30px"><h3 style="margin-top:0">Belépés</h3><p class="muted small">Add meg a kódodat. Első belépéskor az alapkódot – utána kérni fogja a végleges kódot, amit az app megjegyez.</p>' +
     '<div class="fld"><input id="kod" type="password" autocomplete="current-password" placeholder="Kód"></div><button class="btn pri wide" id="belep" style="width:100%">Belépés</button><div id="lerr" class="small" style="color:var(--err);margin-top:8px"></div></div>';
@@ -353,7 +354,7 @@ async function kodMentes(pre, root, gomb, hiba) {
   catch (e) { hiba.textContent = e.server ? e.message : 'Nincs kapcsolat a szerverrel – próbáld újra.'; gomb.disabled = false; return false; }
 }
 function renderKodBeallit() {
-  setHeader(CONFIG.APP_NAME, 'Végleges kód beállítása');
+  setHeader(APP_NEV, 'Végleges kód beállítása');
   $('#btnBack').hidden = true;
   $('#view').innerHTML = '<div class="card" style="margin-top:30px"><h3 style="margin-top:0">Végleges kód</h3><p class="muted small">Az alapkóddal léptél be. Most adj meg egy saját kódot – ettől kezdve csak ezzel lehet belépni, az alapkód megszűnik. Ezen az eszközön az app megjegyzi, nem kell újra beírnod.</p>' +
     kodUrlap('vk') + '<button class="btn pri" id="vkok" style="width:100%">Kód mentése</button><div id="vkerr" class="small" style="color:var(--err);margin-top:8px"></div></div>';
@@ -366,7 +367,7 @@ function renderKodBeallit() {
 function renderKalk() {
   const tmr = S.targetMr && mrById(S.targetMr);
   if (S.targetMr && !tmr) S.targetMr = null;
-  setHeader(CONFIG.APP_NAME, tmr ? 'Kalkuláció hozzáadása' : 'Válassz kalkulátort');
+  setHeader(APP_NEV, tmr ? 'Kalkuláció hozzáadása' : 'Válassz kalkulátort');
   const q = S.kalkKeres.toLowerCase();
   let h = '';
   if (tmr) h += '<div class="banner">📁 Ide mentesz: <b>' + esc(tmr.nev) + '</b>&nbsp;· ' + esc(ugyfelNev(megrOf(tmr))) + '<button class="btn sm" id="tpx">Mégse</button></div>';
@@ -694,7 +695,7 @@ function arDialog(k, ujCsoport) {
 
 /* ----- Több ----- */
 function renderTobb() {
-  setHeader('Több', CONFIG.APP_NAME + ' ' + APP_VERSION);
+  setHeader('Több', APP_TELJES + ' ' + APP_VERSION);
   let h = haviHtml() + '<h2>Adatok</h2><div class="card">';
   if (LOCAL) h += '<div class="kv"><span>Mód</span><b>Helyi (csak ez az eszköz)</b></div><div class="small muted" style="padding:6px 0">A Google Sheet bekötéséhez írd be a config.js-be az API_URL-t (Telepites.txt).</div>';
   else h += '<div class="kv"><span>Mód</span><b>Google Sheet</b></div><div class="kv"><span>Állapot</span><b>' + esc(S.syncing ? 'Szinkronizál…' : S.queue.length ? S.queue.length + ' módosítás várakozik' : S.lastErr || 'Minden mentve') + '</b></div>';
@@ -705,7 +706,7 @@ function renderTobb() {
   h += '<h2>Megjelenés</h2><div class="card"><div class="kv"><span>Téma</span><b>' + (document.documentElement.classList.contains('dark') ? 'Sötét' : 'Világos') + ' – a fejléc ' + (document.documentElement.classList.contains('dark') ? '☀️' : '🌙') + ' gombjával váltasz</b></div></div>';
   if (!LOCAL) h += '<h2>Belépés</h2><div class="btns"><button class="btn wide" id="kodmod">🔑 Kód módosítása</button></div><div class="btns"><button class="btn danger" id="kilep">Kilépés (kód törlése erről az eszközről)</button></div>';
   h += '<h2>Eszköz</h2><div class="btns"><button class="btn danger" id="cache">Helyi adatok törlése</button></div>';
-  h += '<h2>Névjegy</h2><div class="card small"><b>' + esc(CONFIG.APP_NAME) + ' ' + APP_VERSION + '</b><br><span class="muted">' + CALCS.length + ' kalkulátor, ' + allMatKeys().length + ' anyag. A számítások átlagos anyagszükségleti értékekkel dolgoznak, tájékoztató jellegűek – vásárlás előtt mindig nézd meg a gyártó terméklapját.</span></div>';
+  h += '<h2>Névjegy</h2><div class="card small"><b>' + esc(APP_TELJES) + ' ' + APP_VERSION + '</b><br><span class="muted">' + CALCS.length + ' kalkulátor, ' + allMatKeys().length + ' anyag. A számítások átlagos anyagszükségleti értékekkel dolgoznak, tájékoztató jellegűek – vásárlás előtt mindig nézd meg a gyártó terméklapját.</span></div>';
   $('#view').innerHTML = h;
   if (!LOCAL) {
     $('#sync').onclick = () => load(true).then(() => toast(S.lastErr ? S.lastErr : 'Szinkron kész'));
