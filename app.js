@@ -1,5 +1,5 @@
 /* Építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '1.4';
+const APP_VERSION = '1.5';
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -541,46 +541,6 @@ function egyebDialog(mrId, t, pre) {
 }
 
 /* ----- Export ----- */
-function projSheets(p) {
-  const ts = S.data.tetelek.filter(t => t.projektId === p.id);
-  const agg = aggregate(ts);
-  const ossz = [['Ügyfél', ugyfelNev(p)], ['Megrendelés', (p.sorszam || '') + ' – ' + megrLabel(p)], ['Állapot', p.allapot || ''], ['Helyszín', p.hely || ''], ['Megjegyzés', p.megj || ''], ['Készült', new Date().toLocaleString('hu-HU')], [],
-    ['Anyag', 'Mennyiség', 'Egység', 'Kiszerelés', 'Kiszerelés (db)', 'Egységár (Ft)', 'Költség (Ft)']];
-  for (const l of agg) ossz.push([l.name, round3(l.q), l.u, l.pn || '', l.packs == null ? '' : l.packs, l.price, Math.round(l.cost)]);
-  ossz.push([], ['Összesen', '', '', '', '', '', Math.round(sumCost(agg))]);
-  const tet = [['Munkarész', 'Tétel', 'Kalkulátor', 'Eredmény', 'Becsült költség (Ft)']];
-  const tan = [['Munkarész', 'Tétel', 'Anyag', 'Mennyiség', 'Egység', 'Kiszerelés', 'Kiszerelés (db)', 'Egységár (Ft)', 'Költség (Ft)']];
-  for (const t of ts) {
-    const c = CALC_BY_ID[t.calc]; const ls = (t.mats || []).map(line);
-    const mrn = (mrById(t.munkareszId) || {}).nev || '';
-    tet.push([mrn, t.nev, c ? c.n : 'Egyéb tétel', (t.out || []).map(o => o[0] + ': ' + o[1]).join('; '), Math.round(sumCost(ls))]);
-    for (const l of ls) tan.push([mrn, t.nev, l.name, round3(l.q), l.u, l.pn || '', l.packs == null ? '' : l.packs, l.price, Math.round(l.cost)]);
-  }
-  return [{ name: 'Összesítő', rows: ossz }, { name: 'Tételek', rows: tet }, { name: 'Tételek anyagai', rows: tan }];
-}
-const fileSafe = (s) => String(s).replace(/[\\/:*?"<>|]+/g, '_').slice(0, 60);
-async function exportProjekt(p) {
-  const sheets = projSheets(p); const name = fileSafe((p.sorszam || '') + '_' + ugyfelNev(p)) + '_' + new Date().toISOString().slice(0, 10);
-  if (LOCAL || !navigator.onLine) {
-    const csv = sheets.map(s => s.name + '\n' + s.rows.map(r => r.map(x => { x = typeof x === 'number' ? String(x).replace('.', ',') : String(x == null ? '' : x); return /[;"\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(';')).join('\n')).join('\n\n');
-    download(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }), name + '.csv');
-    if (!LOCAL) toast('Offline vagy – CSV készült (Excel megnyitja)');
-    return;
-  }
-  toast('Excel készül…');
-  try { const j = await api('exportXlsx', { fileName: name, sheets }); downloadB64(j.data, name + '.xlsx'); }
-  catch (e) { toast('Export hiba: ' + e.message); }
-}
-async function exportAll() {
-  if (LOCAL) return toast('Helyi módban a teljes export nem érhető el – használd a projektek Excel gombját.');
-  toast('Teljes Excel készül…');
-  try { const j = await api('exportAll'); downloadB64(j.data, 'Epitokalkulator_teljes_' + new Date().toISOString().slice(0, 10) + '.xlsx'); }
-  catch (e) { toast('Export hiba: ' + e.message); }
-}
-function downloadB64(b64, name) {
-  const bin = atob(b64); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i);
-  download(new Blob([a], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), name);
-}
 function download(blob, name) {
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
@@ -673,7 +633,7 @@ function renderTobb() {
   if (LOCAL) h += '<div class="kv"><span>Mód</span><b>Helyi (csak ez az eszköz)</b></div><div class="small muted" style="padding:6px 0">A Google Sheet bekötéséhez írd be a config.js-be az API_URL-t (Telepites.txt).</div>';
   else h += '<div class="kv"><span>Mód</span><b>Google Sheet</b></div><div class="kv"><span>Állapot</span><b>' + esc(S.syncing ? 'Szinkronizál…' : S.queue.length ? S.queue.length + ' módosítás várakozik' : S.lastErr || 'Minden mentve') + '</b></div>';
   h += '<div class="kv"><span>Ügyfelek / megrendelések / tételek</span><b>' + S.data.ugyfelek.length + ' / ' + S.data.projektek.length + ' / ' + S.data.tetelek.length + '</b></div></div>';
-  h += '<div class="btns">' + (LOCAL ? '' : '<button class="btn wide" id="sync">⟳ Szinkron most</button><button class="btn wide" id="xall">⬇️ Teljes Excel</button>') + '</div>';
+  h += '<div class="btns">' + (LOCAL ? '' : '<button class="btn wide" id="sync">⟳ Szinkron most</button>') + '</div>';
   h += '<h2>Árajánlat</h2><div class="card list"><div class="it" id="cegb"><span class="ic">🏢</span><div class="m"><b>Vállalkozói adatok és ajánlat-alapbeállítások</b><small>' + esc((S.data.ceg && S.data.ceg.nev) || 'Még nincs kitöltve – az árajánlat fejlécéhez kell') + '</small></div><span class="arrow">›</span></div></div>';
   h += '<h2>Törölt elemek</h2><div class="card list"><div class="it" id="kukab"><span class="ic">🗑</span><div class="m"><b>Törölt elemek (' + ((S.data.kuka || []).length) + ')</b><small>30 napig visszaállíthatók</small></div><span class="arrow">›</span></div></div>';
   h += '<h2>Megjelenés</h2><div class="card"><div class="kv"><span>Téma</span><b>' + (document.documentElement.classList.contains('dark') ? 'Sötét' : 'Világos') + ' – a fejléc ' + (document.documentElement.classList.contains('dark') ? '☀️' : '🌙') + ' gombjával váltasz</b></div></div>';
@@ -683,7 +643,6 @@ function renderTobb() {
   $('#view').innerHTML = h;
   if (!LOCAL) {
     $('#sync').onclick = () => load(true).then(() => toast(S.lastErr ? S.lastErr : 'Szinkron kész'));
-    $('#xall').onclick = exportAll;
     $('#kodmod').onclick = () => openModal('<h3>Kód módosítása</h3><p class="muted small">Az új kód minden eszközön érvényes lesz; a többi eszközön újra be kell majd lépni vele.</p>' + kodUrlap('km') +
       '<div id="kmerr" class="small" style="color:var(--err);margin-bottom:8px"></div><div class="btns"><button class="btn pri wide" id="kmok">Mentés</button><button class="btn" id="kmx">Mégse</button></div>', m => {
       $('#kmx', m).onclick = closeModal;

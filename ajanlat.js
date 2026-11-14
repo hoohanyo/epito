@@ -26,7 +26,8 @@ function nextAjSzam() {
   return 'ÁJ-' + y + '-' + String(max + 1).padStart(3, '0');
 }
 function bevezetoDef(p) {
-  return 'Tisztelt ' + (p.megrNev || 'Megrendelő') + '!\n\nKöszönjük megkeresését és a bizalmat. Az egyeztetés alapján elkészítettük a(z) „' + p.nev + '” munkáira vonatkozó részletes ajánlatunkat. Az árakat tételesen, átláthatóan állítottuk össze, hogy pontosan lássa, mire számíthat – a munkát az itt rögzített feltételekkel, gondosan és határidőre végezzük el.';
+  const u = ugyfelOf(p);
+  return 'Tisztelt ' + ((u && u.nev) || 'Megrendelő') + '!\n\nKöszönjük megkeresését és a bizalmat. Az egyeztetés alapján elkészítettük a(z) „' + megrLabel(p) + '” munkáira vonatkozó részletes ajánlatunkat. Az árakat tételesen, átláthatóan állítottuk össze, hogy pontosan lássa, mire számíthat – a munkát az itt rögzített feltételekkel, gondosan és határidőre végezzük el.';
 }
 function ajOf(p) {
   const c = cegOf();
@@ -36,11 +37,12 @@ function ajOf(p) {
 
 /* ---------- Számítás ---------- */
 function computeQuote(p, aj) {
-  const ts = S.data.tetelek.filter(t => t.projektId === p.id).sort((a, b) => String(a.letrehozva || '').localeCompare(String(b.letrehozva || '')));
   const ar = 1 + nz(aj.arres) / 100;
-  const rows = [];
+  const blocks = [];
   let anyag = 0, munka = 0;
-  for (const t of ts) {
+  for (const mr of mrsOf(p).filter(m => m.ajanlatban !== false)) {
+  const rows = [];
+  for (const t of tetelekOfMr(mr)) {
     const c = CALC_BY_ID[t.calc];
     const ls = (t.mats || []).map(line).map(l => {
       const k = l.cat === 'anyag' ? ar : 1;
@@ -54,11 +56,14 @@ function computeQuote(p, aj) {
     rows.push({ nev: t.nev, kalk: c ? c.n : '', sub, anyag: a, munka: m, total: a + m, lines: ls });
     anyag += a; munka += m;
   }
+  if (rows.length) blocks.push({ nev: mr.nev, rows, anyag: rows.reduce((x, r) => x + r.anyag, 0), munka: rows.reduce((x, r) => x + r.munka, 0), total: rows.reduce((x, r) => x + r.total, 0) });
+  }
+  const rows = [].concat(...blocks.map(b => b.rows));
   const reszossz = anyag + munka;
   const kedv = Math.round(reszossz * nz(aj.kedv) / 100);
   const netto = reszossz - kedv;
   const afa = aj.afa === '27' ? Math.round(netto * 0.27) : 0;
-  return { rows, anyag, munka, reszossz, kedv, netto, afa, brutto: netto + afa };
+  return { blocks, rows, anyag, munka, reszossz, kedv, netto, afa, brutto: netto + afa };
 }
 
 /* ---------- Vállalkozói adatok ---------- */
@@ -113,7 +118,7 @@ function renderAjanlat(r) {
   const p = S.data.projektek.find(x => x.id === r.id); if (!p) return back();
   const aj = ajOf(p); if (!aj.szam) aj.szam = nextAjSzam();
   const c = cegOf();
-  setHeader('Árajánlat', p.nev);
+  setHeader('Árajánlat', ugyfelNev(p) + ' · ' + (p.sorszam || ''));
   const ft2 = (id, l, val, extra) => '<div class="fld"><label>' + l + '</label><input id="a_' + id + '" value="' + esc(val == null ? '' : val) + '"' + (extra || '') + '></div>';
   const sel = (id, l, opts, val) => '<div class="fld"><label>' + l + '</label><select id="a_' + id + '">' + opts.map(o => '<option value="' + o[0] + '"' + (String(val) === String(o[0]) ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></div>';
   let h = '';
@@ -122,10 +127,11 @@ function renderAjanlat(r) {
   h += '<div class="card hero" id="ajsum"></div>';
   h += '<div class="btns"><button class="btn pri wide" id="aprev">👁 Előnézet, nyomtatás, PDF</button></div>';
   h += '<h2>Alapadatok</h2><div class="card"><div class="row2">' + ft2('szam', 'Ajánlat száma', aj.szam) + ft2('datum', 'Kelte', aj.datum, ' type="date"') + '</div>' +
-    '<div class="row2">' + ft2('erv', 'Érvényes (nap)', aj.erv, ' inputmode="numeric"') + sel('allapot', 'Állapot', AJ_ALLAPOTOK.map(x => [x, x]), aj.allapot) + '</div>' +
-    ft2('targy', 'Az ajánlat tárgya', aj.targy || p.nev) +
-    '<div class="kv"><span>Megrendelő</span><b>' + esc(p.megrNev || '– nincs megadva –') + '</b></div>' +
-    '<div class="btns" style="margin-bottom:0"><button class="btn sm" id="amegr">✏️ Megrendelő adatai</button></div></div>';
+    '<div class="row2">' + ft2('erv', 'Érvényes (nap)', aj.erv, ' inputmode="numeric"') + '<div class="fld"><label>Megrendelés állapota</label><button class="btn sm" id="a_all" style="width:100%;text-align:left">' + allapotPill(p.allapot) + ' – módosítás</button></div>' + '</div>' +
+    ft2('targy', 'Az ajánlat tárgya', aj.targy || megrLabel(p)) +
+    '<div class="kv"><span>Megrendelő</span><b>' + esc(ugyfelNev(p)) + '</b></div>' +
+    '<div class="btns" style="margin-bottom:0"><button class="btn sm" id="amegr">✏️ Ügyfél adatai</button></div></div>';
+  h += '<h2>Munkarészek az ajánlatban</h2><div class="card">' + (mrsOf(p).length ? mrsOf(p).map(m => '<div class="f"><label for="mri_' + m.id + '">' + esc(m.nev) + '<span class="help">' + ft(mrKoltseg(m)) + ' (nettó, árrés nélkül)</span></label><label class="sw"><input type="checkbox" class="mri" id="mri_' + m.id + '" data-m="' + m.id + '"' + (m.ajanlatban !== false ? ' checked' : '') + '><i></i></label></div>').join('') : '<div class="muted small">Még nincs munkarész.</div>') + '</div>';
   h += '<h2>Árazás</h2><div class="card"><div class="row2">' + ft2('arres', 'Anyagárrés (%)', aj.arres, ' inputmode="decimal"') + ft2('kedv', 'Kedvezmény (%)', aj.kedv, ' inputmode="decimal"') + '</div>' +
     sel('afa', 'ÁFA', [['27', 'Nettó ár + 27% ÁFA'], ['aam', 'Alanyi adómentes (AAM)'], ['ford', 'Fordított adózás']], aj.afa) +
     sel('reszlet', 'Tételek bontása', [['tetel', 'Munkanemenként (anyag + munkadíj oszlop)'], ['reszletes', 'Részletes (anyagok tételesen is)']], aj.reszlet) +
@@ -141,7 +147,7 @@ function renderAjanlat(r) {
   $('#view').innerHTML = h;
   const read = () => {
     const o = Object.assign({}, aj);
-    ['szam', 'datum', 'allapot', 'targy', 'afa', 'reszlet', 'kezdes', 'idotartam', 'bevezeto', 'vallalas', 'nemtart', 'megj'].forEach(k => o[k] = $('#a_' + k).value.trim());
+    ['szam', 'datum', 'targy', 'afa', 'reszlet', 'kezdes', 'idotartam', 'bevezeto', 'vallalas', 'nemtart', 'megj'].forEach(k => o[k] = $('#a_' + k).value.trim());
     ['erv', 'arres', 'kedv', 'eloleg', 'jotallas'].forEach(k => o[k] = Number(parseNum($('#a_' + k).value)) || 0);
     if (o.bevezeto === bevezetoDef(p)) o.bevezeto = '';
     return o;
@@ -156,7 +162,9 @@ function renderAjanlat(r) {
   sum();
   $('#asave').onclick = () => save();
   $('#aprev').onclick = $('#aprev2').onclick = () => { save(true); openQuote(p); };
-  $('#amegr').onclick = () => { save(true); projDialog(p); };
+  $('#amegr').onclick = () => { save(true); const u = ugyfelOf(p); if (u) ugyfelDialog(u); };
+  $('#a_all').onclick = () => { save(true); allapotDialog(p); };
+  document.querySelectorAll('.mri').forEach(el => el.onchange = () => { const m = mrById(el.dataset.m); m.ajanlatban = el.checked; upsertMunkaresz(m); sum(); });
   if ($('#toceg')) $('#toceg').onclick = () => { save(true); go({ v: 'ceg' }); };
 }
 
@@ -174,21 +182,28 @@ function quoteHtml(p, fotoSrc) {
     cegSor.map(x => '<div>' + esc(x) + '</div>').join('') + (kapcs.length ? '<div>' + esc(kapcs.join(' · ')) + '</div>' : '') + '</div>' +
     '<div class="q-title"><div class="q-h1">Árajánlat</div><table class="q-meta"><tr><td>Szám</td><td>' + esc(aj.szam) + '</td></tr><tr><td>Kelt</td><td>' + esc(huDate(aj.datum)) + '</td></tr><tr><td>Érvényes</td><td>' + esc(ervIg) + '-ig</td></tr></table></div></header>';
   // felek
-  h += '<section class="q-parties"><div class="q-box"><div class="q-lbl">Megrendelő</div><div class="q-strong">' + esc(p.megrNev || '') + '</div>' +
-    [p.megrCim, p.megrTel, p.megrEmail].filter(Boolean).map(x => '<div>' + esc(x) + '</div>').join('') + '</div>' +
-    '<div class="q-box"><div class="q-lbl">Az ajánlat tárgya</div><div class="q-strong">' + esc(aj.targy || p.nev) + '</div>' + (p.hely ? '<div>Helyszín: ' + esc(p.hely) + '</div>' : '') +
+  const ug = ugyfelOf(p) || {};
+  h += '<section class="q-parties"><div class="q-box"><div class="q-lbl">Megrendelő</div><div class="q-strong">' + esc(ug.nev || '') + '</div>' +
+    [ug.cim, ug.tel, ug.email].filter(Boolean).map(x => '<div>' + esc(x) + '</div>').join('') + '</div>' +
+    '<div class="q-box"><div class="q-lbl">Az ajánlat tárgya</div><div class="q-strong">' + esc(aj.targy || megrLabel(p)) + '</div>' + '<div>Megrendelés: ' + esc(p.sorszam || '') + '</div>' + (p.hely ? '<div>Helyszín: ' + esc(p.hely) + '</div>' : '') +
     (aj.kezdes || aj.idotartam ? '<div>' + esc([aj.kezdes ? 'Kezdés: ' + aj.kezdes : '', aj.idotartam ? 'Időtartam: ' + aj.idotartam : ''].filter(Boolean).join(' · ')) + '</div>' : '') + '</div></section>';
   // bevezető
   h += '<section class="q-intro">' + lines(aj.bevezeto || bevezetoDef(p)).map(x => '<p>' + esc(x) + '</p>').join('') + '</section>';
   if (p.megj) h += '<section class="q-scope"><div class="q-lbl">A munka leírása</div><p>' + esc(p.megj).replace(/\n/g, '<br>') + '</p></section>';
   // tételek
   h += '<table class="q-tbl"><thead><tr><th class="q-n">#</th><th>Megnevezés</th><th class="q-r">Anyag, egyéb</th><th class="q-r">Munkadíj</th><th class="q-r">Összesen</th></tr></thead><tbody>';
-  Q.rows.forEach((r, i) => {
+  const tobbBlokk = Q.blocks.length > 1; let sorsz = 0;
+  Q.blocks.forEach((b, bi) => {
+  if (tobbBlokk) h += '<tr class="q-blk"><td class="q-n">' + String.fromCharCode(65 + bi) + '</td><td colspan="4">' + esc(b.nev) + '</td></tr>';
+  b.rows.forEach((r) => {
+    const i = sorsz++;
     h += '<tr class="q-row"><td class="q-n">' + (i + 1) + '.</td><td><div class="q-strong">' + esc(r.nev) + '</div>' + (r.kalk || r.sub ? '<div class="q-sub">' + esc([r.kalk, r.sub].filter(Boolean).join(' · ')) + '</div>' : '') + '</td><td class="q-r">' + (r.anyag ? ft(r.anyag) : '–') + '</td><td class="q-r">' + (r.munka ? ft(r.munka) : '–') + '</td><td class="q-r q-strong">' + ft(r.total) + '</td></tr>';
     if (aj.reszlet === 'reszletes') for (const l of r.lines) {
       const qty = l.cat === 'anyag' ? (l.ptxt && l.packs != null ? l.ptxt : l.qtxt) : l.qtxt;
       h += '<tr class="q-det"><td></td><td>' + esc(l.name) + ' <span class="q-sub">' + esc(qty) + (l.up ? ' × ' + ft(l.up) : '') + '</span></td><td class="q-r">' + (l.cat !== 'munka' ? ft(l.amount) : '') + '</td><td class="q-r">' + (l.cat === 'munka' ? ft(l.amount) : '') + '</td><td></td></tr>';
     }
+  });
+  if (tobbBlokk) h += '<tr class="q-blksum"><td></td><td>' + esc(b.nev) + ' összesen</td><td class="q-r">' + ft(b.anyag) + '</td><td class="q-r">' + ft(b.munka) + '</td><td class="q-r">' + ft(b.total) + '</td></tr>';
   });
   if (!Q.rows.length) h += '<tr><td></td><td colspan="4" class="q-sub">Nincs tétel.</td></tr>';
   h += '</tbody></table>';
@@ -216,7 +231,7 @@ function quoteHtml(p, fotoSrc) {
   h += '<section class="q-close"><p>' + esc(c.zaras || AJ_DEF.zaras) + '</p></section>';
   // aláírás
   h += '<section class="q-sign"><div><div class="q-sigline"></div><div class="q-strong">' + esc(c.kapcs || c.nev || '') + '</div><div class="q-sub">' + esc(c.kapcs && c.nev ? c.nev : 'Ajánlattevő') + '</div></div>' +
-    '<div><div class="q-sigline"></div><div class="q-strong">Az ajánlatot elfogadom</div><div class="q-sub">' + esc(p.megrNev || 'Megrendelő') + ' · Dátum: ……………………</div></div></section>';
+    '<div><div class="q-sigline"></div><div class="q-strong">Az ajánlatot elfogadom</div><div class="q-sub">' + esc(ug.nev || 'Megrendelő') + ' · Dátum: ……………………</div></div></section>';
   h += '<footer class="q-foot">' + esc([c.nev, c.tel, c.email, c.bank ? 'Számlaszám: ' + c.bank : ''].filter(Boolean).join(' · ')) + '</footer>';
   return h + '</div>';
 }
@@ -234,8 +249,8 @@ async function openQuote(p) {
   history.pushState({ quote: 1 }, '');
   $('#qx').onclick = () => closeQuote();
   $('#qp').onclick = () => {
-    const old = document.title; document.title = (aj.szam + ' ' + p.nev).replace(/[\\/:*?"<>|]+/g, '_');
-    if (aj.allapot === 'Tervezet') { aj.allapot = 'Kiküldve'; p.aj = aj; upsertProjekt(p); }
+    const old = document.title; document.title = (aj.szam + ' ' + ugyfelNev(p) + ' ' + megrLabel(p)).replace(/[\\/:*?"<>|]+/g, '_');
+    if (p.allapot === 'Ajánlat') { p.allapot = 'Kiküldve'; upsertProjekt(p); }
     setTimeout(() => { window.print(); document.title = old; }, 50);
   };
   window.scrollTo(0, 0);
