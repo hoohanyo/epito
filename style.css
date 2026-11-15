@@ -570,3 +570,30 @@ html.dark .kovetes{background:linear-gradient(135deg,#2A2620 0%,#221F1B 100%);bo
 /* 2.9: kerek / négyzetes logó (embléma) nagyobban, a cégadatok mellett */
 .q-brand{display:flex;align-items:center;gap:16px}
 .q-logo.kerek{max-height:none;max-width:none;width:112px;height:112px;object-fit:contain;margin:0;flex:none}
+
+/* 2.10: árzárolás jelzése */
+.banner.zar{background:color-mix(in srgb,var(--pri) 12%,transparent);border-left-color:var(--pri)}
+html.dark .banner.zar{background:#1F2A3A}
+.banner.lejart{border-left-color:#C08A3E;background:color-mix(in srgb,#C08A3E 14%,transparent)}
+html.dark .banner.lejart{background:#2E2A22}
+.q-arval{border-left:3px solid #AB978C;padding-left:12px}
+.list label.it input[type=radio]{accent-color:var(--pri);width:18px;height:18px;margin:0 4px 0 0;flex:none}
+.q-archiv{border:1.5px dashed #B0563F;color:#9A4632;border-radius:6px;padding:6px 10px;margin-bottom:16px;font-weight:600;font-size:12px;text-align:center}
+.q-archiv{border:1.5px dashed #B0563F;color:#9A4632;border-radius:6px;padding:6px 10px;margin-bottom:16px;font-weight:600;font-size:12px;text-align:center}
+
+/* 2.13: ellenőrzés küldés előtt */
+.q-bar .q-bt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.q-bar{gap:8px}
+.q-ell{max-width:794px;margin:14px auto 0;background:var(--card,#fff);color:var(--text,#222);border-radius:14px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:13.5px;line-height:1.45;box-sizing:border-box}
+.q-ell-c{font-weight:700;margin-bottom:6px}
+.q-ell-s{padding:3px 0}
+.q-ell-s.hiba{color:#B0453A;font-weight:600}
+.q-ell-s.figy{color:#9A6A1E}
+html.dark .q-ell-s.hiba{color:#F08A7E}
+html.dark .q-ell-s.figy{color:#E7B866}
+.q-ell-s.info{opacity:.8}
+.q-ell-s.ok{font-weight:600}
+@media print{.q-ell{display:none!important}}
+@media (max-width:820px){.q-ell{margin:10px 8px 0}}
+body.quote-open .modal{z-index:90}
+body.quote-open .toast{z-index:95}

@@ -35,8 +35,93 @@ function ajOf(p) {
     reszlet: c.reszlet, vallalas: c.vallalas, nemtart: c.nemtart, megj: '', bevezeto: '', targy: '' }, p.aj || {});
 }
 
+/* ---------- Árzárolás ----------
+   Kiküldéskor az ajánlatban használt egységárak rögzülnek az érvényesség végéig.
+   Ha a megrendelő ezen belül elfogadja, az árak véglegesen rögzítve maradnak. */
+function ervIgIso(aj) { const d = new Date(aj.datum || Date.now()); d.setDate(d.getDate() + (Number(aj.erv) || 0)); return isoDay(d); }
+// A zárolt árak mindig érvényben maradnak az adott ajánlaton (az kiküldött dokumentum), lejárat után csak jelzünk.
+function arZarAllapot(p) {
+  const z = p.aj && p.aj.arZar; if (!z || !z.arak) return null;
+  const vegleges = !!(p.elfogadva && p.elfogadva <= z.ig);
+  return { z, vegleges, lejart: !vegleges && isoDay() > z.ig };
+}
+function arZarol(p) {
+  const aj = ajOf(p);
+  ARGYUJT = {}; let arak; try { computeQuote(p, aj); } finally { arak = ARGYUJT; ARGYUJT = null; }
+  aj.arZar = { nap: isoDay(), ig: ervIgIso(aj), arak };
+  p.aj = aj;
+}
+function arZarFelold(p) { if (p.aj) delete p.aj.arZar; }
+// a mai árlista szerinti összeg zárolás nélkül
+function quoteMaiAron(p, aj) { const e = ARZAR; ARZAR = null; try { return computeQuote0(p, aj); } finally { ARZAR = e; } }
+const valtPct = (uj, regi) => regi ? Math.round((uj / regi - 1) * 1000) / 10 : 0;
+
+/* Korábbi ajánlatok archív példánya (újranyomtatható). A Sheet cellakorlátja miatt karcsúsítva tároljuk. */
+function ajPillanatkep(p) {
+  const aj = ajOf(p), za = arZarAllapot(p), Q = computeQuote(p, aj), resz = aj.reszlet === 'reszletes';
+  const a = Object.assign({}, aj, { targy: aj.targy || megrLabel(p) }); delete a.arZar;
+  const u = ugyfelOf(p) || {};
+  return { szam: aj.szam, datum: aj.datum, ig: za ? za.z.ig : ervIgIso(aj), brutto: Q.brutto, mentve: isoDay(), aj: a,
+    ug: { nev: u.nev || '', cim: u.cim || '', tel: u.tel || '', email: u.email || '' },
+    Q: { anyag: Q.anyag, munka: Q.munka, reszossz: Q.reszossz, kedv: Q.kedv, netto: Q.netto, afa: Q.afa, brutto: Q.brutto,
+      blocks: Q.blocks.map(b => ({ nev: b.nev, anyag: b.anyag, munka: b.munka, total: b.total,
+        rows: b.rows.map(r => ({ nev: r.nev, kalk: r.kalk, sub: r.sub, anyag: r.anyag, munka: r.munka, total: r.total,
+          lines: resz ? r.lines.map(l => ({ name: l.name, cat: l.cat, qtxt: l.qtxt, ptxt: l.ptxt, packs: l.packs, up: l.up, amount: l.amount })) : [] })) })) } };
+}
+function ajArchival(p) {
+  const lista = (p.ajElozmeny || []).concat([ajPillanatkep(p)]);
+  const meret = () => JSON.stringify(lista).length;
+  // ha túl nagy: előbb a legrégebbiek tételes anyagsorai mennek, végső esetben a legrégebbi példány
+  for (let i = 0; meret() > 45000 && i < lista.length - 1; i++) lista[i].Q.blocks.forEach(b => b.rows.forEach(r => r.lines = []));
+  let torolt = 0; while (meret() > 45000 && lista.length > 1) { lista.shift(); torolt++; }
+  if (torolt) toast('Helyhiány miatt a legrégebbi archív ajánlat törlődött');
+  p.ajElozmeny = lista;
+}
+function elozmenyHtml(p) {
+  const l = p.ajElozmeny || []; if (!l.length) return '';
+  return '<h2>Korábbi ajánlatok</h2><div class="card list">' + l.slice().reverse().map((x, i) => '<div class="it" data-ae="' + (l.length - 1 - i) + '"><span class="ic">📄</span><div class="m"><b>' + esc(x.szam) + '</b><small>' + esc(huDate(x.datum)) + ' · érvényes volt ' + esc(huDate(x.ig)) + '-ig</small></div><b class="small">' + ft(x.brutto) + '</b></div>').join('') + '</div>';
+}
+
+/* Lejárt ajánlat aktualizálása: új szám, mai kelte, árváltozási tájékoztató */
+function aktualizalDialog(p) {
+  const aj = ajOf(p), za = arZarAllapot(p);
+  const regi = computeQuote(p, aj), mai = quoteMaiAron(p, aj);
+  const pct = valtPct(mai.reszossz, regi.reszossz);
+  const h = '<h3>Aktualizált ajánlat</h3>' +
+    '<div class="card"><div class="kv"><span>Lejárt ajánlat (' + esc(aj.szam) + ')</span><b>' + ft(regi.brutto) + '</b></div>' +
+    '<div class="kv"><span>Mai árlista szerint</span><b>' + ft(mai.brutto) + '</b></div>' +
+    '<div class="kv"><span>Változás</span><b>' + (pct > 0 ? '+' : '') + fmt(pct, 1) + '%</b></div></div>' +
+    '<div class="card list">' +
+    '<label class="it"><input type="radio" name="akm" value="lista" checked><div class="m"><b>Az aktuális árlista szerint</b><small>Tételenként a mai anyag- és munkadíjárakkal</small></div></label>' +
+    '<label class="it"><input type="radio" name="akm" value="szaz"><div class="m"><b>Egységes emelés a régi árakra</b><small>Minden tétel ugyanannyi százalékkal nő</small></div></label>' +
+    '<div class="fld" style="padding:4px 12px 10px"><label>Emelés mértéke (%)</label><input id="akp" inputmode="decimal" value="' + fmt(Math.max(0, pct), 1) + '"></div></div>' +
+    '<div class="card"><div class="f"><label for="akt">Árváltozási tájékoztató az ajánlatban<span class="help">Megírja a megrendelőnek, mennyivel és miért változott az ár</span></label><label class="sw"><input type="checkbox" id="akt" checked><i></i></label></div></div>' +
+    '<div class="btns"><button class="btn" id="akx">Mégse</button><button class="btn pri" id="akok">Elkészítem</button></div>';
+  openModal(h, m => {
+    $('#akx', m).onclick = closeModal;
+    $('#akok', m).onclick = () => {
+      const mod = m.querySelector('[name=akm]:checked').value, x = Number(parseNum($('#akp', m).value)) || 0;
+      const uj = Object.assign({}, aj, { szam: nextAjSzam(), datum: isoDay(), tajekoztato: $('#akt', m).checked,
+        elozo: { szam: aj.szam, datum: aj.datum, ig: za ? za.z.ig : ervIgIso(aj), brutto: regi.brutto, reszossz: regi.reszossz } });
+      delete uj.arZar;
+      ajArchival(p);
+      if (mod === 'szaz' && za) {
+        const arak = {}; for (const k in za.z.arak) arak[k] = Math.round(za.z.arak[k] * (1 + x / 100));
+        uj.arZar = { nap: isoDay(), ig: ervIgIso(uj), arak, emeles: x };
+      }
+      p.aj = uj; p.allapot = 'Ajánlat'; p.kikuldve = '';
+      upsertProjekt(p); closeModal(); render(); toast('Elkészült az aktualizált ajánlat: ' + uj.szam);
+    };
+  });
+}
+
 /* ---------- Számítás ---------- */
 function computeQuote(p, aj) {
+  const za = arZarAllapot(p);
+  const elozo = ARZAR; ARZAR = za ? za.z.arak : null;
+  try { return computeQuote0(p, aj); } finally { ARZAR = elozo; }
+}
+function computeQuote0(p, aj) {
   const ar = 1 + nz(aj.arres) / 100;
   const blocks = [];
   let anyag = 0, munka = 0;
@@ -150,8 +235,13 @@ function renderAjanlat(r) {
   let h = '';
   if (!c.nev) h += '<div class="banner">🏢 Még nincsenek kitöltve a vállalkozói adataid – ezek kerülnek az ajánlat fejlécébe.<button class="btn sm" id="toceg">Kitöltés</button></div>';
   if (!S.data.tetelek.some(t => t.projektId === p.id)) h += '<div class="warn">A projektben még nincs tétel – az ajánlat üres lesz.</div>';
+  const za = arZarAllapot(p);
+  if (za && za.lejart) h += '<div class="banner lejart">⏰ Lejárt az ajánlat (érvényes volt: ' + esc(huDate(za.z.ig)) + '). Ha a munka mégis megvalósul, készíts aktualizált ajánlatot a mai árakkal.<button class="btn sm pri" id="aktual">Aktualizálás</button></div>';
+  else if (za) h += '<div class="banner zar">🔒 ' + (za.vegleges ? 'Az árak véglegesen rögzítve (elfogadott ajánlat).' : 'Az árak rögzítve ' + esc(huDate(za.z.ig)) + '-ig – az árlista változása nem írja át az ajánlatot.') + '<button class="btn sm" id="zarfel">Feloldás</button></div>';
+  if (aj.elozo) h += '<div class="banner">🔄 Aktualizált ajánlat – előzmény: ' + esc(aj.elozo.szam) + ' (' + esc(huDate(aj.elozo.datum)) + ', ' + ft(aj.elozo.brutto) + '). Tájékoztató: ' + (aj.tajekoztato === false ? 'kikapcsolva' : 'bekapcsolva') + '<button class="btn sm" id="tajtgl">' + (aj.tajekoztato === false ? 'Bekapcsol' : 'Kikapcsol') + '</button></div>';
   h += '<div class="card hero" id="ajsum"></div>';
   h += '<div class="btns"><button class="btn pri wide" id="aprev">👁 Előnézet, nyomtatás, PDF</button></div>';
+  h += elozmenyHtml(p);
   h += '<h2>Alapadatok</h2><div class="card"><div class="row2">' + ft2('szam', 'Ajánlat száma', aj.szam) + ft2('datum', 'Kelte', aj.datum, ' type="date"') + '</div>' +
     '<div class="row2">' + ft2('erv', 'Érvényes (nap)', aj.erv, ' inputmode="numeric"') + '<div class="fld"><label>Megrendelés állapota</label><button class="btn sm" id="a_all" style="width:100%;text-align:left">' + allapotPill(p.allapot) + ' – módosítás</button></div>' + '</div>' +
     ft2('targy', 'Az ajánlat tárgya', aj.targy || megrLabel(p)) +
@@ -191,30 +281,45 @@ function renderAjanlat(r) {
   $('#amegr').onclick = () => { save(true); const u = ugyfelOf(p); if (u) ugyfelDialog(u); };
   $('#a_all').onclick = () => { save(true); allapotDialog(p); };
   document.querySelectorAll('.mri').forEach(el => el.onchange = () => { const m = mrById(el.dataset.m); m.ajanlatban = el.checked; upsertMunkaresz(m); sum(); });
+  if ($('#zarfel')) $('#zarfel').onclick = () => {
+    if (!confirm('Feloldod az árzárolást? Az ajánlat ezután az aktuális árlistával számol.')) return;
+    save(true); arZarFelold(p); upsertProjekt(p); render(); toast('Árzárolás feloldva');
+  };
+  if ($('#aktual')) $('#aktual').onclick = () => { save(true); aktualizalDialog(p); };
+  document.querySelectorAll('[data-ae]').forEach(el => el.onclick = () => { save(true); openQuote(p, p.ajElozmeny[Number(el.dataset.ae)]); });
+  if ($('#tajtgl')) $('#tajtgl').onclick = () => { save(true); p.aj.tajekoztato = p.aj.tajekoztato === false; upsertProjekt(p); render(); };
   if ($('#toceg')) $('#toceg').onclick = () => { save(true); go({ v: 'ceg' }); };
 }
 
 /* ---------- Ajánlat dokumentum ---------- */
-function quoteHtml(p, fotoSrc) {
-  const aj = ajOf(p); const c = cegOf(); const Q = computeQuote(p, aj);
+function quoteHtml(p, fotoSrc, snap) {
+  const aj = snap ? snap.aj : ajOf(p); const c = cegOf();
+  const Q = snap ? Object.assign({}, snap.Q, { rows: [].concat(...snap.Q.blocks.map(b => b.rows)) }) : computeQuote(p, aj);
   const lines = (s) => String(s || '').split('\n').map(x => x.trim()).filter(Boolean);
   const ervIg = (() => { const d = new Date(aj.datum || Date.now()); d.setDate(d.getDate() + (Number(aj.erv) || 0)); return huDate(isoDay(d)); })();
   const cegSor = [c.cim, c.adoszam ? 'Adószám: ' + c.adoszam : '', c.nyilv ? 'Nyilv. sz.: ' + c.nyilv : ''].filter(Boolean);
   const kapcs = [c.tel, c.email, c.web].filter(Boolean);
-  let h = '<div class="q-paper">';
+  let h = '<div class="q-paper">' + (snap ? '<div class="q-archiv">Archív példány – ez az ajánlat lejárt, helyette a(z) ' + esc(ajOf(p).szam) + ' számú ajánlat érvényes.</div>' : '');
   // fejléc
   h += '<header class="q-head"><div class="q-brand">' + (S.data.logo ? '<img class="q-logo" src="' + S.data.logo + '" alt="" onload="this.classList.toggle(\'kerek\', this.naturalWidth / this.naturalHeight < 1.25)">' : '') + '<div class="q-brand-t">' +
     '<div class="q-cegnev">' + esc(c.nev || 'Vállalkozó neve') + '</div>' +
     cegSor.map(x => '<div>' + esc(x) + '</div>').join('') + (kapcs.length ? '<div>' + esc(kapcs.join(' · ')) + '</div>' : '') + '</div></div>' +
     '<div class="q-title"><div class="q-h1">Árajánlat</div><table class="q-meta"><tr><td>Szám</td><td>' + esc(aj.szam) + '</td></tr><tr><td>Kelt</td><td>' + esc(huDate(aj.datum)) + '</td></tr><tr><td>Érvényes</td><td>' + esc(ervIg) + '-ig</td></tr></table></div></header>';
   // felek
-  const ug = ugyfelOf(p) || {};
+  const ug = snap ? snap.ug : (ugyfelOf(p) || {});
   h += '<section class="q-parties"><div class="q-box"><div class="q-lbl">Megrendelő</div><div class="q-strong">' + esc(ug.nev || '') + '</div>' +
     [ug.cim, ug.tel, ug.email].filter(Boolean).map(x => '<div>' + esc(x) + '</div>').join('') + '</div>' +
     '<div class="q-box"><div class="q-lbl">Az ajánlat tárgya</div><div class="q-strong">' + esc(aj.targy || megrLabel(p)) + '</div>' + '<div>Megrendelés: ' + esc(p.sorszam || '') + '</div>' + (p.hely ? '<div>Helyszín: ' + esc(p.hely) + '</div>' : '') +
     (aj.kezdes || aj.idotartam ? '<div>' + esc([aj.kezdes ? 'Kezdés: ' + aj.kezdes : '', aj.idotartam ? 'Időtartam: ' + aj.idotartam : ''].filter(Boolean).join(' · ')) + '</div>' : '') + '</div></section>';
   // bevezető
   h += '<section class="q-intro">' + lines(aj.bevezeto || bevezetoDef(p)).map(x => '<p>' + esc(x) + '</p>').join('') + '</section>';
+  if (aj.elozo && aj.tajekoztato !== false) {
+    const e = aj.elozo, pc = valtPct(Q.reszossz, e.reszossz || e.brutto);
+    h += '<section class="q-scope q-arval"><div class="q-lbl">Tájékoztatás az árváltozásról</div><p>Ez az ajánlat a(z) ' + esc(e.szam) + ' számú, ' + esc(huDate(e.datum)) + ' keltű, ' + esc(huDate(e.ig)) + '-ig érvényes ajánlatunk aktualizált változata. ' +
+      (pc > 0 ? 'Az azóta eltelt időben az anyagárak és a munkadíjak emelkedtek, ezért a végösszeg az eredeti ' + esc(ft(e.brutto)) + ' helyett ' + esc(ft(Q.brutto)) + ' (+' + esc(fmt(pc, 1)) + '%). Megértését köszönjük – a munka tartalma, a vállalásaink és a feltételeink nem változtak.'
+        : pc < 0 ? 'Az azóta eltelt időben az árak csökkentek, ezért a végösszeg az eredeti ' + esc(ft(e.brutto)) + ' helyett ' + esc(ft(Q.brutto)) + '.'
+        : 'Az árak nem változtak, az ajánlat érvényességét meghosszabbítottuk.') + '</p></section>';
+  }
   if (p.megj) h += '<section class="q-scope"><div class="q-lbl">A munka leírása</div><p>' + esc(p.megj).replace(/\n/g, '<br>') + '</p></section>';
   // tételek
   h += '<table class="q-tbl"><thead><tr><th class="q-n">#</th><th>Megnevezés</th><th class="q-r">Anyag, egyéb</th><th class="q-r">Munkadíj</th><th class="q-r">Összesen</th></tr></thead><tbody>';
@@ -261,22 +366,34 @@ function quoteHtml(p, fotoSrc) {
   h += '<footer class="q-foot">' + esc([c.nev, c.tel, c.email, c.bank ? 'Számlaszám: ' + c.bank : ''].filter(Boolean).join(' · ')) + '</footer>';
   return h + '</div>';
 }
-async function openQuote(p) {
+async function openQuote(p, snap) {
+  if (!snap && !(p.aj && p.aj.szam)) { p.aj = ajOf(p); p.aj.szam = nextAjSzam(); upsertProjekt(p); }
   const fotoSrc = {};
-  const kell = (p.fotok || []).filter(f => f.aj);
+  const kell = snap ? [] : (p.fotok || []).filter(f => f.aj);
   if (kell.length) { toast('Fotók betöltése…'); for (const f of kell) { try { fotoSrc[f.id] = await fotoGet(f.id); } catch (e) {} } }
   let q = $('#quote');
   if (!q) { q = document.createElement('div'); q.id = 'quote'; document.body.appendChild(q); }
-  const aj = ajOf(p);
-  q.innerHTML = '<div class="q-bar"><button class="btn sm" id="qx">‹ Vissza</button><span class="q-bt">' + esc(aj.szam) + '</span><button class="btn sm pri" id="qp">🖨️ Nyomtatás / PDF</button></div>' + quoteHtml(p, fotoSrc);
+  const aj = snap ? snap.aj : ajOf(p);
+  q.innerHTML = '<div class="q-bar"><button class="btn sm" id="qx">‹ Vissza</button><span class="q-bt">' + esc(aj.szam) + (snap ? ' (archív)' : '') + '</span>' +
+    '<button class="btn sm" id="qp" title="Nyomtatás">🖨️</button>' + (snap ? '<button class="btn sm pri" id="qpdf">⬇ PDF</button>' : '<button class="btn sm pri" id="qk">✉️ Küldés</button>') + '</div>' +
+    (snap ? '' : ellenorzesHtml(p)) + quoteHtml(p, fotoSrc, snap);
   q.hidden = false; document.body.classList.add('quote-open');
   const fit = () => { const pp = q.querySelector('.q-paper'); if (pp) pp.style.zoom = Math.min(1, (window.innerWidth - 16) / 794); };
   fit(); window.addEventListener('resize', fit);
   history.pushState({ quote: 1 }, '');
   $('#qx').onclick = () => closeQuote();
+  if ($('#qk')) $('#qk').onclick = () => kuldesDialog(p, q.querySelector('.q-paper'));
+  if ($('#qpdf')) $('#qpdf').onclick = async () => { try { toast('PDF készül…'); letolt(await quotePdf(q.querySelector('.q-paper')), pdfFajlnev(p, aj).replace('.pdf', ' (archív).pdf')); } catch (e) { toast(e.message); } };
   $('#qp').onclick = () => {
     const old = document.title; document.title = (aj.szam + ' ' + ugyfelNev(p) + ' ' + megrLabel(p)).replace(/[\\/:*?"<>|]+/g, '_');
-    if (p.allapot === 'Ajánlat') { p.allapot = 'Kiküldve'; p.kikuldve = isoDay(); upsertProjekt(p); }
+    const za = arZarAllapot(p);
+    if (snap) {}
+    else if (za && za.lejart) { if (!confirm('Ez az ajánlat lejárt (érvényes volt: ' + huDate(za.z.ig) + '). Ha újra el akarod küldeni, előbb készíts aktualizált ajánlatot (Ajánlat → Aktualizálás). Így is kinyomtatod?')) return; }
+    else {
+      if (p.allapot === 'Ajánlat') { p.allapot = 'Kiküldve'; p.kikuldve = isoDay(); }
+      if (p.allapot === 'Kiküldve') arZarol(p);
+      upsertProjekt(p);
+    }
     setTimeout(() => { window.print(); document.title = old; }, 50);
   };
   window.scrollTo(0, 0);

@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.9';
+const APP_VERSION = '2.13';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -35,7 +35,15 @@ const saveCache = () => LS.set('ek_cache', S.data);
 const saveQueue = () => LS.set('ek_queue', S.queue);
 
 /* ---------- Árak ---------- */
+// árajánlat árzárolás: computeQuote alatt a rögzített árak élnek (ARZAR), a gyűjtő (ARGYUJT) pedig feljegyzi a használt árakat
+let ARZAR = null, ARGYUJT = null;
 function mat(k) {
+  const P = mat1(k);
+  if (ARZAR && Object.prototype.hasOwnProperty.call(ARZAR, k)) P.p = ARZAR[k];
+  if (ARGYUJT) ARGYUJT[k] = P.p;
+  return P;
+}
+function mat1(k) {
   const o = S.data.arlista[k];
   const d = MATERIALS[k] || { n: (o && o.n) || k, g: (o && o.g) || 'Egyéb', u: (o && o.u) || 'db', pack: 0, pn: '', p: 0, egyedi: true };
   if (!o) return d;
@@ -116,7 +124,7 @@ async function load(force) {
     const arl = {};
     for (const r of (j.arlista || [])) arl[r.kulcs] = { n: r.anyag, g: r.csoport, u: r.egyseg, pack: r.kiszereles, pn: r.kiszNev, p: r.ar, megj: r.megj };
     const be = j.beallitas || {};
-    S.data = { ceg: safeJson(be.ceg, {}), logo: be.logo || '', sablonok: safeJson(be.sablonok, []), projektek: (j.projektek || []).map(p => Object.assign(p, { aj: safeJson(p.aj, {}), helyisegek: safeJson(p.helyisegek, []), fotok: safeJson(p.fotok, []), szamla: safeJson(p.szamla, null), kiadasok: safeJson(p.kiadasok, []), naplo: safeJson(p.naplo, []) })), tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl,
+    S.data = { ceg: safeJson(be.ceg, {}), logo: be.logo || '', sablonok: safeJson(be.sablonok, []), projektek: (j.projektek || []).map(p => Object.assign(p, { aj: safeJson(p.aj, {}), helyisegek: safeJson(p.helyisegek, []), fotok: safeJson(p.fotok, []), szamla: safeJson(p.szamla, null), kiadasok: safeJson(p.kiadasok, []), naplo: safeJson(p.naplo, []), ajElozmeny: safeJson(p.ajElozmeny, []) })), tetelek: (j.tetelek || []).map(t => Object.assign(t, { values: safeJson(t.values, {}), mats: safeJson(t.mats, []), out: safeJson(t.out, []) })), arlista: arl,
       kuka: (j.kuka || []).map(k => ({ id: k.id, tipus: k.tipus, nev: k.nev, torolve: k.torolve, adat: safeJson([1, 2, 3, 4, 5, 6, 7, 8].map(i => k['adat' + i] || '').join(''), {}) })),
       ugyfelek: j.ugyfelek || [], munkareszek: (j.munkareszek || []).map(m => Object.assign(m, { ajanlatban: !(m.ajanlatban === false || m.ajanlatban === 'FALSE' || m.ajanlatban === 'false'), sorrend: Number(m.sorrend) || 0 })) };
     saveCache(); S.lastErr = ''; S.loaded = true;
@@ -138,7 +146,7 @@ function upsertProjekt(p) {
   p.modositva = now(); if (!p.letrehozva) p.letrehozva = p.modositva;
   const i = S.data.projektek.findIndex(x => x.id === p.id);
   if (i >= 0) S.data.projektek[i] = p; else S.data.projektek.unshift(p);
-  saveCache(); enqueue('saveProjekt', { p: Object.assign({}, p, { aj: JSON.stringify(p.aj || {}), ajAllapot: (p.aj && p.aj.allapot) || '', helyisegek: JSON.stringify(p.helyisegek || []), fotok: JSON.stringify(p.fotok || []), kiadasok: JSON.stringify(p.kiadasok || []), naplo: JSON.stringify(p.naplo || []), kikuldve: p.kikuldve || '',
+  saveCache(); enqueue('saveProjekt', { p: Object.assign({}, p, { aj: JSON.stringify(p.aj || {}), ajAllapot: (p.aj && p.aj.allapot) || '', helyisegek: JSON.stringify(p.helyisegek || []), fotok: JSON.stringify(p.fotok || []), kiadasok: JSON.stringify(p.kiadasok || []), naplo: JSON.stringify(p.naplo || []), ajElozmeny: JSON.stringify(p.ajElozmeny || []), kikuldve: p.kikuldve || '',
     szamla: p.szamla ? JSON.stringify(p.szamla) : '', szamlaSzam: (p.szamla && p.szamla.szam) || '', szamlaKelt: (p.szamla && p.szamla.kelt) || '', szamlaHatarido: (p.szamla && p.szamla.hatarido) || '', szamlaOsszeg: (p.szamla && p.szamla.osszeg) || '', kifizetve: (p.szamla && p.szamla.fizetve) || '' }) });
 }
 function deleteProjekt(id) {

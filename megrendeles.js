@@ -232,7 +232,7 @@ function allapotDialog(p) {
       const a = el.dataset.a; p.allapot = a;
       if (a === 'Elfogadva' && !p.elfogadva) p.elfogadva = isoDay();
       if (a === 'Kész') p.kesz = isoDay();
-      if (a === 'Kiküldve') p.kikuldve = isoDay();
+      if (a === 'Kiküldve') { p.kikuldve = isoDay(); const za = arZarAllapot(p); if (!(za && za.lejart)) arZarol(p); }
       upsertProjekt(p); closeModal(); render(); toast('Állapot: ' + a);
     });
   });
