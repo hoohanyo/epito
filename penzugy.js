@@ -31,7 +31,7 @@ function kovetesHtml(p) {
 }
 function bindKovetes(p) {
   if (!$('#kv_ok')) return;
-  $('#kv_ok').onclick = () => { p.allapot = 'Elfogadva'; if (!p.elfogadva) p.elfogadva = isoDay(); upsertProjekt(p); render(); toast('Állapot: Elfogadva'); };
+  $('#kv_ok').onclick = () => { p.allapot = 'Elfogadva'; if (!p.elfogadva || (p.aj && p.aj.arZar && p.elfogadva < p.aj.arZar.nap)) p.elfogadva = isoDay(); upsertProjekt(p); render(); toast('Állapot: Elfogadva'); };
   $('#kv_var').onclick = () => { p.kikuldve = isoDay(); upsertProjekt(p); render(); toast('Rendben, egy hét múlva újra szólok'); };
 }
 

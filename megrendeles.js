@@ -230,7 +230,7 @@ function allapotDialog(p) {
     $('#ax', m).onclick = closeModal;
     m.querySelectorAll('[data-a]').forEach(el => el.onclick = () => {
       const a = el.dataset.a; p.allapot = a;
-      if (a === 'Elfogadva' && !p.elfogadva) p.elfogadva = isoDay();
+      if (a === 'Elfogadva' && (!p.elfogadva || (p.aj && p.aj.arZar && p.elfogadva < p.aj.arZar.nap))) p.elfogadva = isoDay();
       if (a === 'Kész') p.kesz = isoDay();
       if (a === 'Kiküldve') { p.kikuldve = isoDay(); const za = arZarAllapot(p); if (!(za && za.lejart)) arZarol(p); }
       upsertProjekt(p); closeModal(); render(); toast('Állapot: ' + a);

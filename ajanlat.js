@@ -42,7 +42,8 @@ function ervIgIso(aj) { const d = new Date(aj.datum || Date.now()); d.setDate(d.
 // A zárolt árak mindig érvényben maradnak az adott ajánlaton (az kiküldött dokumentum), lejárat után csak jelzünk.
 function arZarAllapot(p) {
   const z = p.aj && p.aj.arZar; if (!z || !z.arak) return null;
-  const vegleges = !!(p.elfogadva && p.elfogadva <= z.ig);
+  // véglegesen rögzített, ha az ajánlatot (ennek a zárolásnak az idején belül) elfogadták, és nem tért vissza ajánlat-szakaszba
+  const vegleges = !!(p.elfogadva && p.elfogadva >= z.nap && p.elfogadva <= z.ig && !['Ajánlat', 'Kiküldve', 'Elutasítva'].includes(p.allapot));
   return { z, vegleges, lejart: !vegleges && isoDay() > z.ig };
 }
 function arZarol(p) {
@@ -377,7 +378,7 @@ async function openQuote(p, snap) {
   q.innerHTML = '<div class="q-bar"><button class="btn sm" id="qx">‹ Vissza</button><span class="q-bt">' + esc(aj.szam) + (snap ? ' (archív)' : '') + '</span>' +
     '<button class="btn sm" id="qp" title="Nyomtatás">🖨️</button>' + (snap ? '<button class="btn sm pri" id="qpdf">⬇ PDF</button>' : '<button class="btn sm pri" id="qk">✉️ Küldés</button>') + '</div>' +
     (snap ? '' : ellenorzesHtml(p)) + quoteHtml(p, fotoSrc, snap);
-  q.hidden = false; document.body.classList.add('quote-open');
+  q.hidden = false; q.scrollTop = 0; document.body.classList.add('quote-open');
   const fit = () => { const pp = q.querySelector('.q-paper'); if (pp) pp.style.zoom = Math.min(1, (window.innerWidth - 16) / 794); };
   fit(); window.addEventListener('resize', fit);
   history.pushState({ quote: 1 }, '');
