@@ -1,6 +1,6 @@
 // Metrum – építőkalkulátor service worker – az app offline is megnyílik
-const CACHE = 'epitokalk-2.8';
-const FILES = ['./', 'index.html', 'style.css?v=2.8', 'config.js?v=2.8', 'ikonok.js?v=2.8', 'calc.js?v=2.8', 'app.js?v=2.8', 'szamologep.js?v=2.8', 'megrendeles.js?v=2.8', 'helyiseg.js?v=2.8', 'ajanlat.js?v=2.8', 'szamla.js?v=2.8', 'penzugy.js?v=2.8', 'kuka.js?v=2.8', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
+const CACHE = 'epitokalk-2.9';
+const FILES = ['./', 'index.html', 'style.css?v=2.9', 'config.js?v=2.9', 'ikonok.js?v=2.9', 'calc.js?v=2.9', 'app.js?v=2.9', 'szamologep.js?v=2.9', 'megrendeles.js?v=2.9', 'helyiseg.js?v=2.9', 'ajanlat.js?v=2.9', 'szamla.js?v=2.9', 'penzugy.js?v=2.9', 'kuka.js?v=2.9', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

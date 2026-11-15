@@ -566,3 +566,7 @@ html.dark .kovetes{background:linear-gradient(135deg,#2A2620 0%,#221F1B 100%);bo
 /* 2.7.1: kereső és az árlista-csoportok közötti térköz */
 #ak.search{margin-bottom:0}
 #ak+.alcs{margin-top:18px}
+
+/* 2.9: kerek / négyzetes logó (embléma) nagyobban, a cégadatok mellett */
+.q-brand{display:flex;align-items:center;gap:16px}
+.q-logo.kerek{max-height:none;max-width:none;width:112px;height:112px;object-fit:contain;margin:0;flex:none}

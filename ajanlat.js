@@ -119,11 +119,18 @@ function renderCeg() {
 function logoFromFile(f) {
   const img = new Image(); const url = URL.createObjectURL(f);
   img.onload = () => {
-    const sc = Math.min(1, 520 / img.width, 180 / img.height);
-    const cv = document.createElement('canvas'); cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
-    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-    let d = cv.toDataURL('image/png');
-    if (d.length > 45000) { const c2 = document.createElement('canvas'); c2.width = cv.width; c2.height = cv.height; const x = c2.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c2.width, c2.height); x.drawImage(cv, 0, 0); for (const q of [0.9, 0.8, 0.65, 0.5]) { d = c2.toDataURL('image/jpeg', q); if (d.length < 45000) break; } }
+    // kerek / négyzetes logó (pl. embléma körirattal): nagyobb felbontás, hogy nyomtatásban is olvasható legyen
+    const arany = img.width / img.height, negyzetes = arany > 0.8 && arany < 1.25;
+    let maxW = negyzetes ? 360 : 520, maxH = negyzetes ? 360 : 180, d = '';
+    for (let i = 0; i < 5; i++) {
+      const sc = Math.min(1, maxW / img.width, maxH / img.height);
+      const cv = document.createElement('canvas'); cv.width = Math.round(img.width * sc); cv.height = Math.round(img.height * sc);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      d = cv.toDataURL('image/png');
+      if (d.length > 45000) { const c2 = document.createElement('canvas'); c2.width = cv.width; c2.height = cv.height; const x = c2.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c2.width, c2.height); x.drawImage(cv, 0, 0); for (const q of [0.92, 0.85, 0.75, 0.6]) { d = c2.toDataURL('image/jpeg', q); if (d.length < 45000) break; } }
+      if (d.length <= 45000) break;
+      maxW = Math.round(maxW * 0.85); maxH = Math.round(maxH * 0.85);
+    }
     URL.revokeObjectURL(url);
     if (d.length > 48000) { toast('A kép túl nagy, válassz egyszerűbb logót'); return; }
     saveLogo(d); renderCeg(); toast('Logó mentve');
@@ -196,9 +203,9 @@ function quoteHtml(p, fotoSrc) {
   const kapcs = [c.tel, c.email, c.web].filter(Boolean);
   let h = '<div class="q-paper">';
   // fejléc
-  h += '<header class="q-head"><div class="q-brand">' + (S.data.logo ? '<img class="q-logo" src="' + S.data.logo + '" alt="">' : '') +
+  h += '<header class="q-head"><div class="q-brand">' + (S.data.logo ? '<img class="q-logo" src="' + S.data.logo + '" alt="" onload="this.classList.toggle(\'kerek\', this.naturalWidth / this.naturalHeight < 1.25)">' : '') + '<div class="q-brand-t">' +
     '<div class="q-cegnev">' + esc(c.nev || 'Vállalkozó neve') + '</div>' +
-    cegSor.map(x => '<div>' + esc(x) + '</div>').join('') + (kapcs.length ? '<div>' + esc(kapcs.join(' · ')) + '</div>' : '') + '</div>' +
+    cegSor.map(x => '<div>' + esc(x) + '</div>').join('') + (kapcs.length ? '<div>' + esc(kapcs.join(' · ')) + '</div>' : '') + '</div></div>' +
     '<div class="q-title"><div class="q-h1">Árajánlat</div><table class="q-meta"><tr><td>Szám</td><td>' + esc(aj.szam) + '</td></tr><tr><td>Kelt</td><td>' + esc(huDate(aj.datum)) + '</td></tr><tr><td>Érvényes</td><td>' + esc(ervIg) + '-ig</td></tr></table></div></header>';
   // felek
   const ug = ugyfelOf(p) || {};
