@@ -155,7 +155,7 @@ function ugyfelDialog(u, after) {
   const masok = S.data.ugyfelek.filter(x => x.id !== d.id);
   const h = '<h3>' + (uj ? 'Új ügyfél' : 'Ügyfél adatai') + '</h3>' +
     '<div class="fld"><label>Név</label><input id="un" value="' + esc(d.nev) + '" placeholder="pl. Kovács János"></div>' +
-    '<div class="fld"><label>Cím</label><input id="uc" value="' + esc(d.cim) + '" placeholder="pl. 2234 Maglód, Fő utca 1."></div>' +
+    cimMezokHtml('uc', d.cim, 'Cím') +
     '<div class="row2"><div class="fld"><label>Telefon</label><input id="ut" inputmode="tel" value="' + esc(d.tel) + '"></div><div class="fld"><label>E-mail</label><input id="ue" inputmode="email" value="' + esc(d.email) + '"></div></div>' +
     '<div class="fld"><label>Adószám (cégnél, vállalkozónál)</label><input id="ua" value="' + esc(d.adoszam || '') + '" placeholder="Magánszemélynél hagyd üresen"></div>' +
     '<div class="fld"><label>Megjegyzés</label><textarea id="um">' + esc(d.megj) + '</textarea></div>' +
@@ -163,10 +163,11 @@ function ugyfelDialog(u, after) {
     (uj ? '' : (masok.length ? '<div class="fld" style="margin-top:8px"><label>Összevonás egy másik ügyféllel (ha duplán szerepel)</label><select id="umerge"><option value="">– válassz –</option>' + masok.map(x => '<option value="' + x.id + '">' + esc(x.nev) + '</option>').join('') + '</select></div>' : '') +
       '<div class="btns"><button class="btn danger" id="udel">Ügyfél törlése</button></div>');
   openModal(h, m => {
+    const ucim = cimMezokBind(m, 'uc');
     $('#ux', m).onclick = closeModal;
     $('#uok', m).onclick = () => {
       const n = $('#un', m).value.trim(); if (!n) { $('#un', m).focus(); return; }
-      Object.assign(d, { nev: n, cim: $('#uc', m).value.trim(), tel: $('#ut', m).value.trim(), email: $('#ue', m).value.trim(), adoszam: $('#ua', m).value.trim(), megj: $('#um', m).value.trim() });
+      Object.assign(d, { nev: n, cim: ucim.get(), tel: $('#ut', m).value.trim(), email: $('#ue', m).value.trim(), adoszam: $('#ua', m).value.trim(), megj: $('#um', m).value.trim() });
       upsertUgyfel(d); closeModal();
       if (after) after(d); else if (uj) go({ v: 'ugyfel', id: d.id }); else render();
     };
@@ -192,31 +193,36 @@ function megrendelesDialog(p, u) {
   const ugy = d ? ugyfelOf(d) : u;
   const h = '<h3>' + (uj ? 'Új megrendelés' : 'Megrendelés adatai') + '</h3>' +
     '<div class="fld"><label>Ügyfél</label><input id="mug" list="ugyfelLista" value="' + esc(ugy ? ugy.nev : '') + '" placeholder="Kezdd el gépelni – a korábbiakat felajánlja">' + ugyfelDatalist() + '<div class="small muted" id="mugi" style="margin-top:4px"></div></div>' +
-    '<div class="fld"><label>Megnevezés (nem kötelező)</label><input id="mnev" value="' + esc(d ? d.nev : '') + '" placeholder="pl. Lakásfelújítás – üresen a munkarészekből áll össze"></div>' +
-    '<div class="fld"><label>Helyszín</label><input id="mhely" value="' + esc(d ? d.hely : (ugy ? ugy.cim : '')) + '" placeholder="Alapból az ügyfél címe"></div>' +
-    (uj ? '<div class="fld"><label>Első munkarész</label><input id="mmr" placeholder="pl. Fürdőszoba-felújítás (sablonból később is)"></div>' : '') +
+    '<div class="fld"><label>Megnevezés <span class="muted">(nem kötelező – üresen a munkarészekből áll össze)</span></label>' + comboHtml('mnev', d ? d.nev : '', HELYISEG_OPC, 'Válassz vagy írd be') + '</div>' +
+    cimMezokHtml('mh', d ? d.hely : (ugy ? ugy.cim : ''), 'Helyszín (alapból az ügyfél címe)') +
+
+    (uj ? '<div class="fld"><label>Első munkarész</label>' + comboHtml('mmr', '', MUNKARESZ_OPC, 'Válassz vagy írd be (sablonból később is)') + '</div>' : '') +
     '<div class="fld"><label>Megjegyzés / a munka leírása</label><textarea id="mmegj">' + esc(d ? d.megj : '') + '</textarea></div>' +
     '<div class="btns"><button class="btn pri wide" id="mok">' + (uj ? 'Létrehozás' : 'Mentés') + '</button><button class="btn" id="mx">Mégse</button></div>' +
     (uj ? '' : '<div class="btns"><button class="btn danger" id="mdel">Megrendelés törlése</button></div>');
   openModal(h, m => {
     const mug = $('#mug', m);
+    const hely = cimMezokBind(m, 'mh');
+    comboBind(m, 'mnev');
+    if (uj) comboBind(m, 'mmr', null, () => munkareszJavaslat($('#mnev', m).value));
     const info = () => {
       const n = mug.value.trim().toLowerCase(); const x = S.data.ugyfelek.find(y => (y.nev || '').trim().toLowerCase() === n);
       $('#mugi', m).textContent = !n ? '' : x ? '✓ Meglévő ügyfél – ' + (megrendelesekOf(x).length) + ' korábbi megrendelés' : '+ Új ügyfélként veszem fel';
-      if (x && uj && !$('#mhely', m).value) $('#mhely', m).value = x.cim || '';
+      if (x && uj && hely.ures() && x.cim) hely.set(x.cim);
     };
     mug.oninput = info; info();
     $('#mx', m).onclick = closeModal;
     $('#mok', m).onclick = () => {
       const un = mug.value.trim(); if (!un) { mug.focus(); return; }
       const ug = ugyfelByNameOrNew(un);
-      if (!ug.cim && $('#mhely', m).value.trim()) { ug.cim = $('#mhely', m).value.trim(); upsertUgyfel(ug); }
+      const helyStr = hely.get();
+      if (!ug.cim && helyStr) { ug.cim = helyStr; upsertUgyfel(ug); }
       if (uj) {
-        const np = ujMegrendeles(ug, { nev: $('#mnev', m).value.trim(), hely: $('#mhely', m).value.trim(), megj: $('#mmegj', m).value.trim() });
+        const np = ujMegrendeles(ug, { nev: $('#mnev', m).value.trim(), hely: helyStr, megj: $('#mmegj', m).value.trim() });
         const mrn = $('#mmr', m).value.trim(); if (mrn) ujMunkaresz(np, mrn);
         closeModal(); S.tab = 'proj'; S.stack = [{ v: 'proj' }, { v: 'ugyfel', id: ug.id }, { v: 'projekt', id: np.id }]; render();
       } else {
-        Object.assign(d, { ugyfelId: ug.id, nev: $('#mnev', m).value.trim(), hely: $('#mhely', m).value.trim(), megj: $('#mmegj', m).value.trim() });
+        Object.assign(d, { ugyfelId: ug.id, nev: $('#mnev', m).value.trim(), hely: helyStr, megj: $('#mmegj', m).value.trim() });
         upsertProjekt(d); closeModal(); render();
       }
     };
@@ -292,11 +298,12 @@ function renderMegrendeles(r) {
 }
 function ujMunkareszDialog(p) {
   const h = '<h3>Új munkarész</h3>' +
-    '<div class="fld"><label>Üres munkarész neve</label><input id="mrn" placeholder="pl. Kisszoba glettelés, festés"></div>' +
+    '<div class="fld"><label>Üres munkarész neve</label>' + comboHtml('mrn', '', MUNKARESZ_OPC, 'Válassz vagy írd be') + '</div>' +
     '<div class="btns"><button class="btn pri wide" id="mrok">Létrehozás</button></div>' +
     '<div class="or">vagy</div><div class="btns"><button class="btn wide" id="mrsab">📋 Sablonból (fürdőszoba, festés, padlócsere…)</button></div>' +
     '<div class="btns"><button class="btn" id="mrx">Mégse</button></div>';
   openModal(h, m => {
+    comboBind(m, 'mrn', null, () => munkareszJavaslat(p.nev));
     $('#mrx', m).onclick = closeModal;
     $('#mrsab', m).onclick = () => sablonDialog(p);
     $('#mrok', m).onclick = () => { const n = $('#mrn', m).value.trim(); if (!n) { $('#mrn', m).focus(); return; } const mr = ujMunkaresz(p, n); closeModal(); go({ v: 'munkaresz', id: mr.id }); };

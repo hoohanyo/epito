@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.13';
+const APP_VERSION = '2.14';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -552,12 +552,12 @@ function saveDialog(asNew) {
   const h = '<h3>' + (st.tetelId && !asNew ? 'Módosítás mentése' : 'Mentés munkarészbe') + '</h3>' +
     '<div class="fld"><label>Hova kerüljön?</label><select id="mp">' + opts + '<option value="_ujmeg"' + (sel === '_ujmeg' ? ' selected' : '') + '>+ Új megrendelés…</option></select></div>' +
     '<div class="fld" id="ugw" hidden><label>Ügyfél</label><input id="mug" list="ugyfelLista" placeholder="Kezdd el gépelni a nevet…">' + ugyfelDatalist() + '</div>' +
-    '<div class="fld" id="mrw" hidden><label>Munkarész neve</label><input id="mmr" placeholder="pl. Fürdőszoba-felújítás, Kisszoba festés"></div>' +
+    '<div class="fld" id="mrw" hidden><label>Munkarész neve</label>' + comboHtml('mmr', '', MUNKARESZ_OPC, 'Válassz vagy írd be') + '</div>' +
     '<div class="fld"><label>Tétel megnevezése</label><input id="mn" value="' + esc(st.nev && !asNew ? st.nev : (st.nev || c.n)) + '" placeholder="pl. Padlóburkolás"></div>' +
     '<div class="btns"><button class="btn pri wide" id="mok">Mentés</button><button class="btn" id="mx">Mégse</button></div>';
   openModal(h, m => {
     const upd = () => { const v = $('#mp', m).value; $('#ugw', m).hidden = v !== '_ujmeg'; $('#mrw', m).hidden = !(v === '_ujmeg' || v.startsWith('_ujmr|')); };
-    $('#mp', m).onchange = upd; upd();
+    $('#mp', m).onchange = upd; upd(); comboBind(m, 'mmr');
     $('#mx', m).onclick = closeModal;
     $('#mok', m).onclick = () => {
       const v = $('#mp', m).value; let mr;
