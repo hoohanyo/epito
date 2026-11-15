@@ -53,9 +53,28 @@ function computeQuote(p, aj) {
     let sub = '';
     if (c && c.mq) { try { const q = c.mq(t.values || {}); if (q[0] > 0) sub = fmt(q[0], 2) + ' ' + q[1]; } catch (e) {} }
     else if (t.calc === 'egyeb' && t.mats[0]) sub = line(t.mats[0]).qtxt;
+    // részmunkák külön sorban (pl. ajtó-, ablakmázolás a festés mellett), a fő sor a maradék
+    const rs = c && c.resz ? reszOf(c, t.values || {}) : [];
+    let ma = a, mm = m; const resz = [];
+    for (const x of rs) {
+      const rl = [{ k: x.r.md, q: x.q }].concat((x.r.mats || []).map(mt => ({ k: mt[0], q: Math.round(x.q * mt[1] * 1000) / 1000 }))).map(line).map(l => {
+        const k = l.cat === 'anyag' ? ar : 1; return Object.assign({}, l, { up: Math.round(l.price * k), amount: Math.round(l.cost * k) });
+      });
+      const ra = rl.filter(l => l.cat !== 'munka').reduce((s, l) => s + l.amount, 0), rm = rl.filter(l => l.cat === 'munka').reduce((s, l) => s + l.amount, 0);
+      ma -= ra; mm -= rm;
+      resz.push({ nev: x.r.n, kalk: c.n, sub: fmt(x.q, 2) + ' ' + x.r.u, anyag: ra, munka: rm, total: ra + rm, lines: rl, resz: true });
+    }
+    if (resz.length) {
+      ma = Math.max(0, ma); mm = Math.max(0, mm);
+      const reszKulcs = new Set(rs.map(x => x.r.md));
+      const fo = ls.filter(l => !reszKulcs.has(l.k));
+      if (ma + mm > 0) rows.push({ nev: t.nev, kalk: c.n, sub, anyag: ma, munka: mm, total: ma + mm, lines: fo });
+      resz.forEach(r => rows.push(r));
+      continue;
+    }
     rows.push({ nev: t.nev, kalk: c ? c.n : '', sub, anyag: a, munka: m, total: a + m, lines: ls });
-    anyag += a; munka += m;
   }
+  rows.forEach(r => { anyag += r.anyag; munka += r.munka; });
   if (rows.length) blocks.push({ nev: mr.nev, rows, anyag: rows.reduce((x, r) => x + r.anyag, 0), munka: rows.reduce((x, r) => x + r.munka, 0), total: rows.reduce((x, r) => x + r.total, 0) });
   }
   const rows = [].concat(...blocks.map(b => b.rows));

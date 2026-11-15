@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.7.1';
+const APP_VERSION = '2.8';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -400,7 +400,7 @@ function renderCalc() {
   const p = st.projektId && S.data.projektek.find(x => x.id === st.projektId);
   setHeader(c.n, st.tetelId ? 'Tétel szerkesztése' + (p ? ' · ' + p.nev : '') : (p ? 'Projekt: ' + p.nev : ''));
   let h = '<p class="desc">' + esc(c.desc) + '</p><div class="card" id="form"></div><div id="res"></div><div id="munka"></div><div id="calcTot"></div>';
-  h += '<div class="btns"><button class="btn pri wide" id="ment">' + (st.tetelId ? 'Módosítás mentése' : 'Mentés projektbe') + '</button>' +
+  h += '<div class="btns"><button class="btn pri wide" id="ment">' + (st.tetelId ? 'Módosítás mentése' : 'Mentés munkarészbe') + '</button>' +
     (st.tetelId ? '<button class="btn" id="ujkent">Mentés újként</button>' : '') +
     '<button class="btn" id="alap">Alapértékek</button></div>';
   if (st.tetelId) h += '<div class="btns"><button class="btn danger" id="torol">Tétel törlése</button></div>';
