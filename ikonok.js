@@ -28,6 +28,7 @@ const ICONS = {
   lejtes: '<path d="M3 19h18"/><path d="M3 19L21 8"/><path d="M15 19a6 6 0 0 0-1-3.5"/>',
   lepcso: '<path d="M3 20h5v-5h5v-5h5V5h3"/><path d="M3 20h18"/>',
   keveres: '<path d="M12 4v16M7 20h10"/><path d="M5 8h14"/><path d="M5 8l-2.5 6a2.5 2.5 0 0 0 5 0z"/><path d="M19 8l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
+  villany: '<path d="M13 2L5 13.5h6L10 22l8-11.5h-6z"/>',
   // sablonok
   furdo: '<path d="M3 12h18v3a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z"/><path d="M6 12V6a2 2 0 0 1 4 0"/><path d="M7 20l-1 1.5M17 20l1 1.5"/>',
   szobafestes: '<rect x="3" y="3" width="15" height="6" rx="1.5"/><path d="M18 6h2.5v5H11v3"/><rect x="9.5" y="14" width="3" height="7" rx="1"/>',
@@ -80,7 +81,7 @@ const EMOJI_IKON = {
   '📄': 'doc', '🧾': 'receipt', '✏': 'pencil', '🛒': 'cart', '📍': 'pin', '📞': 'phone', '✉': 'mail',
   '📋': 'clipboard', '➕': 'plus', '🗓': 'calendar', '🏢': 'building', '🗑': 'trash', '🔑': 'key', '👁': 'eye',
   '🖨': 'printer', '🕘': 'history', '📱': 'device', '⏳': 'clock', '⚠': 'alert', '☀': 'sun', '🌙': 'moon',
-  '🛁': 'furdo', '🖌': 'szobafestes', '🚗': 'kocsibeallo', '▭': 'padlo', '👥': 'users', '🏷': 'tag', '⚙': 'more',
+  '🛁': 'furdo', '🖌': 'szobafestes', '🚗': 'kocsibeallo', '▭': 'padlo', '👥': 'users', '🏷': 'tag', '⚙': 'more', '⚡': 'villany',
 };
 const EMOJI_RE = new RegExp('(' + Object.keys(EMOJI_IKON).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')️?', 'gu');
 const EMOJI_SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, TITLE: 1, OPTION: 1 };

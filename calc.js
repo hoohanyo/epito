@@ -116,6 +116,24 @@ const MATERIALS = {
   terasz_gerenda:{ n: 'Terasz alátétgerenda', g: 'Fa', u: 'fm', pack: 0, pn: 'fm', p: 1700 },
   facsavar:     { n: 'Facsavar', g: 'Fa', u: 'db', pack: 200, pn: 'doboz (200 db)', p: 4500 },
   fureszaru:    { n: 'Fűrészáru', g: 'Fa', u: 'm³', pack: 0, pn: 'm³', p: 190000 },
+  // Villany (minta árak – írd át a sajátodra)
+  nymj15:       { n: 'Kábel NYM-J 3×1,5', g: 'Villany', u: 'fm', pack: 100, pn: 'tekercs (100 m)', p: 42000 },
+  nymj25:       { n: 'Kábel NYM-J 3×2,5', g: 'Villany', u: 'fm', pack: 100, pn: 'tekercs (100 m)', p: 65000 },
+  nymj525:      { n: 'Kábel NYM-J 5×2,5', g: 'Villany', u: 'fm', pack: 0, pn: 'fm', p: 1100 },
+  utp:          { n: 'UTP kábel (Cat6)', g: 'Villany', u: 'fm', pack: 0, pn: 'fm', p: 250 },
+  gegecso:      { n: 'Gégecső (16 mm)', g: 'Villany', u: 'fm', pack: 50, pn: 'tekercs (50 m)', p: 3800 },
+  kabelcsatorna:{ n: 'Kábelcsatorna', g: 'Villany', u: 'fm', pack: 2, pn: 'szál (2 m)', p: 1300 },
+  szerdoboz:    { n: 'Süllyesztett szerelvénydoboz', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 180 },
+  gkdoboz:      { n: 'Gipszkarton szerelvénydoboz', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 320 },
+  kotodoboz:    { n: 'Kötődoboz', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 450 },
+  dugalj:       { n: 'Dugalj (földelt, kerettel)', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 2600 },
+  kapcsolo:     { n: 'Kapcsoló (kerettel)', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 2400 },
+  utp_aljzat:   { n: 'Adat-/TV-aljzat', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 3800 },
+  vezcsatlakozo:{ n: 'Vezetékösszekötő (pl. WAGO)', g: 'Villany', u: 'db', pack: 50, pn: 'doboz (50 db)', p: 6500 },
+  kiseloszto:   { n: 'Lakáselosztó (kiselosztó doboz)', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 26000 },
+  kismegszakito:{ n: 'Kismegszakító (B16)', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 2200 },
+  fi_rele:      { n: 'Áramvédő kapcsoló (FI-relé, 30 mA)', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 16000 },
+  gyorsgipsz:   { n: 'Gyorskötő gipsz', g: 'Villany', u: 'kg', pack: 5, pn: 'zsák (5 kg)', p: 2200 },
   // Munkadíjak (minta árak – írd át a sajátodra). A "Munkadíj" csoport tételei munkadíjként számítanak.
   md_ora:       { n: 'Szakmunka (óradíj)', g: 'Munkadíj', u: 'óra', pack: 0, pn: 'óra', p: 8000 },
   md_segedora:  { n: 'Segédmunka (óradíj)', g: 'Munkadíj', u: 'óra', pack: 0, pn: 'óra', p: 5000 },
@@ -143,6 +161,14 @@ const MATERIALS = {
   md_kerites:   { n: 'Kerítésépítés', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 7000 },
   md_deszka:    { n: 'Deszkaburkolat szerelés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 8000 },
   md_terasz:    { n: 'Teraszépítés', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 12000 },
+  md_villany_pont:   { n: 'Villanyszerelés – új pont kiépítése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 11000 },
+  md_villany_horony: { n: 'Falhorony vésése (villany)', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 2500 },
+  md_villany_csatorna:{ n: 'Kábelcsatorna szerelése', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 1200 },
+  md_villany_kor:    { n: 'Külön áramkör kiépítése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 25000 },
+  md_villany_csere:  { n: 'Szerelvénycsere (dugalj, kapcsoló)', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 3500 },
+  md_villany_eloszto:{ n: 'Lakáselosztó szerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 40000 },
+  md_villany_kism:   { n: 'Áramkör bekötése az elosztóba', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 3000 },
+  md_villany_ev:     { n: 'Érintésvédelmi mérés, jegyzőkönyv', g: 'Munkadíj', u: 'alkalom', pack: 0, pn: 'alkalom', p: 35000 },
   lazur:        { n: 'Fa felületkezelő (lazúr/olaj)', g: 'Fa', u: 'l', pack: 2.5, pn: 'doboz (2,5 l)', p: 10000 },
 };
 
@@ -268,6 +294,7 @@ const GROUPS = [
   ['szig', 'Szigetelés', '🧊'],
   ['teto', 'Tető', '🏠'],
   ['kert', 'Kert, udvar', '🌿'],
+  ['gep', 'Villany', '⚡'],
   ['fa', 'Fa', '🪵'],
   ['seged', 'Segédszámítások', '📐'],
 ];
@@ -933,6 +960,78 @@ const CALCS = [
       mats: [{ k: 'cement', q: cemKg }, { k: v.ad, q: adT }], warn: ['Száraz-nedves térfogatváltozás ≈ 1,35-ös szorzóval; a víz mennyisége az adalék nedvességétől függ.'] };
   }
 },
+{
+  id: 'villany', g: 'gep', n: 'Villanyszerelés', i: 'villany',
+  desc: 'Dugaljak, kapcsolók, lámpahelyek, külön áramkörök: kábel, védőcső, dobozok, szerelvények, elosztó és munkadíj.',
+  fields: [
+    SEL('mod', 'Szerelés módja', [['vesett', 'Falba vésve (új kiépítés)'], ['csatorna', 'Falon kívül, kábelcsatornában'], ['gk', 'Gipszkarton / szerelt falban'], ['csere', 'Csak szerelvénycsere (marad a vezeték)']], 'vesett'),
+    F('hely', 'Helyiségek száma', 'db', 1, { show: v => v.mod !== 'csere', help: 'A kötődobozok számához' }),
+    H('Szerelési pontok'),
+    F('dug', 'Dugalj (konnektor)', 'db', 4, { help: 'A kettes dugalj is egy pont' }),
+    F('kap', 'Kapcsoló', 'db', 2),
+    F('lam', 'Lámpahely (mennyezeti, fali)', 'db', 2, { show: v => v.mod !== 'csere' }),
+    F('kor', 'Külön áramkör (bojler, sütő, főzőlap, klíma…)', 'db', 0, { show: v => v.mod !== 'csere', help: 'Saját kismegszakítóval, közvetlenül az elosztóból' }),
+    F('kor5', 'ebből háromfázisú (5×2,5)', 'db', 0, { show: v => v.mod !== 'csere' && nz(v.kor) > 0, help: 'Pl. főzőlap' }),
+    F('gyenge', 'Adat-/TV-aljzat (gyengeáram)', 'db', 0),
+    F('vh', 'Átlagos vezetékhossz pontonként', 'm', 6, { show: v => v.mod !== 'csere', help: 'A kötődoboztól mérve. Külön áramkörnél az elosztótól, ott a kétszeresével számol' }),
+    H('Elosztó, átadás'),
+    C('eloszto', 'Lakáselosztó cseréje / új elosztó', false),
+    F('kism', 'Kismegszakítók száma', 'db', 0, { show: v => v.eloszto, help: '0 = az áramkörökből számolja (8 dugalj és 10 lámpa / kör + a külön körök)' }),
+    C('fi', 'Áramvédő kapcsoló (FI-relé)', true, { show: v => v.eloszto }),
+    C('ev', 'Érintésvédelmi mérés, jegyzőkönyv', false),
+    RAH(10),
+  ],
+  compute(v) {
+    const warn = [], out = [], mats = [], k = 1 + nz(v.rah) / 100, md = v.mdOn !== false;
+    const dug = nz(v.dug), kap = nz(v.kap), gy = nz(v.gyenge);
+    if (v.mod === 'csere') {
+      if (dug) mats.push({ k: 'dugalj', q: dug });
+      if (kap) mats.push({ k: 'kapcsolo', q: kap });
+      if (gy) mats.push({ k: 'utp_aljzat', q: gy });
+      out.push(['Cserélendő szerelvény', fmt(dug + kap + gy) + ' db']);
+      if (md && dug + kap + gy) mats.push({ k: 'md_villany_csere', q: dug + kap + gy });
+    } else {
+      const lam = nz(v.lam), kor = nz(v.kor), kor5 = Math.min(kor, nz(v.kor5)), vh = nz(v.vh);
+      const pont = dug + kap + lam + gy;
+      const k15 = (kap + lam) * vh * k, k25 = (dug * vh + (kor - kor5) * vh * 2) * k, k525 = kor5 * vh * 2 * k, kutp = gy * vh * 1.5 * k;
+      const kabel = k15 + k25 + k525 + kutp;
+      const utvonal = villanyUtvonal(v); // a közös szakaszok miatt a kábelhossz kb. 70%-a
+      out.push(['Szerelési pont', fmt(pont) + ' db' + (kor ? ' + ' + fmt(kor) + ' külön áramkör' : '')]);
+      if (k15) { mats.push({ k: 'nymj15', q: k15 }); out.push(['NYM-J 3×1,5 (lámpa, kapcsoló)', fmt(k15, 0) + ' m']); }
+      if (k25) { mats.push({ k: 'nymj25', q: k25 }); out.push(['NYM-J 3×2,5 (dugalj, külön kör)', fmt(k25, 0) + ' m']); }
+      if (k525) { mats.push({ k: 'nymj525', q: k525 }); out.push(['NYM-J 5×2,5 (háromfázisú)', fmt(k525, 0) + ' m']); }
+      if (kutp) { mats.push({ k: 'utp', q: kutp }); out.push(['UTP / koax (gyengeáram)', fmt(kutp, 0) + ' m']); }
+      if (v.mod === 'csatorna') { mats.push({ k: 'kabelcsatorna', q: utvonal * k }); out.push(['Kábelcsatorna', fmt(utvonal * k, 0) + ' m']); }
+      else { mats.push({ k: 'gegecso', q: kabel }); out.push(['Gégecső', fmt(kabel, 0) + ' m']); }
+      if (v.mod === 'vesett') out.push(['Falhorony (kb.)', fmt(utvonal, 0) + ' fm']);
+      const doboz = dug + kap + gy, kot = Math.max(nz(v.hely), Math.ceil(pont / 6));
+      if (doboz && v.mod !== 'csatorna') mats.push({ k: v.mod === 'gk' ? 'gkdoboz' : 'szerdoboz', q: doboz });
+      if (kot) mats.push({ k: 'kotodoboz', q: kot });
+      if (dug) mats.push({ k: 'dugalj', q: dug });
+      if (kap) mats.push({ k: 'kapcsolo', q: kap });
+      if (gy) mats.push({ k: 'utp_aljzat', q: gy });
+      if (pont + kor) mats.push({ k: 'vezcsatlakozo', q: (pont + kor) * 3 });
+      out.push(['Dobozok', (v.mod === 'csatorna' ? 'falon kívüli szerelvények + ' : fmt(doboz) + ' szerelvény- + ') + fmt(kot) + ' kötődoboz']);
+      if (md) {
+        if (kor) mats.push({ k: 'md_villany_kor', q: kor });
+        if (v.mod === 'vesett' && utvonal) mats.push({ k: 'md_villany_horony', q: Math.round(utvonal * 10) / 10 });
+        if (v.mod === 'csatorna' && utvonal) mats.push({ k: 'md_villany_csatorna', q: Math.round(utvonal * 10) / 10 });
+      }
+      if (v.mod === 'vesett') warn.push('A falhornyok visszajavítását a Részmunkák között kérheted.');
+    }
+    if (v.eloszto) {
+      const auto = Math.ceil(dug / 8) + Math.ceil(nz(v.lam) / 10) + (v.mod === 'csere' ? 0 : nz(v.kor)) + (gy ? 1 : 0);
+      const km = nz(v.kism) || Math.max(1, auto);
+      mats.push({ k: 'kiseloszto', q: 1 }, { k: 'kismegszakito', q: km });
+      if (v.fi) mats.push({ k: 'fi_rele', q: 1 });
+      out.push(['Kismegszakító', fmt(km) + ' db' + (nz(v.kism) ? '' : ' (számolt)')]);
+      if (md) mats.push({ k: 'md_villany_eloszto', q: 1 }, { k: 'md_villany_kism', q: km });
+    }
+    if (v.ev && md) mats.push({ k: 'md_villany_ev', q: 1 });
+    if (!v.ev && v.mod !== 'csere') warn.push('Új áramkör átadása előtt érintésvédelmi mérés és jegyzőkönyv kell – kapcsold be, ha te csinálod.');
+    return { out, mats, warn };
+  }
+},
 ];
 
 const CALC_BY_ID = Object.fromEntries(CALCS.map(c => [c.id, c]));
@@ -965,7 +1064,10 @@ const MUNKA = {
   kerites: ['md_kerites', v => [nz(v.L), 'fm']],
   deszka: ['md_deszka', v => [Math.max(0, nz(v.L) * nz(v.Hm) - nz(v.ny)), 'm²']],
   terasz: ['md_terasz', v => [nz(v.Lh) * nz(v.Ls), 'm²']],
+  villany: ['md_villany_pont', v => [v.mod === 'csere' ? 0 : nz(v.dug) + nz(v.kap) + nz(v.lam) + nz(v.gyenge), 'db']],
 };
+// villanyszerelés: falhorony / kábelcsatorna útvonala (a közös szakaszok miatt a kábelhossz kb. 70%-a)
+function villanyUtvonal(v) { return v.mod === 'csere' ? 0 : (nz(v.dug) + nz(v.kap) + nz(v.lam) + nz(v.gyenge) + nz(v.kor) * 2) * nz(v.vh) * 0.7; }
 for (const id in MUNKA) { CALC_BY_ID[id].md = MUNKA[id][0]; CALC_BY_ID[id].mq = MUNKA[id][1]; }
 
 /* ---------- Részmunkák ----------
@@ -1101,6 +1203,17 @@ const RESZ = {
     RSZ('falszig', 'Vízszintes falszigetelés', 'fm', 1500, 'n'),
     RSZ('bontas', 'Falbontás', 'm²', 6000, 'n'),
   ],
+  villany: [
+    RSZ('bontas', 'Régi vezeték, szerelvények bontása', 'db', 1500, 'n', { help: 'Pontonként' }),
+    RSZ('javitas', 'Falhornyok visszajavítása (gipszelés)', 'fm', 1200, 'c', { q: v => v.mod === 'vesett' ? Math.round(villanyUtvonal(v) * 10) / 10 : 0, mats: [['gyorsgipsz', 0.6]] }),
+    RSZ('lampa', 'Lámpatest felszerelése', 'db', 6000, 'n'),
+    RSZ('spot', 'Spotlámpa beépítése', 'db', 4000, 'n'),
+    RSZ('lampacsere', 'Lámpacsere (meglévő helyre)', 'db', 5000, 'n'),
+    RSZ('kulter', 'Kültéri, vízvédett dugalj (IP44)', 'db', 9000, 'n'),
+    RSZ('mozgas', 'Mozgásérzékelő felszerelése', 'db', 8000, 'n'),
+    RSZ('csengo', 'Csengő, kaputelefon bekötése', 'db', 12000, 'n'),
+    RSZ('hiba', 'Hibakeresés', 'óra', 9000, 'n'),
+  ],
   zsaluko: [
     RSZ('vas', 'Vasszerelés', 'kg', 150, 'n'),
     RSZ('szig', 'Talajnedvesség elleni szigetelés', 'm²', 3000, 'n'),
@@ -1138,6 +1251,7 @@ const SZAKMAK = [
   ['beton', 'Beton, aljzat, falazás', ['beton', 'esztrich', 'falazas', 'zsaluko']],
   ['kert', 'Kert, térkő, kerítés', ['terko', 'omlesztett', 'kerites']],
   ['fa', 'Fa, terasz', ['deszka', 'terasz']],
+  ['villany', 'Villanyszerelés', ['villany']],
   ['sajat', 'Saját munkadíjak', []],
 ];
 function munkaSzakma(k) {
@@ -1218,6 +1332,8 @@ const SABLONOK = [
       { nev: 'Térkövezés (autós terhelés)', calc: 'terko', v: { alap: 25, agy: 4 } },
       { nev: 'Föld elszállítása', md: 'md_sitt', rq: 'egy' },
     ] },
+  { id: 'villanyfelujitas', n: 'Lakás villanyfelújítása', i: 'villany', desc: 'Új vezetékezés falba vésve, szerelvények, lakáselosztó, érintésvédelmi mérés',
+    items: [{ nev: 'Villanyszerelés', calc: 'villany', v: { mod: 'vesett', hely: 3, dug: 12, kap: 6, lam: 6, kor: 2, eloszto: true, fi: true, ev: true } }] },
 ];
 
 // Ömlesztett anyag mértékegysége – a választást az app megjegyzi, minden kalkulátorban ugyanaz

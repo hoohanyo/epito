@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.15';
+const APP_VERSION = '2.16';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -501,6 +501,7 @@ function renderMunka() {
       h += '<div class="small muted" id="mdInfo" style="padding-top:8px"></div>';
     }
   }
+  h += '<div id="mdTobb"></div>';
   if (c.resz && c.resz.length) {
     const db = reszOf(c, v).length;
     h += '<div class="resz-fej"><b>Részmunkák</b><span class="small muted">' + (db ? db + ' kiválasztva' : 'külön is kérhetők') + '</span></div>' +
@@ -537,6 +538,14 @@ function renderRes() {
   if (info && r.munka) {
     const P = mat(r.munka.key);
     info.innerHTML = (r.munka.auto ? 'A kalkulációból: ' : '') + fmt(r.munka.q) + ' ' + esc(P.u) + ' × ' + ft(P.p) + ' = <b style="color:var(--text)">' + ft(r.munka.q * P.p) + '</b>' + (P.p ? '' : ' – <span class="noprice">nincs díj megadva (Árlista → Munkadíj)</span>');
+  }
+  // a kalkulátor által számolt további munkadíjak (pl. villanynál falhorony, külön áramkör, elosztó)
+  const tb = $('#mdTobb');
+  if (tb) {
+    const reszK = new Set(r.resz.map(x => x.r.md)); const fo = r.munka && r.munka.key;
+    const L = computeSafe(c, st.v).mats.filter(m => isMunkaKey(m.k) && m.k !== fo && !reszK.has(m.k) && m.q > 0);
+    tb.innerHTML = L.length ? '<div class="resz-fej"><b>Számolt munkadíjak</b><span class="small muted">a megadott adatokból</span></div>' +
+      L.map(m => { const P = mat(m.k); return '<div class="kv small"><span>' + esc(P.n) + '<br><span class="muted">' + fmt(m.q) + ' ' + esc(P.u) + ' × ' + ft(P.p) + '</span></span><b>' + ft(m.q * P.p) + '</b></div>'; }).join('') : '';
   }
   const tot = $('#calcTot');
   if (tot) tot.innerHTML = sc.munka.length && sc.anyag.length ? '<div class="card hero"><div class="total"><span>Anyag + munkadíj</span><b>' + ft(sumCost(ls)) + '</b></div><div class="small muted" style="margin-top:4px">Anyag ' + ft(sumCost(sc.anyag)) + ' · munkadíj ' + ft(sumCost(sc.munka)) + '</div></div>' : '';

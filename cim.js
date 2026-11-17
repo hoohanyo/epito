@@ -134,11 +134,12 @@ const MUNKARESZ_OPC = [
   ['Festés, glettelés', ['Glettelés, festés', 'Szobafestés', 'Ajtók, ablakok mázolása', 'Radiátorfestés', 'Tapétázás', 'Homlokzatfestés']],
   ['Burkolás', ['Padlócsere', 'Hidegburkolás (csempe, járólap)', 'Laminált padló lerakása', 'Parkettázás', 'Teraszburkolás']],
   ['Szerkezet, szigetelés', ['Falazás', 'Vakolás', 'Aljzatbetonozás', 'Esztrichelés', 'Gipszkartonozás', 'Álmennyezet', 'Hőszigetelés', 'Homlokzati hőszigetelés', 'Vízszigetelés']],
+  ['Villany', ['Villanyszerelés', 'Villanyhálózat felújítása', 'Szerelvénycsere', 'Lakáselosztó cseréje', 'Lámpák felszerelése']],
   ['Kültér', ['Térkövezés', 'Kerítésépítés', 'Kocsibeálló', 'Tetőfelújítás', 'Ereszcsatorna', 'Járdaépítés']]
 ];
 const HELYISEG_NEVEK = new Set([].concat(...HELYISEG_OPC.slice(1).map(x => x[1])));
 // ha a megnevezés egy helyiség, arra szabott javaslatok: "Konyha felújítása", "Konyha festése"…
 function munkareszJavaslat(megnev) {
   const n = String(megnev || '').trim(); if (!HELYISEG_NEVEK.has(n)) return [];
-  return [[n, ['felújítása', 'festése', 'glettelése, festése', 'burkolása', 'padlócseréje'].map(x => n + ' ' + x)]];
+  return [[n, ['felújítása', 'festése', 'glettelése, festése', 'burkolása', 'padlócseréje', 'villanyszerelése'].map(x => n + ' ' + x)]];
 }
