@@ -617,3 +617,7 @@ body.quote-open .toast{z-index:95}
 .combo-i:hover,.combo-i:active{background:color-mix(in srgb,var(--pri,#4E5D78) 12%,transparent)}
 html.dark .combo-l{background:#232B36;box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.06)}
 .combo.jelleg .combo-l{left:auto;right:0}
+
+/* 2.15: saját világos/sötét téma jelzése a böngészőnek (Samsung Internet, Chrome automatikus sötétítés) */
+:root{color-scheme:light}
+html.dark{color-scheme:dark}
