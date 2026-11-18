@@ -134,6 +134,7 @@ const MUNKARESZ_OPC = [
   ['Festés, glettelés', ['Glettelés, festés', 'Szobafestés', 'Ajtók, ablakok mázolása', 'Radiátorfestés', 'Tapétázás', 'Homlokzatfestés']],
   ['Burkolás', ['Padlócsere', 'Hidegburkolás (csempe, járólap)', 'Laminált padló lerakása', 'Parkettázás', 'Teraszburkolás']],
   ['Szerkezet, szigetelés', ['Falazás', 'Vakolás', 'Aljzatbetonozás', 'Esztrichelés', 'Gipszkartonozás', 'Álmennyezet', 'Hőszigetelés', 'Homlokzati hőszigetelés', 'Vízszigetelés']],
+  ['Víz, fűtés', ['Vízszerelés', 'Fürdőszoba vízszerelése', 'Fűtéskorszerűsítés', 'Radiátorcsere', 'Padlófűtés kiépítése', 'Kazáncsere']],
   ['Villany', ['Villanyszerelés', 'Villanyhálózat felújítása', 'Szerelvénycsere', 'Lakáselosztó cseréje', 'Lámpák felszerelése']],
   ['Kültér', ['Térkövezés', 'Kerítésépítés', 'Kocsibeálló', 'Tetőfelújítás', 'Ereszcsatorna', 'Járdaépítés']]
 ];

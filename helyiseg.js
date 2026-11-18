@@ -145,10 +145,45 @@ function sablonRoomStep(p, sab) {
     $('#sr_uj', m).onclick = () => roomDialog(p, null, (room) => applySablon(p, sab, room));
   });
 }
-function applySablon(p, sab, room) {
+/* Duplikátumvédelem: a sablon olyan tételét, ami ugyanerre a helyiségre (vagy helyiség nélkül) már szerepel a megrendelésben, alapból kihagyjuk */
+function sablonDuplikatumok(p, sab, room) {
+  const ts = S.data.tetelek.filter(t => t.projektId === p.id);
+  const L = [];
+  sab.items.forEach((it, i) => {
+    const egyezik = ts.filter(t => {
+      const rid = tetelRoomId(t);
+      if (it.calc) {
+        if (t.calc !== it.calc || (room && rid && rid !== room.id)) return false;
+        // azonos kalkulátor más fajtája (pl. padló- vs. falburkolás) nem duplikátum
+        const tv = t.values || {};
+        return Object.entries(it.v || {}).every(([k, x]) => typeof x !== 'string' || tv[k] === undefined || tv[k] === x);
+      }
+      if (it.md) return t.calc === 'egyeb' && t.mats && t.mats[0] && t.mats[0].k === it.md && room && rid === room.id;
+      return false;
+    });
+    if (egyezik.length) L.push({ i, it, t: egyezik[0] });
+  });
+  return L;
+}
+function applySablon(p, sab, room, kihagy) {
+  if (!kihagy) {
+    const D = sablonDuplikatumok(p, sab, room);
+    if (D.length) {
+      const h = '<h3>Ez már szerepel</h3><p class="small muted" style="margin-top:-6px">A „' + esc(sab.n) + '” sablon alábbi tételei már megvannak ennél a megrendelésnél' + (room ? ' (' + esc(room.nev) + ')' : '') + '. Ezeket kihagyom, hogy ne számold kétszer – jelöld be, amelyiket mégis újra szeretnéd.</p>' +
+        '<div class="card">' + D.map(d => { const mr = mrById(d.t.munkareszId); return '<div class="f"><label for="sd_' + d.i + '">' + esc(d.it.nev) + '<small class="muted" style="display:block;font-weight:400">Már megvan: „' + esc(d.t.nev) + '”' + (mr ? ' – ' + esc(mr.nev) : '') + '</small></label><label class="sw"><input type="checkbox" id="sd_' + d.i + '"><i></i></label></div>'; }).join('') + '</div>' +
+        '<div class="btns"><button class="btn" id="sd_x">Mégse</button><button class="btn pri" id="sd_ok">Folytatás</button></div>';
+      openModal(h, m => {
+        $('#sd_x', m).onclick = closeModal;
+        $('#sd_ok', m).onclick = () => { const k = new Set(D.filter(d => !$('#sd_' + d.i, m).checked).map(d => d.i)); closeModal(); if (k.size >= sab.items.length) { toast('Minden tétel megvolt már, nem hoztam létre új munkarészt'); return; } applySablon(p, sab, room, k); };
+      });
+      return;
+    }
+    kihagy = new Set();
+  }
   let n = 0; const base = Date.now();
   const mr = ujMunkaresz(p, sab.n + (room ? ' – ' + room.nev : ''));
-  for (const it of sab.items) {
+  for (const [i, it] of sab.items.entries()) {
+    if (kihagy.has(i)) continue;
     const t = { id: uid('T'), projektId: p.id, munkareszId: mr.id, nev: it.nev, letrehozva: new Date(base + n).toISOString() };
     if (it.calc && CALC_BY_ID[it.calc]) {
       const c = CALC_BY_ID[it.calc];
@@ -156,7 +191,7 @@ function applySablon(p, sab, room) {
       if (c.fields.some(f => f.id === 'mj')) v.mj = mjPref();
       t.calc = c.id; t.values = v;
       if (room && ROOM_MAP[c.id]) { applyRoomToTetel(t, room); }
-      else { const r = fullResult(c, v); t.mats = r.mats.map(x => Object.assign({}, x, { q: round3(x.q) })); t.out = r.out; }
+      else { const r = fullResult(c, v); t.mats = r.mats.map(x => Object.assign({}, x, { q: round3(x.q) })); t.out = r.out; if (room) t.roomId = room.id; }
     } else if (it.md || it.mats) {
       t.calc = 'egyeb'; t.values = {};
       if (it.md) {
@@ -168,7 +203,7 @@ function applySablon(p, sab, room) {
     upsertTetel(t); n++;
   }
   S.tab = 'proj'; S.stack = [{ v: 'proj' }, { v: 'projekt', id: p.id }, { v: 'munkaresz', id: mr.id }]; render();
-  toast('„' + mr.nev + '” – ' + n + ' tétel létrehozva');
+  toast('„' + mr.nev + '” – ' + n + ' tétel létrehozva' + (kihagy.size ? ', ' + kihagy.size + ' kihagyva (már megvolt)' : ''));
 }
 function saveAsSablon(p) {
   const ts = tetelekOfMr(p);

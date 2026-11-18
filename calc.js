@@ -134,6 +134,29 @@ const MATERIALS = {
   kismegszakito:{ n: 'Kismegszakító (B16)', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 2200 },
   fi_rele:      { n: 'Áramvédő kapcsoló (FI-relé, 30 mA)', g: 'Villany', u: 'db', pack: 1, pn: 'db', p: 16000 },
   gyorsgipsz:   { n: 'Gyorskötő gipsz', g: 'Villany', u: 'kg', pack: 5, pn: 'zsák (5 kg)', p: 2200 },
+  // Víz, fűtés (minta árak – írd át a sajátodra)
+  ppr20:        { n: 'PPR cső 20 mm', g: 'Víz, fűtés', u: 'fm', pack: 4, pn: 'szál (4 m)', p: 1400 },
+  ppr_idom:     { n: 'PPR idom (könyök, T, karmantyú)', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 250 },
+  otr16:        { n: 'Ötrétegű cső 16 mm', g: 'Víz, fűtés', u: 'fm', pack: 0, pn: 'fm', p: 650 },
+  otr_idom:     { n: 'Préselt idom (ötrétegű)', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 1800 },
+  falikorong:   { n: 'Falikorong (csatlakozó könyök)', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 1500 },
+  csoszig:      { n: 'Csőhéj szigetelés', g: 'Víz, fűtés', u: 'fm', pack: 2, pn: 'szál (2 m)', p: 800 },
+  pvc40:        { n: 'Lefolyócső 40–50 mm', g: 'Víz, fűtés', u: 'fm', pack: 0, pn: 'fm', p: 900 },
+  pvc110:       { n: 'Lefolyócső 110 mm (WC)', g: 'Víz, fűtés', u: 'fm', pack: 0, pn: 'fm', p: 2200 },
+  lefolyo_idom: { n: 'Lefolyóidom (ív, ágidom, szűkítő)', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 700 },
+  sarokszelep:  { n: 'Sarokszelep', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 2800 },
+  rad_800:      { n: 'Lapradiátor 22K 600×800', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 36000 },
+  rad_1000:     { n: 'Lapradiátor 22K 600×1000', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 42000 },
+  rad_1400:     { n: 'Lapradiátor 22K 600×1400', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 56000 },
+  torolkozo:    { n: 'Törölközőszárító radiátor', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 38000 },
+  termoszelep:  { n: 'Termosztatikus szelepszett (szelep, fej, visszatérő)', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'szett', p: 9500 },
+  oszto_kor:    { n: 'Osztó-gyűjtő (köronként)', g: 'Víz, fűtés', u: 'kör', pack: 1, pn: 'kör', p: 12000 },
+  osztoszekreny:{ n: 'Osztószekrény', g: 'Víz, fűtés', u: 'db', pack: 1, pn: 'db', p: 18000 },
+  pf_cso:       { n: 'Padlófűtéscső 16 mm (PE-RT)', g: 'Víz, fűtés', u: 'fm', pack: 0, pn: 'fm', p: 380 },
+  pf_lemez:     { n: 'Padlófűtés rendszerlemez (bütykös)', g: 'Víz, fűtés', u: 'm²', pack: 0, pn: 'm²', p: 4800 },
+  pf_tabla:     { n: 'Hőszigetelő tábla padlófűtéshez', g: 'Víz, fűtés', u: 'm²', pack: 0, pn: 'm²', p: 3200 },
+  pf_kapocs:    { n: 'Csőrögzítő kapocs', g: 'Víz, fűtés', u: 'db', pack: 100, pn: 'csomag (100 db)', p: 2500 },
+  pf_perem:     { n: 'Peremszigetelő szalag', g: 'Víz, fűtés', u: 'fm', pack: 25, pn: 'tekercs (25 m)', p: 3500 },
   // Munkadíjak (minta árak – írd át a sajátodra). A "Munkadíj" csoport tételei munkadíjként számítanak.
   md_ora:       { n: 'Szakmunka (óradíj)', g: 'Munkadíj', u: 'óra', pack: 0, pn: 'óra', p: 8000 },
   md_segedora:  { n: 'Segédmunka (óradíj)', g: 'Munkadíj', u: 'óra', pack: 0, pn: 'óra', p: 5000 },
@@ -169,6 +192,14 @@ const MATERIALS = {
   md_villany_eloszto:{ n: 'Lakáselosztó szerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 40000 },
   md_villany_kism:   { n: 'Áramkör bekötése az elosztóba', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 3000 },
   md_villany_ev:     { n: 'Érintésvédelmi mérés, jegyzőkönyv', g: 'Munkadíj', u: 'alkalom', pack: 0, pn: 'alkalom', p: 35000 },
+  md_viz_pont:       { n: 'Vízszerelés – vételi hely kiépítése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 28000 },
+  md_viz_csere:      { n: 'Vízszerelés – szerelvénycsere', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 9000 },
+  md_viz_proba:      { n: 'Nyomáspróba (víz)', g: 'Munkadíj', u: 'alkalom', pack: 0, pn: 'alkalom', p: 15000 },
+  md_viz_horony:     { n: 'Falhorony vésése (víz, fűtés)', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 3000 },
+  md_futes_rad:      { n: 'Radiátor felszerelése, bekötése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 28000 },
+  md_futes_oszto:    { n: 'Osztó-gyűjtő szerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 30000 },
+  md_futes_proba:    { n: 'Fűtés nyomáspróba, feltöltés, légtelenítés', g: 'Munkadíj', u: 'alkalom', pack: 0, pn: 'alkalom', p: 20000 },
+  md_padlofutes:     { n: 'Padlófűtés kiépítése', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 4500 },
   lazur:        { n: 'Fa felületkezelő (lazúr/olaj)', g: 'Fa', u: 'l', pack: 2.5, pn: 'doboz (2,5 l)', p: 10000 },
 };
 
@@ -294,7 +325,7 @@ const GROUPS = [
   ['szig', 'Szigetelés', '🧊'],
   ['teto', 'Tető', '🏠'],
   ['kert', 'Kert, udvar', '🌿'],
-  ['gep', 'Villany', '⚡'],
+  ['gep', 'Villany, víz, fűtés', '⚡'],
   ['fa', 'Fa', '🪵'],
   ['seged', 'Segédszámítások', '📐'],
 ];
@@ -1032,6 +1063,135 @@ const CALCS = [
     return { out, mats, warn };
   }
 },
+{
+  id: 'viz', g: 'gep', n: 'Víz- és lefolyószerelés', i: 'viz',
+  desc: 'Vételi helyek (mosdó, WC, zuhany, kád, mosogató, gépek): hideg-meleg vízcső, lefolyó, idomok, sarokszelepek és munkadíj.',
+  fields: [
+    SEL('mod', 'Szerelés módja', [['vesett', 'Falba vésve (új kiépítés)'], ['szerelt', 'Szerelőfal / álfal mögé, vésés nélkül'], ['csere', 'Csak szerelvénycsere (marad a cső)']], 'vesett'),
+    SEL('cso', 'Vízcső', [['ppr', 'PPR, hegesztett (20 mm)'], ['otr', 'Ötrétegű, préselt (16 mm)']], 'ppr', { show: v => v.mod !== 'csere' }),
+    H('Vételi helyek'),
+    F('mosdo', 'Mosdó', 'db', 1),
+    F('wc', 'WC', 'db', 1),
+    F('zuhany', 'Zuhany', 'db', 1),
+    F('kad', 'Kád', 'db', 0),
+    F('mosogato', 'Mosogató', 'db', 0),
+    F('gep', 'Mosógép / mosogatógép', 'db', 1, { help: 'Csak hideg víz és lefolyó' }),
+    F('vh', 'Átlagos vízcsőhossz vételi helyenként', 'm', 5, { show: v => v.mod !== 'csere', help: 'A felszállótól / elosztótól mérve, egy vezetékre' }),
+    F('lh', 'Átlagos lefolyóhossz vételi helyenként', 'm', 3, { show: v => v.mod !== 'csere', help: 'A lefolyó gerincvezetékig' }),
+    C('szig', 'Melegvízcső szigetelése', true, { show: v => v.mod !== 'csere' }),
+    C('proba', 'Nyomáspróba, átadás', true, { show: v => v.mod !== 'csere' }),
+    RAH(10),
+  ],
+  compute(v) {
+    const warn = [], out = [], mats = [], k = 1 + nz(v.rah) / 100, md = v.mdOn !== false;
+    const mo = nz(v.mosdo), wc = nz(v.wc), zu = nz(v.zuhany), ka = nz(v.kad), mg = nz(v.mosogato), gp = nz(v.gep);
+    const pont = mo + wc + zu + ka + mg + gp;
+    const hm = mo + zu + ka + mg;            // hideg + meleg kiállás
+    const csakH = wc + gp;                   // csak hideg
+    const kiall = hm * 2 + csakH;            // falikorong / csatlakozás
+    const sarok = mo * 2 + mg * 2 + wc + gp; // sarokszelepek
+    out.push(['Vételi hely', fmt(pont) + ' db (' + fmt(kiall) + ' vízkiállás)']);
+    if (sarok) mats.push({ k: 'sarokszelep', q: sarok });
+    if (v.mod === 'csere') {
+      if (md && pont) mats.push({ k: 'md_viz_csere', q: pont });
+      out.push(['Sarokszelep', fmt(sarok) + ' db']);
+      return { out, mats, warn };
+    }
+    const vh = nz(v.vh), lh = nz(v.lh);
+    const viz = kiall * vh * k, meleg = hm * vh * k;
+    if (v.cso === 'otr') { mats.push({ k: 'otr16', q: viz }, { k: 'otr_idom', q: kiall * 3 }); out.push(['Ötrétegű cső 16 mm', fmt(viz, 0) + ' m']); }
+    else { mats.push({ k: 'ppr20', q: viz }, { k: 'ppr_idom', q: kiall * 5 }); out.push(['PPR cső 20 mm', fmt(viz, 0) + ' m']); }
+    mats.push({ k: 'falikorong', q: kiall });
+    if (v.szig && meleg) { mats.push({ k: 'csoszig', q: meleg }); out.push(['Csőszigetelés (meleg ág)', fmt(meleg, 0) + ' m']); }
+    const l40 = (mo + zu + ka + mg + gp) * lh * k, l110 = wc * Math.max(1, lh * 0.6) * k;
+    if (l40) mats.push({ k: 'pvc40', q: l40 });
+    if (l110) mats.push({ k: 'pvc110', q: l110 });
+    if (pont) mats.push({ k: 'lefolyo_idom', q: pont * 3 });
+    out.push(['Lefolyó', fmt(l40, 0) + ' m (40–50 mm)' + (l110 ? ' + ' + fmt(l110, 0) + ' m (110 mm)' : '')]);
+    const horony = gepUtvonal(v);
+    if (v.mod === 'vesett') out.push(['Falhorony (kb.)', fmt(horony, 0) + ' fm']);
+    if (md) {
+      if (v.mod === 'vesett' && horony) mats.push({ k: 'md_viz_horony', q: Math.round(horony * 10) / 10 });
+      if (v.proba) mats.push({ k: 'md_viz_proba', q: 1 });
+    }
+    if (zu || ka || wc) warn.push('A szaniterek (WC, mosdó, zuhanytálca, kád) és a csaptelepek felszerelését a Részmunkák között kérheted.');
+    return { out, mats, warn };
+  }
+},
+{
+  id: 'futes', g: 'gep', n: 'Radiátoros fűtés', i: 'futes',
+  desc: 'Radiátorok, termosztatikus szelepek, ötrétegű fűtéscső, osztó-gyűjtő, nyomáspróba és munkadíj.',
+  fields: [
+    SEL('mod', 'Szerelés módja', [['vesett', 'Falba / aljzatba vésve (új kiépítés)'], ['latszo', 'Falon kívül, látszó csővel'], ['csere', 'Csak radiátorcsere (marad a cső)']], 'vesett'),
+    H('Radiátorok'),
+    F('rad', 'Radiátorok száma', 'db', 4),
+    SEL('meret', 'Jellemző radiátorméret', [['600x800', 'Lapradiátor 22K 600×800'], ['600x1000', 'Lapradiátor 22K 600×1000'], ['600x1400', 'Lapradiátor 22K 600×1400'], ['torolkozo', 'Törölközőszárító']], '600x1000'),
+    C('radAnyag', 'A radiátorokat én szerzem be', true, { help: 'Kikapcsolva a megrendelő hozza, csak a felszerelés díja számít' }),
+    F('vh', 'Átlagos csőhossz radiátoronként', 'm', 8, { show: v => v.mod !== 'csere', help: 'Az osztótól / kazántól, egy irányba – az előremenőt és a visszatérőt is számolja' }),
+    C('oszto', 'Osztó-gyűjtő (köronként egy radiátor)', true, { show: v => v.mod !== 'csere' }),
+    C('szig', 'Csőszigetelés', true, { show: v => v.mod !== 'csere' }),
+    C('proba', 'Nyomáspróba, feltöltés, légtelenítés', true),
+    RAH(10),
+  ],
+  compute(v) {
+    const warn = [], out = [], mats = [], k = 1 + nz(v.rah) / 100, md = v.mdOn !== false;
+    const rad = nz(v.rad), rk = { '600x800': 'rad_800', '600x1000': 'rad_1000', '600x1400': 'rad_1400', torolkozo: 'torolkozo' }[v.meret] || 'rad_1000';
+    if (rad && v.radAnyag) mats.push({ k: rk, q: rad });
+    if (rad) mats.push({ k: 'termoszelep', q: rad });
+    out.push(['Radiátor', fmt(rad) + ' db' + (v.radAnyag ? '' : ' (a megrendelő hozza)')]);
+    if (v.mod !== 'csere') {
+      const cso = rad * nz(v.vh) * 2 * k;
+      if (cso) { mats.push({ k: 'otr16', q: cso }, { k: 'otr_idom', q: rad * 4 }); out.push(['Ötrétegű cső 16 mm', fmt(cso, 0) + ' m']); }
+      if (v.szig && cso) mats.push({ k: 'csoszig', q: cso });
+      if (v.oszto && rad) { mats.push({ k: 'oszto_kor', q: rad }, { k: 'osztoszekreny', q: Math.ceil(rad / 10) }); out.push(['Osztó-gyűjtő', fmt(rad) + ' kör']); }
+      const horony = gepUtvonal(v);
+      if (v.mod === 'vesett') out.push(['Falhorony / aljzathorony (kb.)', fmt(horony, 0) + ' fm']);
+      if (md) {
+        if (v.mod === 'vesett' && horony) mats.push({ k: 'md_viz_horony', q: Math.round(horony * 10) / 10 });
+        if (v.oszto && rad) mats.push({ k: 'md_futes_oszto', q: 1 });
+      }
+    }
+    if (md && v.proba) mats.push({ k: 'md_futes_proba', q: 1 });
+    warn.push('A kazán beépítését, a rendszer mosatását és a beszabályozást a Részmunkák között kérheted.');
+    return { out, mats, warn };
+  }
+},
+{
+  id: 'padlofutes', g: 'gep', n: 'Padlófűtés', i: 'padlofutes',
+  desc: 'Rendszerlemez vagy hőszigetelés, padlófűtéscső, peremszigetelés, osztó-gyűjtő, nyomáspróba és munkadíj. Az esztrichet külön kalkulátorral számold.',
+  fields: [
+    F('A', 'Fűtött alapterület', 'm²', 20),
+    F('ker', 'Helyiség(ek) kerülete', 'm', 0, { help: '0 = az alapterületből becsli' }),
+    SEL('oszt', 'Csőosztás', [['10', '10 cm (fürdő, nagy hőigény)'], ['15', '15 cm (lakószoba)'], ['20', '20 cm (jól szigetelt ház)']], '15'),
+    SEL('alap', 'Alap', [['lemez', 'Bütykös rendszerlemez'], ['tabla', 'Hőszigetelő tábla + rögzítőkapocs']], 'lemez'),
+    F('vh', 'Osztó és helyiség közti távolság', 'm', 5, { help: 'Körönként oda-vissza számolja' }),
+    C('oszto', 'Osztó-gyűjtő szekrénnyel', true),
+    C('proba', 'Nyomáspróba, feltöltés, beszabályozás', true),
+    RAH(5),
+  ],
+  compute(v) {
+    const warn = [], out = [], mats = [], k = 1 + nz(v.rah) / 100, md = v.mdOn !== false;
+    const A = nz(v.A), osz = nz(v.oszt) || 15;
+    const csoM2 = 100 / osz; // 15 cm-nél ≈ 6,7 fm/m²
+    const kor = Math.max(1, Math.ceil(A / 12));
+    const cso = (A * csoM2 + kor * nz(v.vh) * 2) * k;
+    const ker = nz(v.ker) || Math.sqrt(A) * 4;
+    out.push(['Fűtőkör', fmt(kor) + ' db (max. kb. 12 m² / kör)']);
+    out.push(['Padlófűtéscső 16 mm', fmt(cso, 0) + ' m']);
+    if (A) mats.push({ k: 'pf_cso', q: cso });
+    if (A) mats.push({ k: v.alap === 'tabla' ? 'pf_tabla' : 'pf_lemez', q: A * k });
+    if (v.alap === 'tabla' && A) mats.push({ k: 'pf_kapocs', q: cso * 2.5 });
+    if (ker) mats.push({ k: 'pf_perem', q: ker * k });
+    if (v.oszto) { mats.push({ k: 'oszto_kor', q: kor }, { k: 'osztoszekreny', q: 1 }); out.push(['Osztó-gyűjtő', fmt(kor) + ' kör']); }
+    if (md) {
+      if (v.oszto) mats.push({ k: 'md_futes_oszto', q: 1 });
+      if (v.proba) mats.push({ k: 'md_futes_proba', q: 1 });
+    }
+    if (A / kor > 12) warn.push('Egy kör legfeljebb kb. 100 m cső legyen.');
+    warn.push('A csövek fölé esztrich kell – azt az Esztrich kalkulátorral számold.');
+    return { out, mats, warn };
+  }
+},
 ];
 
 const CALC_BY_ID = Object.fromEntries(CALCS.map(c => [c.id, c]));
@@ -1065,8 +1225,18 @@ const MUNKA = {
   deszka: ['md_deszka', v => [Math.max(0, nz(v.L) * nz(v.Hm) - nz(v.ny)), 'm²']],
   terasz: ['md_terasz', v => [nz(v.Lh) * nz(v.Ls), 'm²']],
   villany: ['md_villany_pont', v => [v.mod === 'csere' ? 0 : nz(v.dug) + nz(v.kap) + nz(v.lam) + nz(v.gyenge), 'db']],
+  viz: ['md_viz_pont', v => [v.mod === 'csere' ? 0 : nz(v.mosdo) + nz(v.wc) + nz(v.zuhany) + nz(v.kad) + nz(v.mosogato) + nz(v.gep), 'db']],
+  futes: ['md_futes_rad', v => [nz(v.rad), 'db']],
+  padlofutes: ['md_padlofutes', v => [nz(v.A), 'm²']],
 };
 // villanyszerelés: falhorony / kábelcsatorna útvonala (a közös szakaszok miatt a kábelhossz kb. 70%-a)
+// víz/fűtés: vésendő horony hossza (a közös szakaszok miatt a csőhossz kb. 60%-a)
+function gepUtvonal(v) {
+  if (v.mod !== 'vesett') return 0;
+  if (v.rad !== undefined && v.mosdo === undefined) return nz(v.rad) * nz(v.vh) * 0.6;
+  const kiall = (nz(v.mosdo) + nz(v.zuhany) + nz(v.kad) + nz(v.mosogato)) * 2 + nz(v.wc) + nz(v.gep);
+  return kiall * nz(v.vh) * 0.6;
+}
 function villanyUtvonal(v) { return v.mod === 'csere' ? 0 : (nz(v.dug) + nz(v.kap) + nz(v.lam) + nz(v.gyenge) + nz(v.kor) * 2) * nz(v.vh) * 0.7; }
 for (const id in MUNKA) { CALC_BY_ID[id].md = MUNKA[id][0]; CALC_BY_ID[id].mq = MUNKA[id][1]; }
 
@@ -1203,6 +1373,36 @@ const RESZ = {
     RSZ('falszig', 'Vízszintes falszigetelés', 'fm', 1500, 'n'),
     RSZ('bontas', 'Falbontás', 'm²', 6000, 'n'),
   ],
+  viz: [
+    RSZ('bontas', 'Régi csövek, szerelvények bontása', 'db', 4000, 'n', { help: 'Vételi helyenként' }),
+    RSZ('javitas', 'Falhornyok visszajavítása', 'fm', 1500, 'c', { q: v => Math.round(gepUtvonal(v) * 10) / 10, mats: [['gyorsgipsz', 0.8]] }),
+    RSZ('mosdo', 'Mosdó + csaptelep felszerelése', 'db', 18000, 'n'),
+    RSZ('wc', 'WC (álló) felszerelése', 'db', 20000, 'n'),
+    RSZ('wckeret', 'Beépített WC-tartály (szerelőkeret) + WC', 'db', 45000, 'n'),
+    RSZ('zuhanytalca', 'Zuhanytálca beépítése', 'db', 25000, 'n'),
+    RSZ('kad', 'Kád beépítése', 'db', 35000, 'n'),
+    RSZ('csaptelep', 'Csaptelep cseréje', 'db', 9000, 'n'),
+    RSZ('mosogato', 'Mosogató bekötése', 'db', 15000, 'n'),
+    RSZ('gep', 'Mosógép / mosogatógép bekötése', 'db', 8000, 'n'),
+    RSZ('bojler', 'Villanybojler felszerelése', 'db', 25000, 'n'),
+    RSZ('foelzaro', 'Főelzáró cseréje', 'db', 15000, 'n'),
+    RSZ('dugulas', 'Duguláselhárítás', 'óra', 12000, 'n'),
+  ],
+  futes: [
+    RSZ('bontas', 'Régi radiátorok, csövek bontása', 'db', 6000, 'n', { help: 'Radiátoronként' }),
+    RSZ('javitas', 'Hornyok visszajavítása', 'fm', 1500, 'c', { q: v => Math.round(gepUtvonal(v) * 10) / 10, mats: [['gyorsgipsz', 0.8]] }),
+    RSZ('kazan', 'Kazán beépítése, bekötése', 'db', 120000, 'n', { help: 'A kémény / égéstermék-elvezetés és a gázszerelés nélkül' }),
+    RSZ('mosatas', 'Fűtési rendszer mosatása, inhibitorozás', 'alkalom', 45000, 'n'),
+    RSZ('termosztat', 'Szobatermosztát felszerelése', 'db', 12000, 'n'),
+    RSZ('fejcsere', 'Termosztatikus fej cseréje', 'db', 3000, 'n'),
+    RSZ('beszab', 'Beszabályozás, légtelenítés', 'óra', 10000, 'n'),
+  ],
+  padlofutes: [
+    RSZ('bontas', 'Régi burkolat, aljzat bontása', 'm²', 3500, 'c', { q: v => nz(v.A) }),
+    RSZ('termosztat', 'Helyiségtermosztát + szelepmozgató', 'db', 22000, 'n'),
+    RSZ('szivattyu', 'Keverőszelep / szivattyús egység beépítése', 'db', 45000, 'n'),
+    RSZ('beszab', 'Beszabályozás, felfűtési protokoll', 'alkalom', 15000, 'n'),
+  ],
   villany: [
     RSZ('bontas', 'Régi vezeték, szerelvények bontása', 'db', 1500, 'n', { help: 'Pontonként' }),
     RSZ('javitas', 'Falhornyok visszajavítása (gipszelés)', 'fm', 1200, 'c', { q: v => v.mod === 'vesett' ? Math.round(villanyUtvonal(v) * 10) / 10 : 0, mats: [['gyorsgipsz', 0.6]] }),
@@ -1252,6 +1452,7 @@ const SZAKMAK = [
   ['kert', 'Kert, térkő, kerítés', ['terko', 'omlesztett', 'kerites']],
   ['fa', 'Fa, terasz', ['deszka', 'terasz']],
   ['villany', 'Villanyszerelés', ['villany']],
+  ['viz', 'Víz-, fűtésszerelés', ['viz', 'futes', 'padlofutes']],
   ['sajat', 'Saját munkadíjak', []],
 ];
 function munkaSzakma(k) {
@@ -1284,6 +1485,7 @@ function roomGeo(r) {
 const r2 = (x) => Math.round(x * 100) / 100;
 const ROOM_MAP = {
   burkolas: (r, v) => {
+    if (v.hol === 'm2') return {}; // kész terület (pl. konyhai csempesáv) – a helyiség méretei nem írják felül
     const g = roomGeo(r);
     if (v.hol === 'fal') return { Lh: g.L, Ls: g.W, ny: r2(nyInBand(r.nyl, nz(v.Hm) || 2.1)), nyl: r.nyl || [] };
     return { hol: 'padlo', Lh: g.L, Ls: g.W, ajto: r2(g.st.ajtoSz), nyl: r.nyl || [] };
@@ -1297,6 +1499,7 @@ const ROOM_MAP = {
   omlesztett: (r) => { const g = roomGeo(r); return { am: 'hsz', Lh: g.L, Ls: g.W }; },
   gipszkarton: (r, v) => { const g = roomGeo(r); return v.tip === 'am' ? { Lh: g.L, Ls: g.W } : {}; },
   terasz: (r) => { const g = roomGeo(r); return { Lh: g.L, Ls: g.W }; },
+  padlofutes: (r) => { const g = roomGeo(r); return { A: r2(g.A), ker: r2(g.per) }; },
 };
 // Egyéb (munkadíj) tételek mennyisége a helyiségből
 const ROOM_Q = {
@@ -1310,12 +1513,13 @@ const ROOM_Q = {
 
 /* ---------- Beépített projektsablonok ---------- */
 const SABLONOK = [
-  { id: 'furdo', n: 'Fürdőszoba-felújítás', i: 'furdo', desc: 'Bontás, vízszigetelés, padló- és falburkolás, festés a csempe felett, sittszállítás',
+  { id: 'furdo', n: 'Fürdőszoba-felújítás', i: 'furdo', desc: 'Bontás, vízszigetelés, padló- és falburkolás, festés a csempe felett, vízszerelés (mosdó, WC, zuhany), sittszállítás',
     items: [
       { nev: 'Régi burkolat bontása', md: 'md_bontas', rq: 'csempe' },
       { nev: 'Padlóburkolás vízszigeteléssel', calc: 'burkolas', v: { hol: 'padlo', szig: true } },
       { nev: 'Falburkolás (csempe 2,1 m-ig)', calc: 'burkolas', v: { hol: 'fal', Hm: 2.1, la: 30, lb: 60, lv: 8, szig: false } },
       { nev: 'Glettelés, festés (csempe felett + mennyezet)', calc: 'festes', v: { csempeH: 2.1, menny: true } },
+      { nev: 'Vízszerelés (mosdó, WC, zuhany)', calc: 'viz', v: { mod: 'vesett', mosdo: 1, wc: 1, zuhany: 1, kad: 0, mosogato: 0, gep: 0, rm_mosdo: 1, rm_wc: 1, rm_zuhanytalca: 1 } },
       { nev: 'Sittszállítás', md: 'md_sitt', rq: 'egy' },
     ] },
   { id: 'festes', n: 'Szobafestés', i: 'szobafestes', desc: 'Glettelés, alapozás, festés falakra és mennyezetre',
@@ -1332,6 +1536,35 @@ const SABLONOK = [
       { nev: 'Térkövezés (autós terhelés)', calc: 'terko', v: { alap: 25, agy: 4 } },
       { nev: 'Föld elszállítása', md: 'md_sitt', rq: 'egy' },
     ] },
+  { id: 'konyha', n: 'Konyhafelújítás', i: 'konyha', desc: 'Bontás, padlóburkolás, csempesáv a pult felett, festés, víz a mosogatóhoz és mosogatógéphez, villany a konyhagépekhez, sittszállítás',
+    items: [
+      { nev: 'Régi burkolat bontása', md: 'md_bontas', rq: 'padlo' },
+      { nev: 'Padlóburkolás', calc: 'burkolas', v: { hol: 'padlo', lab: true } },
+      { nev: 'Csempesáv a konyhapult felett', calc: 'burkolas', v: { hol: 'm2', A: 2.4, la: 30, lb: 60, lv: 8 } },
+      { nev: 'Glettelés, festés', calc: 'festes', v: { menny: true } },
+      { nev: 'Vízszerelés (mosogató, mosogatógép)', calc: 'viz', v: { mod: 'vesett', mosdo: 0, wc: 0, zuhany: 0, kad: 0, mosogato: 1, gep: 1, vh: 4, rm_mosogato: 1, rm_gep: 1 } },
+      { nev: 'Villanyszerelés (konyhai pontok, sütő, főzőlap)', calc: 'villany', v: { mod: 'vesett', hely: 1, dug: 6, kap: 1, lam: 2, kor: 2, kor5: 1, gyenge: 0, vh: 5, ev: true } },
+      { nev: 'Sittszállítás', md: 'md_sitt', rq: 'egy' },
+    ] },
+  { id: 'wc', n: 'WC-felújítás', i: 'wc', desc: 'Bontás, padló- és falburkolás 1,5 m-ig, festés, WC (beépített tartállyal) és kézmosó, sittszállítás',
+    items: [
+      { nev: 'Régi burkolat bontása', md: 'md_bontas', rq: 'csempe' },
+      { nev: 'Padlóburkolás', calc: 'burkolas', v: { hol: 'padlo', lab: false } },
+      { nev: 'Falburkolás (csempe 1,5 m-ig)', calc: 'burkolas', v: { hol: 'fal', Hm: 1.5, la: 30, lb: 60, lv: 8 } },
+      { nev: 'Glettelés, festés (csempe felett + mennyezet)', calc: 'festes', v: { csempeH: 1.5, menny: true } },
+      { nev: 'Vízszerelés (WC, kézmosó)', calc: 'viz', v: { mod: 'vesett', mosdo: 1, wc: 1, zuhany: 0, kad: 0, mosogato: 0, gep: 0, vh: 3, rm_wckeret: 1, rm_mosdo: 1 } },
+      { nev: 'Sittszállítás', md: 'md_sitt', rq: 'egy' },
+    ] },
+  { id: 'padlofutes', n: 'Padlófűtés kiépítése', i: 'padlofutes', desc: 'Régi padló bontása, padlófűtés rendszerlemezen, esztrich a csövek fölé, új padlóburkolat',
+    items: [
+      { nev: 'Régi padló bontása', md: 'md_bontas', rq: 'padlo' },
+      { nev: 'Padlófűtés', calc: 'padlofutes', v: { oszt: '15', alap: 'lemez', oszto: true, proba: true } },
+      { nev: 'Esztrich a csövek fölé (6,5 cm)', calc: 'esztrich', v: { mod: 'zsak', vast: 6.5, perem: false } },
+      { nev: 'Padlóburkolás', calc: 'burkolas', v: { hol: 'padlo', lab: true } },
+      { nev: 'Sittszállítás', md: 'md_sitt', rq: 'egy' },
+    ] },
+  { id: 'futeskorszerusites', n: 'Fűtéskorszerűsítés radiátorokkal', i: 'futes', desc: 'Új radiátorok termosztatikus szelepekkel, ötrétegű cső, osztó-gyűjtő, nyomáspróba',
+    items: [{ nev: 'Radiátoros fűtés', calc: 'futes', v: { mod: 'vesett', rad: 6, meret: '600x1000', radAnyag: true, vh: 8, oszto: true, szig: true, proba: true } }] },
   { id: 'villanyfelujitas', n: 'Lakás villanyfelújítása', i: 'villany', desc: 'Új vezetékezés falba vésve, szerelvények, lakáselosztó, érintésvédelmi mérés',
     items: [{ nev: 'Villanyszerelés', calc: 'villany', v: { mod: 'vesett', hely: 3, dug: 12, kap: 6, lam: 6, kor: 2, eloszto: true, fi: true, ev: true } }] },
 ];

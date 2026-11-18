@@ -29,6 +29,11 @@ const ICONS = {
   lepcso: '<path d="M3 20h5v-5h5v-5h5V5h3"/><path d="M3 20h18"/>',
   keveres: '<path d="M12 4v16M7 20h10"/><path d="M5 8h14"/><path d="M5 8l-2.5 6a2.5 2.5 0 0 0 5 0z"/><path d="M19 8l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
   villany: '<path d="M13 2L5 13.5h6L10 22l8-11.5h-6z"/>',
+  viz: '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+  konyha: '<rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 14h18M8 10V6a2 2 0 0 1 4 0M15 6v4M17 6v4"/>',
+  wc: '<path d="M7 3h6v7H7zM5 10h12a0 0 0 0 1 0 0 5 5 0 0 1-5 5H10a5 5 0 0 1-5-5zM9 15l-1 6h7l-1-6"/>',
+  futes: '<rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M7 6v12M11 6v12M15 6v12M3 20h2M19 20h2"/>',
+  padlofutes: '<path d="M3 20h18M4 16c2.5 0 2.5-3 5-3s2.5 3 5 3 2.5-3 5-3M5 9c1.5-2 1.5-4 0-6M12 9c1.5-2 1.5-4 0-6M19 9c1.5-2 1.5-4 0-6"/>',
   // sablonok
   furdo: '<path d="M3 12h18v3a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5z"/><path d="M6 12V6a2 2 0 0 1 4 0"/><path d="M7 20l-1 1.5M17 20l1 1.5"/>',
   szobafestes: '<rect x="3" y="3" width="15" height="6" rx="1.5"/><path d="M18 6h2.5v5H11v3"/><rect x="9.5" y="14" width="3" height="7" rx="1"/>',

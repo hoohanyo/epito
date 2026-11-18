@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.16';
+const APP_VERSION = '2.22';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -466,6 +466,8 @@ function remember() { if (S.calc && !S.calc.tetelId) LS.set('ek_utolso_' + S.cal
 function fullResult(c, v) {
   const r = computeSafe(c, v);
   r.munka = null; r.resz = [];
+  // a fő munka anyagai kikapcsolhatók (ha a megrendelő csak részmunkát kér)
+  if (v.anyOn === false) { r.mats = r.mats.filter(m => isMunkaKey(m.k)); r.warn = (r.warn || []).concat(['Csak részmunkák: a fő munka anyaga és díja kimarad, csak a kiválasztott részmunkák számítanak (Munkadíj rész).']); }
   if (c.md && v.mdOn !== false) {
     const key = v.mdK && mat(v.mdK) && isMunkaKey(v.mdK) ? v.mdK : c.md; const P = mat(key);
     let mq = [0, '']; try { mq = c.mq(v); } catch (e) {}
@@ -494,7 +496,12 @@ function renderMunka() {
   if (c.md) {
     const on = v.mdOn !== false; const key = v.mdK && isMunkaKey(v.mdK) ? v.mdK : c.md; const P = mat(key);
     let mq = [0, '']; try { mq = c.mq(v); } catch (e) {}
-    h += '<div class="f"><label for="mdOn">Fő munka díja<small class="muted" style="display:block;font-weight:400">' + esc(mat(c.md).n) + '</small></label><label class="sw"><input type="checkbox" id="mdOn"' + (on ? ' checked' : '') + '><i></i></label></div>';
+    if (c.resz && c.resz.length) // egy kapcsoló: a fő munka anyaga és díja együtt marad ki
+      h += '<div class="f"><label for="csakResz">Csak részmunkák<small class="muted" style="display:block;font-weight:400">' + (on
+        ? 'Most a fő munka (' + esc(mat(c.md).n.toLowerCase()) + ') és mellé a lent kiválasztott részmunkák számítanak'
+        : 'Most csak a lent kiválasztott részmunkák számítanak – a fő munka anyaga és díja kimarad') + '</small></label><label class="sw"><input type="checkbox" id="csakResz"' + (on ? '' : ' checked') + '><i></i></label></div>';
+    else
+      h += '<div class="f"><label for="mdOn">Fő munka díja<small class="muted" style="display:block;font-weight:400">' + esc(mat(c.md).n) + '</small></label><label class="sw"><input type="checkbox" id="mdOn"' + (on ? ' checked' : '') + '><i></i></label></div>';
     if (on) {
       h += '<div class="f sel"><label for="mdK">Díjtétel</label><select id="mdK">' + munkaKeys().map(k => '<option value="' + k + '"' + (k === key ? ' selected' : '') + '>' + esc(mat(k).n) + ' (' + ft(mat(k).p) + '/' + esc(mat(k).u) + ')</option>').join('') + '</select></div>';
       if (P.u !== mq[1]) h += '<div class="f"><label for="mdQ">Mennyiség</label><span class="in"><input id="mdQ" inputmode="decimal" value="' + esc(numStr(v.mdQ)) + '"><span class="u">' + esc(P.u) + '</span></span></div>';
@@ -505,7 +512,7 @@ function renderMunka() {
   if (c.resz && c.resz.length) {
     const db = reszOf(c, v).length;
     h += '<div class="resz-fej"><b>Részmunkák</b><span class="small muted">' + (db ? db + ' kiválasztva' : 'külön is kérhetők') + '</span></div>' +
-      '<div class="small muted" style="margin:-2px 0 6px">Ha a megrendelő csak ezek közül kér valamit, kapcsold ki fent a fő munkát (és az anyagokat).</div>';
+      '<div class="small muted" style="margin:-2px 0 6px">' + (c.md ? (v.mdOn !== false ? 'A kiválasztottak a fő munkához adódnak. Ha a megrendelő csak ezeket kéri, kapcsold be fent a „Csak részmunkák” kapcsolót.' : 'Csak a kiválasztott részmunkák kerülnek a tételbe.') : 'Kapcsold be, amit a megrendelő kér.') + '</div>';
     for (const r of c.resz) {
       const k = 'rm_' + r.id; const P = mat(r.md);
       const ar = '<span class="resz-ar">' + ft(P.p) + '/' + esc(P.u) + '</span>';
@@ -519,6 +526,7 @@ function renderMunka() {
   }
   box.innerHTML = h + '</div>';
   if ($('#mdOn')) $('#mdOn').onchange = (e) => { v.mdOn = e.target.checked; remember(); renderMunka(); renderRes(); };
+  if ($('#csakResz')) $('#csakResz').onchange = (e) => { const x = e.target.checked; v.mdOn = !x; v.anyOn = !x; remember(); renderMunka(); renderRes(); };
   if ($('#mdK')) $('#mdK').onchange = (e) => { v.mdK = e.target.value; remember(); renderMunka(); renderRes(); };
   const q = $('#mdQ'); if (q) { q.oninput = () => { v.mdQ = parseNum(q.value); remember(); renderRes(); }; q.onfocus = () => q.select(); }
   box.querySelectorAll('[data-rc]').forEach(el => el.onchange = () => { v['rm_' + el.dataset.rc] = el.checked; remember(); renderMunka(); renderRes(); });
