@@ -119,7 +119,13 @@ function bindRoomPicker(c, v) {
 /* ---------- Projektsablonok ---------- */
 const sajatSablonok = () => (Array.isArray(S.data.sablonok) ? S.data.sablonok : []);
 function saveSablonok(list) { S.data.sablonok = list; saveCache(); enqueue('saveBeallitas', { kulcs: 'sablonok', ertek: JSON.stringify(list) }); }
-const sablonKell = (sab) => sab.items.some(it => (it.calc && ROOM_MAP[it.calc]) || it.rq);
+// kell-e helyiség a sablonhoz: csak ha valamelyik tétel tényleg átvesz méretet belőle (pl. a földmunka csak „terület” módban)
+const sablonKell = (sab) => sab.items.some(it => {
+  if (it.rq) return true;
+  if (!it.calc || !ROOM_MAP[it.calc] || !CALC_BY_ID[it.calc]) return false;
+  const v = Object.assign(defaults(CALC_BY_ID[it.calc]), it.v || {});
+  try { return Object.keys(ROOM_MAP[it.calc]({ L: 1, W: 1, H: 1, nyl: [] }, v) || {}).length > 0; } catch (e) { return true; }
+});
 
 function sablonDialog(p) {
   const all = SABLONOK.map(s => Object.assign({ beepitett: true }, s)).concat(sajatSablonok());
