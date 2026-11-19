@@ -30,6 +30,12 @@ const ICONS = {
   keveres: '<path d="M12 4v16M7 20h10"/><path d="M5 8h14"/><path d="M5 8l-2.5 6a2.5 2.5 0 0 0 5 0z"/><path d="M19 8l-2.5 6a2.5 2.5 0 0 0 5 0z"/>',
   villany: '<path d="M13 2L5 13.5h6L10 22l8-11.5h-6z"/>',
   viz: '<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+  elokeszito: '<path d="M3 21l7-7M14 4l6 6-3 3-6-6zM12.5 5.5l-6 6 6 6 6-6"/>',
+  bontas: '<path d="M14 3l7 7-3 3-7-7zM12.5 4.5L4 13l7 7 3.5-3.5M3 21h8"/>',
+  foldmunka: '<path d="M3 20h18M12 4v10M8 10l4 4 4-4M5 20l2-5h10l2 5"/>',
+  berles: '<rect x="3" y="8" width="18" height="10" rx="1"/><path d="M7 18v3M17 18v3M3 12h18M8 8V4h8v4"/>',
+  laminalt: '<path d="M3 5h18v14H3zM3 9.7h18M3 14.3h18M9 5v4.7M15 9.7v4.6M7 14.3V19M17 14.3V19M14 5v4.7"/>',
+  nyilaszaro: '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M12 3v18M5 12h14M3 21h18"/>',
   konyha: '<rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 14h18M8 10V6a2 2 0 0 1 4 0M15 6v4M17 6v4"/>',
   wc: '<path d="M7 3h6v7H7zM5 10h12a0 0 0 0 1 0 0 5 5 0 0 1-5 5H10a5 5 0 0 1-5-5zM9 15l-1 6h7l-1-6"/>',
   futes: '<rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M7 6v12M11 6v12M15 6v12M3 20h2M19 20h2"/>',
@@ -86,7 +92,7 @@ const EMOJI_IKON = {
   '📄': 'doc', '🧾': 'receipt', '✏': 'pencil', '🛒': 'cart', '📍': 'pin', '📞': 'phone', '✉': 'mail',
   '📋': 'clipboard', '➕': 'plus', '🗓': 'calendar', '🏢': 'building', '🗑': 'trash', '🔑': 'key', '👁': 'eye',
   '🖨': 'printer', '🕘': 'history', '📱': 'device', '⏳': 'clock', '⚠': 'alert', '☀': 'sun', '🌙': 'moon',
-  '🛁': 'furdo', '🖌': 'szobafestes', '🚗': 'kocsibeallo', '▭': 'padlo', '👥': 'users', '🏷': 'tag', '⚙': 'more', '⚡': 'villany',
+  '🛁': 'furdo', '🖌': 'szobafestes', '🚗': 'kocsibeallo', '▭': 'padlo', '👥': 'users', '🏷': 'tag', '⚙': 'more', '⚡': 'villany', '⛏': 'elokeszito',
 };
 const EMOJI_RE = new RegExp('(' + Object.keys(EMOJI_IKON).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')️?', 'gu');
 const EMOJI_SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, TITLE: 1, OPTION: 1 };

@@ -130,6 +130,8 @@ const HELYISEG_OPC = [
   ['Kültér', ['Homlokzat', 'Tető', 'Lábazat', 'Kerítés', 'Kert', 'Kocsibeálló', 'Járda', 'Udvar']]
 ];
 const MUNKARESZ_OPC = [
+  ['Bontás, előkészítés', ['Bontás, sittelszállítás', 'Földmunka', 'Előkészítő munkák (gáz, kémény, napelem, klíma)', 'Közműárok']],
+  ['Nyílászáró', ['Nyílászárócsere', 'Ablakcsere', 'Beltéri ajtók cseréje']],
   ['Felújítás', ['Fürdőszoba-felújítás', 'Konyhafelújítás', 'WC-felújítás', 'Lakásfelújítás']],
   ['Festés, glettelés', ['Glettelés, festés', 'Szobafestés', 'Ajtók, ablakok mázolása', 'Radiátorfestés', 'Tapétázás', 'Homlokzatfestés']],
   ['Burkolás', ['Padlócsere', 'Hidegburkolás (csempe, járólap)', 'Laminált padló lerakása', 'Parkettázás', 'Teraszburkolás']],
