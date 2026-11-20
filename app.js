@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.29';
+const APP_VERSION = '2.30';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -411,7 +411,7 @@ function renderCalc() {
   let h = '<p class="desc">' + esc(c.desc) + '</p><div id="peldaInfo"></div><div class="card" id="form"></div><div id="res"></div><div id="munka"></div><div id="calcTot"></div>';
   h += '<div class="btns"><button class="btn pri wide" id="ment">' + (st.tetelId ? 'Módosítás mentése' : 'Mentés munkarészbe') + '</button>' +
     (st.tetelId ? '<button class="btn" id="ujkent">Mentés újként</button>' : '') +
-    '<button class="btn" id="alap">Alapértékek</button>' + (PELDAK[c.id] ? '<button class="btn" id="pelda">Példa</button>' : '') + '</div>';
+    '<button class="btn" id="alap">Alapértékek</button>' + (PELDAK[c.id] && !st.tetelId ? '<button class="btn" id="pelda">Példa</button>' : '') + '</div>';
   if (st.tetelId) h += '<div class="btns"><button class="btn danger" id="torol">Tétel törlése</button></div>';
   $('#view').innerHTML = h;
   renderForm(); renderMunka(); renderRes();
@@ -423,6 +423,9 @@ function renderCalc() {
   $('#alap').onclick = () => { st.v = defaults(c); LS.del('ek_utolso_' + c.id); $('#peldaInfo').innerHTML = ''; renderForm(); renderMunka(); renderRes(); };
   if ($('#pelda')) $('#pelda').onclick = () => {
     const [szoveg, pv] = PELDAK[c.id];
+    // ha már beírtál valamit, előbb rákérdez – a példa nem ment el semmit, csak a képernyőn lévő értékeket cseréli
+    const alap = defaults(c), sajat = Object.keys(st.v).some(k => k !== 'mj' && JSON.stringify(st.v[k]) !== JSON.stringify(alap[k]));
+    if (sajat && !confirm('A beírt adataid helyére a példa kerül. Folytatod?')) return;
     st.v = Object.assign(defaults(c), pv); if (c.fields.some(f => f.id === 'mj')) st.v.mj = mjPref();
     $('#peldaInfo').innerHTML = '<div class="banner pelda">💡 <span><b>Példa:</b> ' + esc(szoveg) + '. Írd át a saját adataidra – ha valamit módosítasz, onnantól a saját számításod.</span></div>';
     renderForm(); renderMunka(); renderRes(); scrollTo({ top: 0, behavior: 'smooth' });
