@@ -36,6 +36,7 @@ const ICONS = {
   berles: '<rect x="3" y="8" width="18" height="10" rx="1"/><path d="M7 18v3M17 18v3M3 12h18M8 8V4h8v4"/>',
   laminalt: '<path d="M3 5h18v14H3zM3 9.7h18M3 14.3h18M9 5v4.7M15 9.7v4.6M7 14.3V19M17 14.3V19M14 5v4.7"/>',
   nyilaszaro: '<rect x="5" y="3" width="14" height="18" rx="1"/><path d="M12 3v18M5 12h14M3 21h18"/>',
+  butor: '<rect x="4" y="4" width="16" height="15" rx="1"/><path d="M12 4v15M4 11.5h16M10 7.5v1M14 7.5v1M10 15v1M14 15v1M6 19v2M18 19v2"/>',
   konyha: '<rect x="3" y="10" width="18" height="11" rx="1"/><path d="M3 14h18M8 10V6a2 2 0 0 1 4 0M15 6v4M17 6v4"/>',
   wc: '<path d="M7 3h6v7H7zM5 10h12a0 0 0 0 1 0 0 5 5 0 0 1-5 5H10a5 5 0 0 1-5-5zM9 15l-1 6h7l-1-6"/>',
   futes: '<rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M7 6v12M11 6v12M15 6v12M3 20h2M19 20h2"/>',
@@ -92,7 +93,7 @@ const EMOJI_IKON = {
   '📄': 'doc', '🧾': 'receipt', '✏': 'pencil', '🛒': 'cart', '📍': 'pin', '📞': 'phone', '✉': 'mail',
   '📋': 'clipboard', '➕': 'plus', '🗓': 'calendar', '🏢': 'building', '🗑': 'trash', '🔑': 'key', '👁': 'eye',
   '🖨': 'printer', '🕘': 'history', '📱': 'device', '⏳': 'clock', '⚠': 'alert', '☀': 'sun', '🌙': 'moon',
-  '🛁': 'furdo', '🖌': 'szobafestes', '🚗': 'kocsibeallo', '▭': 'padlo', '👥': 'users', '🏷': 'tag', '⚙': 'more', '⚡': 'villany', '⛏': 'elokeszito',
+  '🛁': 'furdo', '🖌': 'szobafestes', '🚗': 'kocsibeallo', '▭': 'padlo', '👥': 'users', '🏷': 'tag', '⚙': 'more', '⚡': 'villany', '⛏': 'elokeszito', '🪑': 'butor',
 };
 const EMOJI_RE = new RegExp('(' + Object.keys(EMOJI_IKON).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')️?', 'gu');
 const EMOJI_SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, INPUT: 1, TITLE: 1, OPTION: 1 };

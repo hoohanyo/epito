@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.30';
+const APP_VERSION = '2.32';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);

@@ -181,6 +181,10 @@ const MATERIALS = {
   tomitoszalag: { n: 'Tömítőszalag (kültéri / beltéri)', g: 'Nyílászáró', u: 'fm', pack: 0, pn: 'fm', p: 900 },
   belso_parkany:{ n: 'Belső párkány', g: 'Nyílászáró', u: 'fm', pack: 0, pn: 'fm', p: 6500 },
   kulso_parkany:{ n: 'Külső alumínium párkány', g: 'Nyílászáró', u: 'fm', pack: 0, pn: 'fm', p: 5500 },
+  // Bútor
+  butor_rogzito:{ n: 'Bútorrögzítő szett (tipli, csavar)', g: 'Bútor', u: 'db', pack: 1, pn: 'db', p: 350 },
+  pultzaro:     { n: 'Munkalap fali záróléc', g: 'Bútor', u: 'fm', pack: 0, pn: 'fm', p: 1800 },
+  munkalap:     { n: 'Munkalap (laminált, 60 cm)', g: 'Bútor', u: 'fm', pack: 0, pn: 'fm', p: 18000 },
   pf_perem:     { n: 'Peremszigetelő szalag', g: 'Víz, fűtés', u: 'fm', pack: 25, pn: 'tekercs (25 m)', p: 3500 },
   // Munkadíjak (minta árak – írd át a sajátodra). A "Munkadíj" csoport tételei munkadíjként számítanak.
   md_ora:       { n: 'Szakmunka (óradíj)', g: 'Munkadíj', u: 'óra', pack: 0, pn: 'óra', p: 8000 },
@@ -264,6 +268,28 @@ const MATERIALS = {
   md_nyilaszaro_bontas:{ n: 'Régi nyílászáró kibontása', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 8000 },
   md_nyilaszaro_park:{ n: 'Párkány beépítése', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 4000 },
   md_nyilaszaro_kava:{ n: 'Kávajavítás (vakolás, glettelés)', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 3500 },
+  md_butor_also:     { n: 'Konyhabútor alsó elemeinek összeszerelése, beállítása', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 18000 },
+  md_butor_felso:    { n: 'Konyhabútor felső elemeinek összeszerelése, felfüggesztése', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 15000 },
+  md_butor_magas:    { n: 'Magas szekrény összeszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 22000 },
+  md_butor_pult:     { n: 'Munkalap szabása, rögzítése', g: 'Munkadíj', u: 'fm', pack: 0, pn: 'fm', p: 6000 },
+  md_butor_kivag:    { n: 'Kivágás a munkalapon', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 8000 },
+  md_butor_fozo:     { n: 'Főzőlap beépítése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 12000 },
+  md_butor_suto:     { n: 'Sütő beépítése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 10000 },
+  md_butor_mosgep:   { n: 'Mosogatógép beépítése, bekötése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 18000 },
+  md_butor_huto:     { n: 'Beépíthető hűtő beépítése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 20000 },
+  md_butor_para:     { n: 'Páraelszívó felszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 15000 },
+  md_butor_mikro:    { n: 'Mikró beépítése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 8000 },
+  md_butor_mosogato: { n: 'Mosogató, csaptelep bekötése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 15000 },
+  md_butor_szekreny: { n: 'Ruhásszekrény összeszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 18000 },
+  md_butor_tolo:     { n: 'Tolóajtós szekrény összeszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 30000 },
+  md_butor_komod:    { n: 'Komód összeszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 9000 },
+  md_butor_agy:      { n: 'Ágy összeszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 12000 },
+  md_butor_asztal:   { n: 'Asztal összeszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 5000 },
+  md_butor_szek:     { n: 'Szék összeszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 2500 },
+  md_butor_polc:     { n: 'Polc összeszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 5000 },
+  md_butor_tv:       { n: 'TV-szekrény összeszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 7000 },
+  md_butor_furdo:    { n: 'Fürdőszobabútor felszerelése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 12000 },
+  md_butor_falrog:   { n: 'Bútor falhoz rögzítése', g: 'Munkadíj', u: 'db', pack: 0, pn: 'db', p: 1500 },
   md_padlofutes:     { n: 'Padlófűtés kiépítése', g: 'Munkadíj', u: 'm²', pack: 0, pn: 'm²', p: 4500 },
   lazur:        { n: 'Fa felületkezelő (lazúr/olaj)', g: 'Fa', u: 'l', pack: 2.5, pn: 'doboz (2,5 l)', p: 10000 },
 };
@@ -392,6 +418,7 @@ const GROUPS = [
   ['teto', 'Tető', '🏠'],
   ['kert', 'Kert, udvar', '🌿'],
   ['gep', 'Villany, víz, fűtés', '⚡'],
+  ['butor', 'Bútor', '🪑'],
   ['fa', 'Fa', '🪵'],
   ['seged', 'Segédszámítások', '📐'],
 ];
@@ -1544,6 +1571,73 @@ const CALCS = [
     return { out, mats, warn };
   }
 },
+{
+  id: 'butor', g: 'butor', n: 'Bútor összeszerelése, beépítése', i: 'butor',
+  desc: 'Konyhabútor folyóméterre, gépek beépítése, lapra szerelt bútorok darabra – rögzítőanyag és munkadíj.',
+  fields: [
+    H('Konyhabútor'),
+    C('konyha', 'Konyhabútor összeszerelése', true),
+    F('alsoFm', 'Alsó szekrénysor', 'fm', 3.6, { show: v => v.konyha }),
+    F('felsoFm', 'Felső szekrénysor', 'fm', 3, { show: v => v.konyha }),
+    F('magas', 'Magas szekrény (hűtő-, sütőkamra)', 'db', 1, { show: v => v.konyha }),
+    C('pult', 'Munkalap szabása, rögzítése', true, { show: v => v.konyha, help: 'Hossza az alsó szekrénysorral egyezik' }),
+    F('kiv', 'Kivágás a munkalapon (mosogató, főzőlap)', 'db', 2, { show: v => v.konyha && v.pult }),
+    C('pultAnyag', 'A munkalapot én szerzem be', false, { show: v => v.konyha && v.pult }),
+    H('Gépek beépítése'),
+    F('g_fozo', 'Főzőlap', 'db', 0, { help: 'Csak a beépítés – lásd a figyelmeztetést' }),
+    F('g_suto', 'Beépíthető sütő', 'db', 0),
+    F('g_mosgep', 'Beépíthető mosogatógép (víz, lefolyó bekötéssel)', 'db', 0),
+    F('g_huto', 'Beépíthető hűtő (front ajtóval)', 'db', 0),
+    F('g_para', 'Páraelszívó (kivezetéssel)', 'db', 0),
+    F('g_mikro', 'Beépíthető mikró', 'db', 0),
+    F('g_mosogato', 'Mosogató + csaptelep bekötése', 'db', 0),
+    H('Lapra szerelt bútorok'),
+    F('szekreny', 'Ruhásszekrény, gardrób (nyílóajtós)', 'db', 0),
+    F('tolo', 'Tolóajtós szekrény', 'db', 0),
+    F('komod', 'Komód, fiókos elem', 'db', 0),
+    F('agy', 'Ágy', 'db', 0),
+    F('asztal', 'Asztal', 'db', 0),
+    F('szek', 'Szék', 'db', 0),
+    F('polc', 'Polc, könyvespolc', 'db', 0),
+    F('tv', 'TV-szekrény, alacsony elem', 'db', 0),
+    F('furdo', 'Fürdőszobabútor (mosdószekrény, tükrös szekrény)', 'db', 0),
+    C('falrog', 'Magas bútorok falhoz rögzítése (billenésgátló)', true),
+  ],
+  compute(v) {
+    const warn = [], out = [], mats = [];
+    let rogzito = 0;
+    if (v.konyha) {
+      const a = nz(v.alsoFm), f = nz(v.felsoFm), m = nz(v.magas);
+      if (a) mats.push({ k: 'md_butor_also', q: a });
+      if (f) mats.push({ k: 'md_butor_felso', q: f });
+      if (m) mats.push({ k: 'md_butor_magas', q: m });
+      rogzito += Math.ceil(f / 0.6) * 2 + m * 2 + Math.ceil(a / 0.6);
+      out.push(['Konyhabútor', fmt(a, 1) + ' fm alsó + ' + fmt(f, 1) + ' fm felső' + (m ? ' + ' + fmt(m) + ' magas szekrény' : '')]);
+      if (v.pult && a) {
+        mats.push({ k: 'md_butor_pult', q: a }, { k: 'pultzaro', q: a });
+        if (v.pultAnyag) mats.push({ k: 'munkalap', q: a });
+        if (nz(v.kiv)) mats.push({ k: 'md_butor_kivag', q: nz(v.kiv) });
+        out.push(['Munkalap', fmt(a, 1) + ' fm' + (nz(v.kiv) ? ', ' + fmt(nz(v.kiv)) + ' kivágással' : '')]);
+      }
+    }
+    const gepek = [['g_fozo', 'md_butor_fozo'], ['g_suto', 'md_butor_suto'], ['g_mosgep', 'md_butor_mosgep'], ['g_huto', 'md_butor_huto'], ['g_para', 'md_butor_para'], ['g_mikro', 'md_butor_mikro'], ['g_mosogato', 'md_butor_mosogato']];
+    let gdb = 0; for (const [f, k] of gepek) if (nz(v[f])) { mats.push({ k, q: nz(v[f]) }); gdb += nz(v[f]); }
+    if (gdb) out.push(['Beépített gép', fmt(gdb) + ' db']);
+    // szilikon folyóméterben: a munkalap fali csatlakozása + mosogatónként kb. 2,5 fm
+    const szil = (v.konyha && v.pult ? nz(v.alsoFm) : 0) + nz(v.g_mosogato) * 2.5;
+    if (szil) mats.push({ k: 'szilikon', q: szil });
+    const lapra = [['szekreny', 'md_butor_szekreny', true], ['tolo', 'md_butor_tolo', true], ['komod', 'md_butor_komod', true], ['agy', 'md_butor_agy'], ['asztal', 'md_butor_asztal'], ['szek', 'md_butor_szek'], ['polc', 'md_butor_polc', true], ['tv', 'md_butor_tv'], ['furdo', 'md_butor_furdo', true]];
+    let ldb = 0, magasDb = 0;
+    for (const [f, k, magas] of lapra) if (nz(v[f])) { mats.push({ k, q: nz(v[f]) }); ldb += nz(v[f]); if (magas) magasDb += nz(v[f]); }
+    if (ldb) out.push(['Lapra szerelt bútor', fmt(ldb) + ' db']);
+    if (v.falrog && magasDb) { mats.push({ k: 'md_butor_falrog', q: magasDb }); rogzito += magasDb * 2; }
+    if (rogzito) mats.push({ k: 'butor_rogzito', q: rogzito });
+    if (nz(v.g_fozo)) warn.push('Gázfőzőlap bekötése gázszerelői, háromfázisú főzőlapé villanyszerelői feladat – a kalkulátor csak a beépítést számolja.');
+    if (!mats.length) warn.push('Add meg, mit kell összeszerelni.');
+    warn.push('A bútor és a gépek árát nem számolja – azokat a megrendelő hozza, vagy külön tételként veszed fel.');
+    return { out, mats, warn };
+  }
+},
 ];
 
 const CALC_BY_ID = Object.fromEntries(CALCS.map(c => [c.id, c]));
@@ -1750,6 +1844,15 @@ const RESZ = {
     RSZ('fejcsere', 'Termosztatikus fej cseréje', 'db', 3000, 'n'),
     RSZ('beszab', 'Beszabályozás, légtelenítés', 'óra', 10000, 'n'),
   ],
+  butor: [
+    RSZ('felhord', 'Kiszállítás, felhordás emeletre', 'alkalom', 10000, 'n'),
+    RSZ('regi', 'Régi bútor bontása, elszállítása', 'db', 6000, 'n'),
+    RSZ('csomag', 'Csomagolóanyag elszállítása', 'alkalom', 5000, 'n'),
+    RSZ('fogantyu', 'Fogantyúk felszerelése', 'db', 500, 'n'),
+    RSZ('led', 'LED pultmegvilágítás felszerelése', 'fm', 5000, 'n'),
+    RSZ('hatfal', 'Konyhai hátfal (üveg, panel) felszerelése', 'm²', 9000, 'n'),
+    RSZ('atszerel', 'Bútor átszerelése, átrendezése', 'óra', 8000, 'n'),
+  ],
   bontas: [
     RSZ('takaras', 'Takarás, porvédelem', 'm²', 500, 'n', { mats: [['takaro', 1]] }),
     RSZ('levalaszt', 'Víz, villany leválasztása a bontás előtt', 'alkalom', 15000, 'n'),
@@ -1837,6 +1940,7 @@ const SZAKMAK = [
   ['festes', 'Festés, mázolás', ['festes']],
   ['burkolas', 'Burkolás, padló', ['burkolas', 'laminalt']],
   ['nyilaszaro', 'Nyílászáró', ['nyilaszaro']],
+  ['butor', 'Bútor', ['butor']],
   ['bontas', 'Bontás, földmunka', ['bontas', 'foldmunka']],
   ['vakolas', 'Vakolás', ['vakolas']],
   ['gipszkarton', 'Gipszkarton', ['gipszkarton']],
@@ -1935,7 +2039,7 @@ const SABLONOK = [
       { nev: 'Térkövezés (autós terhelés)', calc: 'terko', v: { alap: 25, agy: 4 } },
       { nev: 'Föld elszállítása', md: 'md_sitt', rq: 'egy' },
     ] },
-  { id: 'konyha', n: 'Konyhafelújítás', i: 'konyha', desc: 'Bontás, padlóburkolás, csempesáv a pult felett, festés, víz a mosogatóhoz és mosogatógéphez, villany a konyhagépekhez, sittszállítás',
+  { id: 'konyha', n: 'Konyhafelújítás', i: 'konyha', desc: 'Bontás, padlóburkolás, csempesáv a pult felett, festés, víz a mosogatóhoz és mosogatógéphez, villany a konyhagépekhez, konyhabútor gépekkel, sittszállítás',
     items: [
       { nev: 'Régi burkolat bontása', md: 'md_bontas', rq: 'padlo' },
       { nev: 'Padlóburkolás', calc: 'burkolas', v: { hol: 'padlo', lab: true } },
@@ -1943,6 +2047,7 @@ const SABLONOK = [
       { nev: 'Glettelés, festés', calc: 'festes', v: { menny: true } },
       { nev: 'Vízszerelés (mosogató, mosogatógép)', calc: 'viz', v: { mod: 'vesett', mosdo: 0, wc: 0, zuhany: 0, kad: 0, mosogato: 1, gep: 1, vh: 4, rm_mosogato: 1, rm_gep: 1 } },
       { nev: 'Villanyszerelés (konyhai pontok, sütő, főzőlap)', calc: 'villany', v: { mod: 'vesett', hely: 1, dug: 6, kap: 1, lam: 2, kor: 2, kor5: 1, gyenge: 0, vh: 5, ev: true } },
+      { nev: 'Konyhabútor összeszerelése, gépek beépítése', calc: 'butor', v: { konyha: true, alsoFm: 3.6, felsoFm: 3, magas: 1, pult: true, kiv: 2, g_fozo: 1, g_suto: 1, g_para: 1, g_mosgep: 0, g_mosogato: 0 } },
       { nev: 'Sittszállítás', md: 'md_sitt', rq: 'egy' },
     ] },
   { id: 'wc', n: 'WC-felújítás', i: 'wc', desc: 'Bontás, padló- és falburkolás 1,5 m-ig, festés, WC (beépített tartállyal) és kézmosó, sittszállítás',
@@ -1993,6 +2098,13 @@ const SABLONOK = [
     items: [
       { nev: 'Terület előkészítése', calc: 'foldmunka', v: { tip: 'terulet', M: 0.15, asas: 'kezi', elsz: true } },
       { nev: 'Teraszburkolat', calc: 'terasz', v: {} },
+    ] },
+  { id: 'berendezes', n: 'Lakás berendezése', i: 'butor', desc: 'Konyhabútor gépekkel, hálószoba, nappali és fürdőszobabútorok összeszerelése, kiszállítással',
+    items: [
+      { nev: 'Konyhabútor összeszerelése, gépek beépítése', calc: 'butor', v: { konyha: true, alsoFm: 3.6, felsoFm: 3, magas: 1, pult: true, kiv: 2, g_fozo: 1, g_suto: 1, g_mosgep: 1, g_para: 1, g_mosogato: 1, rm_felhord: 1, rm_csomag: 1 } },
+      { nev: 'Hálószoba bútorai', calc: 'butor', v: { konyha: false, tolo: 1, agy: 1, komod: 1, falrog: true } },
+      { nev: 'Nappali, étkező bútorai', calc: 'butor', v: { konyha: false, tv: 1, polc: 2, asztal: 1, szek: 4, falrog: true } },
+      { nev: 'Fürdőszobabútor', calc: 'butor', v: { konyha: false, furdo: 2, falrog: false } },
     ] },
   { id: 'futeskorszerusites', n: 'Fűtéskorszerűsítés radiátorokkal', i: 'futes', desc: 'Új radiátorok termosztatikus szelepekkel, ötrétegű cső, osztó-gyűjtő, nyomáspróba',
     items: [{ nev: 'Radiátoros fűtés', calc: 'futes', v: { mod: 'vesett', rad: 6, meret: '600x1000', radAnyag: true, vh: 8, oszto: true, szig: true, proba: true } }] },

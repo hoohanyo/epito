@@ -36,6 +36,7 @@ const PELDAK = {
   elokeszito: ['Kazáncsere előtt: 6 fm horony a gázcsőnek, 1 faláttörés az égéstermék-elvezetőnek, a kazán helyének előkészítése', { horony: true, hl: 6, hjav: true, atfur: true, adb: 1, atip: 'nagy', avast: 'v30', rm_kazanhely: 1 }],
   berles: ['Homlokzatfelújítás: 150 m² állvány 4 hétre, fel- és leszereléssel, egy 6 m³-es konténer', { allv: true, aA: 150, ah: 4, aszer: true, k6: 1 }],
   laminalt: ['4×3 m-es szoba laminált padlóval, alátéttel, párazáróval, szegélyléccel', { tip: 'lam', Lh: 4, Ls: 3, ajto: 0.9, alatet: true, para: true, szeg: true, atm: 1 }],
+  butor: ['Konyhabútor: 3,6 m alsó és 3 m felső sor, egy magas szekrény, munkalap két kivágással, főzőlap, sütő, mosogatógép, páraelszívó és mosogató beépítése', { konyha: true, alsoFm: 3.6, felsoFm: 3, magas: 1, pult: true, kiv: 2, g_fozo: 1, g_suto: 1, g_mosgep: 1, g_para: 1, g_mosogato: 1 }],
   nyilaszaro: ['Két 120×140-es ablak cseréje belső párkánnyal és kávajavítással', { mod: 'csere', ablak: 2, aw: 1.2, ah: 1.4, bpark: true, kava: true }],
 };
 
