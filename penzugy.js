@@ -228,7 +228,7 @@ function bindArEmeles() {
 /* ---------- 5. Havi összesítő ---------- */
 function haviHtml() {
   const ym = S.honap || (S.honap = isoDay().slice(0, 7));
-  const ps = S.data.projektek;
+  const ps = nemMinta(S.data.projektek);
   const kik = ps.filter(p => ebbenAHonapban(p.kikuldve, ym));
   const elf = ps.filter(p => ebbenAHonapban(p.elfogadva, ym));
   const fiz = ps.filter(p => p.szamla && ebbenAHonapban(p.szamla.fizetve, ym));

@@ -18,6 +18,8 @@ const AJ_DEF = {
   zaras: 'Bízunk benne, hogy ajánlatunk elnyeri tetszését. Ha bármilyen kérdése van, vagy módosítaná a tartalmát, keressen bizalommal – szívesen egyeztetünk személyesen is.',
 };
 const cegOf = () => Object.assign({}, AJ_DEF, S.data.ceg || {});
+// dátum + „-ig”: a megszokott írásmód (pl. „2026. december 20.-ig”)
+const huDateIg = (iso) => huDate(iso) + '-ig';
 const huDate = (iso) => { if (!iso) return ''; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleDateString('hu-HU', { year: 'numeric', month: 'long', day: 'numeric' }); };
 const isoDay = (d) => { d = d || new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
 function nextAjSzam() {
@@ -80,7 +82,7 @@ function ajArchival(p) {
 }
 function elozmenyHtml(p) {
   const l = p.ajElozmeny || []; if (!l.length) return '';
-  return '<h2>Korábbi ajánlatok</h2><div class="card list">' + l.slice().reverse().map((x, i) => '<div class="it" data-ae="' + (l.length - 1 - i) + '"><span class="ic">📄</span><div class="m"><b>' + esc(x.szam) + '</b><small>' + esc(huDate(x.datum)) + ' · érvényes volt ' + esc(huDate(x.ig)) + '-ig</small></div><b class="small">' + ft(x.brutto) + '</b></div>').join('') + '</div>';
+  return '<h2>Korábbi ajánlatok</h2><div class="card list">' + l.slice().reverse().map((x, i) => '<div class="it" data-ae="' + (l.length - 1 - i) + '"><span class="ic">📄</span><div class="m"><b>' + esc(x.szam) + '</b><small>' + esc(huDate(x.datum)) + ' · érvényes volt ' + esc(huDateIg(x.ig)) + '</small></div><b class="small">' + ft(x.brutto) + '</b></div>').join('') + '</div>';
 }
 
 /* Lejárt ajánlat aktualizálása: új szám, mai kelte, árváltozási tájékoztató */
@@ -238,7 +240,7 @@ function renderAjanlat(r) {
   if (!S.data.tetelek.some(t => t.projektId === p.id)) h += '<div class="warn">A projektben még nincs tétel – az ajánlat üres lesz.</div>';
   const za = arZarAllapot(p);
   if (za && za.lejart) h += '<div class="banner lejart">⏰ Lejárt az ajánlat (érvényes volt: ' + esc(huDate(za.z.ig)) + '). Ha a munka mégis megvalósul, készíts aktualizált ajánlatot a mai árakkal.<button class="btn sm pri" id="aktual">Aktualizálás</button></div>';
-  else if (za) h += '<div class="banner zar">🔒 ' + (za.vegleges ? 'Az árak véglegesen rögzítve (elfogadott ajánlat).' : 'Az árak rögzítve ' + esc(huDate(za.z.ig)) + '-ig – az árlista változása nem írja át az ajánlatot.') + '<button class="btn sm" id="zarfel">Feloldás</button></div>';
+  else if (za) h += '<div class="banner zar">🔒 ' + (za.vegleges ? 'Az árak véglegesen rögzítve (elfogadott ajánlat).' : 'Az árak rögzítve ' + esc(huDateIg(za.z.ig)) + ' – az árlista változása nem írja át az ajánlatot.') + '<button class="btn sm" id="zarfel">Feloldás</button></div>';
   if (aj.elozo) h += '<div class="banner">🔄 Aktualizált ajánlat – előzmény: ' + esc(aj.elozo.szam) + ' (' + esc(huDate(aj.elozo.datum)) + ', ' + ft(aj.elozo.brutto) + '). Tájékoztató: ' + (aj.tajekoztato === false ? 'kikapcsolva' : 'bekapcsolva') + '<button class="btn sm" id="tajtgl">' + (aj.tajekoztato === false ? 'Bekapcsol' : 'Kikapcsol') + '</button></div>';
   h += '<div class="card hero" id="ajsum"></div>';
   h += '<div class="btns"><button class="btn pri wide" id="aprev">👁 Előnézet, nyomtatás, PDF</button></div>';
@@ -305,7 +307,7 @@ function quoteHtml(p, fotoSrc, snap) {
   h += '<header class="q-head"><div class="q-brand">' + (S.data.logo ? '<img class="q-logo" src="' + S.data.logo + '" alt="" onload="this.classList.toggle(\'kerek\', this.naturalWidth / this.naturalHeight < 1.25)">' : '') + '<div class="q-brand-t">' +
     '<div class="q-cegnev">' + esc(c.nev || 'Vállalkozó neve') + '</div>' +
     cegSor.map(x => '<div>' + esc(x) + '</div>').join('') + (kapcs.length ? '<div>' + esc(kapcs.join(' · ')) + '</div>' : '') + '</div></div>' +
-    '<div class="q-title"><div class="q-h1">Árajánlat</div><table class="q-meta"><tr><td>Szám</td><td>' + esc(aj.szam) + '</td></tr><tr><td>Kelt</td><td>' + esc(huDate(aj.datum)) + '</td></tr><tr><td>Érvényes</td><td>' + esc(ervIg) + '-ig</td></tr></table></div></header>';
+    '<div class="q-title"><div class="q-h1">Árajánlat</div><table class="q-meta"><tr><td>Szám</td><td>' + esc(aj.szam) + '</td></tr><tr><td>Kelt</td><td>' + esc(huDate(aj.datum)) + '</td></tr><tr><td>Érvényes</td><td>' + esc(huDateIg(ervIgIso(aj))) + '</td></tr></table></div></header>';
   // felek
   const ug = snap ? snap.ug : (ugyfelOf(p) || {});
   h += '<section class="q-parties"><div class="q-box"><div class="q-lbl">Megrendelő</div><div class="q-strong">' + esc(ug.nev || '') + '</div>' +
@@ -316,7 +318,7 @@ function quoteHtml(p, fotoSrc, snap) {
   h += '<section class="q-intro">' + lines(aj.bevezeto || bevezetoDef(p)).map(x => '<p>' + esc(x) + '</p>').join('') + '</section>';
   if (aj.elozo && aj.tajekoztato !== false) {
     const e = aj.elozo, pc = valtPct(Q.reszossz, e.reszossz || e.brutto);
-    h += '<section class="q-scope q-arval"><div class="q-lbl">Tájékoztatás az árváltozásról</div><p>Ez az ajánlat a(z) ' + esc(e.szam) + ' számú, ' + esc(huDate(e.datum)) + ' keltű, ' + esc(huDate(e.ig)) + '-ig érvényes ajánlatunk aktualizált változata. ' +
+    h += '<section class="q-scope q-arval"><div class="q-lbl">Tájékoztatás az árváltozásról</div><p>Ez az ajánlat a(z) ' + esc(e.szam) + ' számú, ' + esc(huDate(e.datum)) + ' keltű, ' + esc(huDateIg(e.ig)) + ' érvényes ajánlatunk aktualizált változata. ' +
       (pc > 0 ? 'Az azóta eltelt időben az anyagárak és a munkadíjak emelkedtek, ezért a végösszeg az eredeti ' + esc(ft(e.brutto)) + ' helyett ' + esc(ft(Q.brutto)) + ' (+' + esc(fmt(pc, 1)) + '%). Megértését köszönjük – a munka tartalma, a vállalásaink és a feltételeink nem változtak.'
         : pc < 0 ? 'Az azóta eltelt időben az árak csökkentek, ezért a végösszeg az eredeti ' + esc(ft(e.brutto)) + ' helyett ' + esc(ft(Q.brutto)) + '.'
         : 'Az árak nem változtak, az ajánlat érvényességét meghosszabbítottuk.') + '</p></section>';
@@ -353,7 +355,7 @@ function quoteHtml(p, fotoSrc, snap) {
   if (nz(aj.eloleg) > 0) felt.push(['Fizetés', fmt(aj.eloleg) + '% előleg (' + ft(Math.round(Q.brutto * nz(aj.eloleg) / 100)) + ') a munka kezdésekor, a fennmaradó összeg a műszaki átadáskor']);
   else felt.push(['Fizetés', 'A teljes összeg a műszaki átadáskor']);
   if (nz(aj.jotallas) > 0) felt.push(['Jótállás', fmt(aj.jotallas) + ' hónap az elvégzett munkára']);
-  felt.push(['Az ajánlat érvényes', ervIg + '-ig']);
+  felt.push(['Az ajánlat érvényes', huDateIg(ervIgIso(aj))]);
   h += '<section class="q-cols"><div><div class="q-lbl">Feltételek</div><table class="q-felt">' + felt.map(f => '<tr><td>' + esc(f[0]) + '</td><td>' + esc(f[1]) + '</td></tr>').join('') + '</table>' +
     (lines(aj.nemtart).length ? '<div class="q-lbl" style="margin-top:14px">Az ajánlat nem tartalmazza</div><ul class="q-ul">' + lines(aj.nemtart).map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') + '</div>' +
     (lines(aj.vallalas).length ? '<div class="q-commit"><div class="q-lbl">Vállalásaink</div><ul class="q-check">' + lines(aj.vallalas).map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>' : '<div></div>') + '</section>';

@@ -640,7 +640,7 @@ const CALCS = [
       if (Hm > pl) warn.push('A falmagasság nagyobb a profil szálhosszánál – a CW profilokat toldani kell (toldáskor min. 50 cm átfedés).');
       const gst = nyStats(v);
       if (gst.ajtoDb > 0) { mats.push({ k: 'ua_profil', q: gst.ajtoDb * 2 }); out.push(['UA profil (ajtónként 2)', gst.ajtoDb * 2 + ' szál']); }
-      else if (nz(v.ny) > 0) warn.push('Ajtónyílásnál 2 db UA (merevített) profil kell a tok mellé – a „Nyílások” listában vedd fel az ajtót, és kiszámolja.');
+      else if (nz(v.ny) > 0) warn.push('Ajtónyílásnál 2 db UA (merevített) profil kell a tok mellé – a „📐 Nyílások listából” gombbal vedd fel az ajtót, és kiszámolja.');
     }
     return { out, mats, warn };
   }
@@ -745,7 +745,7 @@ const CALCS = [
     const mats = [{ k: v.any, q: V }, { k: 'hoszig_ragaszto', q: (rag + beagy) * 1.05 }, { k: 'dubel', q: CEIL(A0 * nz(v.dub) * 1.05) }, { k: 'uvegszovet', q: A * 1.15 }];
     const out = [['Szigetelendő felület', fmt(A0, 2) + ' m²' + (kavaA ? ' + káva ' + fmt(kavaA, 2) + ' m²' : '')], ['Hőszigetelő anyag', fmt(V, 2) + ' m³ ≈ ' + tabla + ' tábla (100×50 cm)' + (kavaA ? ' + kávalapok' : '')],
       ['Ragasztó (ragasztás 5 + beágyazás 4,5 kg/m²)', fmt((rag + beagy) * 1.05, 0) + ' kg'], ['Dübel', CEIL(A0 * nz(v.dub) * 1.05) + ' db'], ['Üvegszövet háló', fmt(A * 1.15, 1) + ' m²']];
-    if (v.kava && !st.list) warn.push('A kávák számolásához add meg az ablakokat, ajtókat a „Nyílások” listában.');
+    if (v.kava && !st.list) warn.push('A kávák számolásához add meg az ablakokat, ajtókat a „📐 Nyílások listából” gombbal.');
     if (v.vak !== '0') {
       const kgm = v.vak === '2' ? 3 : 2.5; mats.push({ k: 'vakolat_alapozo', q: A * 0.25 * 1.05 }, { k: 'szinvakolat', q: A * kgm * 1.05 });
       out.push(['Vakolatalapozó', fmt(A * 0.25 * 1.05, 1) + ' kg'], ['Színvakolat', fmt(A * kgm * 1.05, 0) + ' kg']);
@@ -754,7 +754,7 @@ const CALCS = [
     if (lab > 0) { const sz = CEIL(lab * 1.05 / 2.5); mats.push({ k: 'labazati_profil', q: sz }); out.push(['Lábazati profil', fmt(lab, 1) + ' fm → ' + sz + ' szál']); }
     const elv = v.elvm === 'auto' ? st.kavaKer + nz(v.sarok) * (v.am === 'fal' ? nz(v.Hm) : nz(v.smag)) : v.elvm === 'kezi' ? nz(v.elv) : 0;
     if (elv > 0) { const sz = CEIL(elv * 1.05 / 2.5); mats.push({ k: 'elvedo', q: sz }); out.push(['Élvédő', fmt(elv, 1) + ' fm → ' + sz + ' szál']); }
-    if (v.elvm === 'auto' && !st.list && nz(v.ny) > 0) warn.push('Az élvédőbe a nyílások kerülete csak akkor számít bele, ha a „Nyílások” listában adod meg őket.');
+    if (v.elvm === 'auto' && !st.list && nz(v.ny) > 0) warn.push('Az élvédőbe a nyílások kerülete csak akkor számít bele, ha a „📐 Nyílások listából” gombbal adod meg őket.');
     const dl = nz(v.vast) + 5; out.push(['Javasolt dübelhossz', '≈ ' + dl + '–' + (dl + 4) + ' cm']);
     warn.push('A lábazati XPS-t külön számold (XPS anyaggal, a lábazat magasságával).');
     return { out, mats, warn };
@@ -1313,6 +1313,7 @@ const CALCS = [
         const meret = { k4: 4, k6: 6, k8: 8 }[v.kont] || 6, db = Math.ceil(laza / meret);
         mats.push({ k: 'kontener_' + meret, q: db });
         out.push(['Konténer', fmt(db) + ' × ' + meret + ' m³']);
+        if (laza < 1.5) warn.push('Kevés a sitt (' + fmt(laza, 1) + ' m³) – zsákos elszállítással olcsóbb lehet, mint egy egész konténer. Ehhez válaszd a „Nem kell konténer” lehetőséget.');
         if (tomor * 1.8 > meret * 1.2 * db) warn.push('A sitt nehéz (beton, tégla) – nézd meg a konténer súlyhatárát, lehet, hogy kisebb, de több konténer kell.');
       }
     }

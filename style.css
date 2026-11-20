@@ -621,3 +621,15 @@ html.dark .combo-l{background:#232B36;box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 
 /* 2.15: saját világos/sötét téma jelzése a böngészőnek (Samsung Internet, Chrome automatikus sötétítés) */
 :root{color-scheme:light}
 html.dark{color-scheme:dark}
+
+/* 2.26: ne maradjon üres sáv a Munkadíj kártya tetején */
+.card>#mdTobb:empty:first-child{display:none}
+.card>#mdTobb:empty:first-child+.resz-fej,.card>#mdTobb:first-child>.resz-fej:first-child{margin-top:0;padding-top:0;border-top:0}
+
+/* 2.29: példa és beépített minta */
+.banner.pelda{display:flex;gap:6px;align-items:flex-start;border-left-color:#C9A227;background:color-mix(in srgb,#C9A227 14%,transparent);margin-bottom:12px}
+html.dark .banner.pelda{background:#2E2B1E}
+.banner.minta{display:block;border-left-color:#7A8F5A;background:color-mix(in srgb,#7A8F5A 15%,transparent)}
+html.dark .banner.minta{background:#232B1F}
+.banner.minta .btn{margin-top:8px;display:block}
+.pill.minta{background:#7A8F5A;color:#fff;margin-left:6px;font-size:10.5px;letter-spacing:.06em}

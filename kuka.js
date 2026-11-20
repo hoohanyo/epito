@@ -53,6 +53,7 @@ function torolHelyiseg(p, room) {
 }
 // Megerősítés + törlés típus szerint (listából húzva, vagy a szerkesztő ablakokból)
 function torlesKerdes(tipus, id, utana) {
+  if (isMintaId(id)) { toast('A minta nem törölhető – a Több fülön elrejtheted'); return; }
   let szoveg, fn;
   if (tipus === 'ugyfel') {
     const u = ugyfelById(id); if (!u) return; const n = megrendelesekOf(u).length;

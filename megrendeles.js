@@ -89,7 +89,7 @@ function migrateData() {
 function renderUgyfelek() {
   S.ugyNezet = S.ugyNezet || 'ugyfel';
   const q = (S.ugyKeres || '').toLowerCase();
-  setHeader('Ügyfelek', S.data.ugyfelek.length + ' ügyfél · ' + S.data.projektek.filter(isAktiv).length + ' aktív megrendelés');
+  setHeader('Ügyfelek', nemMinta(S.data.ugyfelek).length + ' ügyfél · ' + nemMinta(S.data.projektek).filter(isAktiv).length + ' aktív megrendelés');
   let h = '<div class="seg"><button data-n="ugyfel"' + (S.ugyNezet === 'ugyfel' ? ' class="on"' : '') + '>Ügyfelek</button><button data-n="megr"' + (S.ugyNezet === 'megr' ? ' class="on"' : '') + '>Összes megrendelés</button></div>';
   h += '<input class="search" id="uk" placeholder="' + (S.ugyNezet === 'ugyfel' ? 'Keresés névre, településre…' : 'Keresés ügyfélre, munkára, sorszámra…') + '" value="' + esc(S.ugyKeres || '') + '">';
   if (S.ugyNezet === 'ugyfel') {
@@ -100,7 +100,7 @@ function renderUgyfelek() {
       return { u, ms, akt, last };
     }).sort((a, b) => (b.akt.length > 0) - (a.akt.length > 0) || String(b.last).localeCompare(String(a.last)));
     if (!us.length) h += '<div class="empty">' + (S.data.ugyfelek.length ? 'Nincs találat.' : 'Még nincs ügyfeled. Az „+ Új megrendelés” gombbal kezdj – az ügyfelet ott helyben felveheted.') + '</div>';
-    else h += '<div class="card list">' + us.map(x => '<div class="it" data-u="' + x.u.id + '" data-del="ugyfel|' + x.u.id + '"><span class="ic">👤</span><div class="m"><b>' + esc(x.u.nev) + (x.akt.length ? '<span class="pill">' + x.akt.length + ' aktív</span>' : '') + (x.ms.some(kovetendo) ? '<span class="pill kovet">Rákérdezni</span>' : '') + '</b><small>' + esc([telepules(x.u.cim), x.ms.length + ' megrendelés'].filter(Boolean).join(' · ')) + '</small></div><span class="arrow">›</span></div>').join('') + '</div>';
+    else h += '<div class="card list">' + us.map(x => '<div class="it" data-u="' + x.u.id + '" data-del="ugyfel|' + x.u.id + '"><span class="ic">👤</span><div class="m"><b>' + esc(x.u.nev) + mintaPill(x.u) + (x.akt.length ? '<span class="pill">' + x.akt.length + ' aktív</span>' : '') + (x.ms.some(kovetendo) ? '<span class="pill kovet">Rákérdezni</span>' : '') + '</b><small>' + esc([telepules(x.u.cim), x.ms.length + ' megrendelés'].filter(Boolean).join(' · ')) + '</small></div><span class="arrow">›</span></div>').join('') + '</div>';
   } else {
     S.projFilter = S.projFilter || 'Aktív';
     const nFiz = S.data.projektek.filter(fizetesreVar).length;
@@ -123,7 +123,7 @@ function renderUgyfelek() {
 const telepules = (cim) => { const m = String(cim || '').match(/^\s*\d{4}\s+([^,]+)/); return m ? m[1].trim() : String(cim || '').split(',')[0].trim(); };
 function megrItem(p) {
   const ms = mrsOf(p).map(m => m.nev);
-  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(ugyfelNev(p)) + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + kovetesPill(p) + '</div><small>' + esc([p.sorszam, p.nev || ms.join(', ') || 'nincs munkarész', telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
+  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(ugyfelNev(p)) + '</b><div class="pills">' + mintaPill(p) + allapotPill(p.allapot) + szamlaPill(p) + kovetesPill(p) + '</div><small>' + esc([p.sorszam, p.nev || ms.join(', ') || 'nincs munkarész', telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
 }
 
 /* ---------- Ügyfél ---------- */
@@ -147,7 +147,7 @@ function renderUgyfel(r) {
 }
 function megrItemU(p) {
   const ms = mrsOf(p).map(m => m.nev);
-  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(p.nev || ms.join(', ') || 'Új megrendelés') + '</b><div class="pills">' + allapotPill(p.allapot) + szamlaPill(p) + kovetesPill(p) + '</div><small>' + esc([p.sorszam, dateHu(p.letrehozva), telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
+  return '<div class="it" data-p="' + p.id + '" data-del="megrendeles|' + p.id + '"><div class="m"><b>' + esc(p.nev || ms.join(', ') || 'Új megrendelés') + '</b><div class="pills">' + mintaPill(p) + allapotPill(p.allapot) + szamlaPill(p) + kovetesPill(p) + '</div><small>' + esc([p.sorszam, dateHu(p.letrehozva), telepules(p.hely)].filter(Boolean).join(' · ')) + '</small></div><div class="v">' + ft(megrKoltseg(p)) + '</div><span class="arrow">›</span></div>';
 }
 function ugyfelDialog(u, after) {
   const uj = !u; const d = u ? Object.assign({}, u) : { id: uid('U'), nev: '', cim: '', tel: '', email: '', megj: '' };
@@ -251,7 +251,7 @@ function renderMegrendeles(r) {
   const agg = aggregate(ts); const sc = splitCats(agg);
   setHeader(ugyfelNev(p), [p.sorszam, p.nev].filter(Boolean).join(' · '));
   const datumok = [p.elfogadva ? 'elfogadva ' + dateHu(p.elfogadva) : '', p.kesz && p.allapot === 'Kész' ? 'kész ' + dateHu(p.kesz) : ''].filter(Boolean).join(' · ');
-  let h = kovetesHtml(p) + '<div class="card hero"><div class="hero-top"><button class="allapot-btn" id="pall">' + allapotPill(p.allapot) + ' <span>▾</span></button><span class="muted small">' + esc(datumok) + '</span></div>' +
+  let h = mintaBanner(p) + kovetesHtml(p) + '<div class="card hero"><div class="hero-top"><button class="allapot-btn" id="pall">' + allapotPill(p.allapot) + ' <span>▾</span></button><span class="muted small">' + esc(datumok) + '</span></div>' +
     (p.szamla && p.szamla.szam ? '<div style="margin-top:8px" class="small">🧾 ' + esc(p.szamla.szam) + ' · ' + ft(p.szamla.osszeg) + ' ' + szamlaPill(p) + '</div>' : '') +
     '<div class="total" style="margin-top:8px"><span>Összesen (nettó)</span><b>' + ft(sumCost(agg)) + '</b></div>' +
     '<div class="small muted" style="margin-top:4px">Anyag ' + ft(sumCost(sc.anyag)) + ' · munkadíj ' + ft(sumCost(sc.munka)) + (sc.egyeb.length ? ' · egyéb ' + ft(sumCost(sc.egyeb)) : '') + '</div>' +
@@ -284,6 +284,7 @@ function renderMegrendeles(r) {
   h += fotokHtml(p);
   $('#view').innerHTML = h;
   bindFotok(p); bindPenzugy(p); bindKovetes(p);
+  if ($('#mintaMas')) $('#mintaMas').onclick = () => mintaMasolat(p);
   $('#pall').onclick = () => allapotDialog(p);
   $('#pedit').onclick = () => megrendelesDialog(p);
   if ($('#pugy')) $('#pugy').onclick = () => go({ v: 'ugyfel', id: u.id });

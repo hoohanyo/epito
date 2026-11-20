@@ -15,7 +15,7 @@ function ajEllenorzes(p) {
   Q.rows.filter(r => !r.total).forEach(r => L.push(['figy', '„' + r.nev + '” sor összege 0 Ft.']));
   const kimarad = mrsOf(p).filter(m => m.ajanlatban === false);
   if (kimarad.length) L.push(['info', 'Nincs az ajánlatban: ' + kimarad.map(m => m.nev).join(', ') + '.']);
-  L.push(['ok', Q.rows.length + ' tétel · ' + (aj.afa === '27' ? 'bruttó ' : '') + ft(Q.brutto) + ' · érvényes ' + huDate(ervIgIso(aj)) + '-ig']);
+  L.push(['ok', Q.rows.length + ' tétel · ' + (aj.afa === '27' ? 'bruttó ' : '') + ft(Q.brutto) + ' · érvényes ' + huDateIg(ervIgIso(aj))]);
   return L;
 }
 function ellenorzesHtml(p) {
@@ -113,7 +113,7 @@ function kuldesDialog(p, paper) {
   const L = ajEllenorzes(p), hibak = L.filter(x => x[0] === 'hiba');
   const megszolit = 'Tisztelt ' + (ug.nev || 'Megrendelő') + '!';
   const alair = [c.kapcs, c.nev, c.tel, c.email].filter(Boolean).join('\n');
-  const uzenet = megszolit + '\n\nMellékelten küldöm a(z) „' + (aj.targy || megrLabel(p)) + '” munkáira vonatkozó árajánlatunkat (' + aj.szam + '), amely ' + huDate(ervIgIso(aj)) + '-ig érvényes.\nHa kérdése van, vagy módosítana valamin, keressen bizalommal.\n\nÜdvözlettel:\n' + alair;
+  const uzenet = megszolit + '\n\nMellékelten küldöm a(z) „' + (aj.targy || megrLabel(p)) + '” munkáira vonatkozó árajánlatunkat (' + aj.szam + '), amely ' + huDateIg(ervIgIso(aj)) + ' érvényes.\nHa kérdése van, vagy módosítana valamin, keressen bizalommal.\n\nÜdvözlettel:\n' + alair;
   const tudMegosztani = !!(navigator.canShare && window.File && navigator.canShare({ files: [new File([''], 'x.pdf', { type: 'application/pdf' })] }));
   const korabbi = (aj.kuldesek || []).map(k => huDate(k.datum) + ' → ' + k.to).join(', ');
   const h = '<h3>Ajánlat küldése</h3>' +

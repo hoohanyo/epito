@@ -1,5 +1,5 @@
 /* Metrum – építőkalkulátor – felület, adatkezelés, szinkron */
-const APP_VERSION = '2.24';
+const APP_VERSION = '2.29';
 const APP_NEV = 'Metrum', APP_TELJES = 'Metrum – építőkalkulátor'; // a config.js APP_NAME-jét felülírja
 const LOCAL = !CONFIG.API_URL;
 const $ = (s, r) => (r || document).querySelector(s);
@@ -31,7 +31,7 @@ if (!S.data.arlista) S.data.arlista = {};
 if (!S.data.ceg) S.data.ceg = {};
 if (!S.data.ugyfelek) S.data.ugyfelek = [];
 if (!S.data.munkareszek) S.data.munkareszek = [];
-const saveCache = () => LS.set('ek_cache', S.data);
+const saveCache = () => LS.set('ek_cache', mintaNelkul(S.data));
 const saveQueue = () => LS.set('ek_queue', S.queue);
 
 /* ---------- Árak ---------- */
@@ -96,6 +96,7 @@ async function api(action, payload) {
 }
 function enqueue(action, payload) {
   if (LOCAL) return;
+  if (mintaPayload(payload)) return; // a beépített minta sosem megy a szerverre
   S.queue.push({ action, payload }); saveQueue(); flush();
 }
 async function flush() {
@@ -318,7 +319,7 @@ setInterval(() => { if (!$('#datumsor').hidden) datumSor(); }, 60000);
 
 /* ---------- Render ---------- */
 function render() {
-  themeIcon(); updateSync();
+  themeIcon(); updateSync(); mintaBiztosit();
   const nav = $('nav.bottom');
   $('#datumsor').hidden = true;
   if (!LOCAL && !S.kod) { nav.hidden = true; return renderLogin(); }
@@ -407,10 +408,10 @@ function renderCalc() {
   const c = CALC_BY_ID[st.id];
   const p = st.projektId && S.data.projektek.find(x => x.id === st.projektId);
   setHeader(c.n, st.tetelId ? 'Tétel szerkesztése' + (p ? ' · ' + p.nev : '') : (p ? 'Projekt: ' + p.nev : ''));
-  let h = '<p class="desc">' + esc(c.desc) + '</p><div class="card" id="form"></div><div id="res"></div><div id="munka"></div><div id="calcTot"></div>';
+  let h = '<p class="desc">' + esc(c.desc) + '</p><div id="peldaInfo"></div><div class="card" id="form"></div><div id="res"></div><div id="munka"></div><div id="calcTot"></div>';
   h += '<div class="btns"><button class="btn pri wide" id="ment">' + (st.tetelId ? 'Módosítás mentése' : 'Mentés munkarészbe') + '</button>' +
     (st.tetelId ? '<button class="btn" id="ujkent">Mentés újként</button>' : '') +
-    '<button class="btn" id="alap">Alapértékek</button></div>';
+    '<button class="btn" id="alap">Alapértékek</button>' + (PELDAK[c.id] ? '<button class="btn" id="pelda">Példa</button>' : '') + '</div>';
   if (st.tetelId) h += '<div class="btns"><button class="btn danger" id="torol">Tétel törlése</button></div>';
   $('#view').innerHTML = h;
   renderForm(); renderMunka(); renderRes();
@@ -419,7 +420,14 @@ function renderCalc() {
     $('#ujkent').onclick = () => saveDialog(true);
     $('#torol').onclick = () => torlesKerdes('tetel', st.tetelId, () => back());
   }
-  $('#alap').onclick = () => { st.v = defaults(c); LS.del('ek_utolso_' + c.id); renderForm(); renderMunka(); renderRes(); };
+  $('#alap').onclick = () => { st.v = defaults(c); LS.del('ek_utolso_' + c.id); $('#peldaInfo').innerHTML = ''; renderForm(); renderMunka(); renderRes(); };
+  if ($('#pelda')) $('#pelda').onclick = () => {
+    const [szoveg, pv] = PELDAK[c.id];
+    st.v = Object.assign(defaults(c), pv); if (c.fields.some(f => f.id === 'mj')) st.v.mj = mjPref();
+    $('#peldaInfo').innerHTML = '<div class="banner pelda">💡 <span><b>Példa:</b> ' + esc(szoveg) + '. Írd át a saját adataidra – ha valamit módosítasz, onnantól a saját számításod.</span></div>';
+    renderForm(); renderMunka(); renderRes(); scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  $('#form').addEventListener('input', () => { const pi = $('#peldaInfo'); if (pi && pi.innerHTML) pi.innerHTML = ''; });
 }
 function renderForm() {
   const st = S.calc, c = CALC_BY_ID[st.id], v = st.v;
@@ -512,7 +520,7 @@ function renderMunka() {
   if (c.resz && c.resz.length) {
     const db = reszOf(c, v).length;
     h += '<div class="resz-fej"><b>Részmunkák</b><span class="small muted">' + (db ? db + ' kiválasztva' : 'külön is kérhetők') + '</span></div>' +
-      '<div class="small muted" style="margin:-2px 0 6px">' + (c.md ? (v.mdOn !== false ? 'A kiválasztottak a fő munkához adódnak. Ha a megrendelő csak ezeket kéri, kapcsold be fent a „Csak részmunkák” kapcsolót.' : 'Csak a kiválasztott részmunkák kerülnek a tételbe.') : 'Kapcsold be, amit a megrendelő kér.') + '</div>';
+      '<div class="small muted" style="margin:-2px 0 6px">' + (c.md ? (v.mdOn !== false ? 'A kiválasztottak a fő munkához adódnak. Ha a megrendelő csak ezeket kéri, kapcsold be fent a „Csak részmunkák” kapcsolót.' : 'Csak a kiválasztott részmunkák kerülnek a tételbe.') : (c.resz.some(x => x.t === 'c') ? (c.resz.some(x => x.t !== 'c') ? 'Kapcsold be, vagy írd be a mennyiségét annak, amit a megrendelő kér.' : 'Kapcsold be, amit a megrendelő kér.') : 'Írd be a mennyiségét annak, amit a megrendelő kér – a 0 kimarad.')) + '</div>';
     for (const r of c.resz) {
       const k = 'rm_' + r.id; const P = mat(r.md);
       const ar = '<span class="resz-ar">' + ft(P.p) + '/' + esc(P.u) + '</span>';
@@ -537,7 +545,8 @@ function renderRes() {
   const st = S.calc, c = CALC_BY_ID[st.id];
   (c.resz || []).filter(r => r.t === 'c').forEach(r => { const el = document.getElementById('rq_' + r.id); if (!el) return; let q = 0; try { q = nz(r.q(st.v)); } catch (e) {} el.textContent = q > 0 ? fmt(q) + ' ' + r.u + ' · ' : ''; });
   const r = fullResult(c, st.v); st.r = r;
-  let h = '<h2>Eredmény</h2><div class="card res">' + r.out.map(o => '<div class="row"><span>' + esc(o[0]) + '</span><b>' + esc(o[1]) + '</b></div>').join('') + '</div>';
+  // az Eredmény kártya csak akkor jelenik meg, ha van mit mutatni
+  let h = (r.out.length || r.warn.length ? '<h2>Eredmény</h2>' : '') + (r.out.length ? '<div class="card res">' + r.out.map(o => '<div class="row"><span>' + esc(o[0]) + '</span><b>' + esc(o[1]) + '</b></div>').join('') + '</div>' : '');
   for (const w of r.warn) h += '<div class="warn">' + esc(w) + '</div>';
   const ls = r.mats.map(line); const sc = splitCats(ls);
   if (sc.anyag.length) h += '<h2>Anyagok és költség</h2><div class="card">' + matsTable(sc.anyag) + '</div>';
@@ -768,7 +777,8 @@ function renderTobb() {
   let h = haviHtml() + '<h2>Adatok</h2><div class="card">';
   if (LOCAL) h += '<div class="kv"><span>Mód</span><b>Helyi (csak ez az eszköz)</b></div><div class="small muted" style="padding:6px 0">A Google Sheet bekötéséhez írd be a config.js-be az API_URL-t (Telepites.txt).</div>';
   else h += '<div class="kv"><span>Mód</span><b>Google Sheet</b></div><div class="kv"><span>Állapot</span><b>' + esc(S.syncing ? 'Szinkronizál…' : S.queue.length ? S.queue.length + ' módosítás várakozik' : S.lastErr || 'Minden mentve') + '</b></div>';
-  h += '<div class="kv"><span>Ügyfelek / megrendelések / tételek</span><b>' + S.data.ugyfelek.length + ' / ' + S.data.projektek.length + ' / ' + S.data.tetelek.length + '</b></div></div>';
+  h += '<div class="kv"><span>Ügyfelek / megrendelések / tételek</span><b>' + nemMinta(S.data.ugyfelek).length + ' / ' + nemMinta(S.data.projektek).length + ' / ' + nemMinta(S.data.tetelek).length + '</b></div>' +
+    '<div class="f"><label for="mintaOn">Minta ügyfél és megrendelés<small class="muted" style="display:block;font-weight:400">„Minta Anna” kitöltött megrendelése puskának. Nem kerül a táblázatba és az összesítőkbe.</small></label><label class="sw"><input type="checkbox" id="mintaOn"' + (MINTA_ON() ? ' checked' : '') + '><i></i></label></div></div>';
   h += '<div class="btns">' + (LOCAL ? '' : '<button class="btn wide" id="sync">⟳ Szinkron most</button>') + '</div>';
   h += '<h2>Árajánlat</h2><div class="card list"><div class="it" id="cegb"><span class="ic">🏢</span><div class="m"><b>Vállalkozói adatok és ajánlat-alapbeállítások</b><small>' + esc((S.data.ceg && S.data.ceg.nev) || 'Még nincs kitöltve – az árajánlat fejlécéhez kell') + '</small></div><span class="arrow">›</span></div></div>';
   h += '<h2>Törölt elemek</h2><div class="card list"><div class="it" id="kukab"><span class="ic">🗑</span><div class="m"><b>Törölt elemek (' + ((S.data.kuka || []).length) + ')</b><small>30 napig visszaállíthatók</small></div><span class="arrow">›</span></div></div>';
@@ -777,6 +787,7 @@ function renderTobb() {
   h += '<h2>Eszköz</h2><div class="btns"><button class="btn danger" id="cache">Helyi adatok törlése</button></div>';
   h += '<h2>Névjegy</h2><div class="card small"><b>' + esc(APP_TELJES) + ' ' + APP_VERSION + '</b><br><span class="muted">' + CALCS.length + ' kalkulátor, ' + allMatKeys().length + ' anyag. A számítások átlagos anyagszükségleti értékekkel dolgoznak, tájékoztató jellegűek – vásárlás előtt mindig nézd meg a gyártó terméklapját.</span></div>';
   $('#view').innerHTML = h;
+  if ($('#mintaOn')) $('#mintaOn').onchange = (e) => { LS.set('metrum_minta', e.target.checked); render(); toast(e.target.checked ? 'A minta megjelent az Ügyfelek között' : 'Minta elrejtve'); };
   if (!LOCAL) {
     $('#sync').onclick = () => load(true).then(() => toast(S.lastErr ? S.lastErr : 'Szinkron kész'));
     $('#kodmod').onclick = () => openModal('<h3>Kód módosítása</h3><p class="muted small">Az új kód minden eszközön érvényes lesz; a többi eszközön újra be kell majd lépni vele.</p>' + kodUrlap('km') +
